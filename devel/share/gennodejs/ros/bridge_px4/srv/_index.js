@@ -1,0 +1,1 @@
+/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/share/gennodejs/ros/bridge_px4/srv/_index.js

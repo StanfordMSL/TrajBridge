@@ -1,0 +1,5 @@
+[31m[1mCMake Error[0m at /home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge-px4/CMakeLists.txt:210:
+  Parse error.  Function missing ending ")".  End of file reached.
+
+
+make: *** [cmake_check_build_system] Error 1

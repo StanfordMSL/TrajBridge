@@ -1,0 +1,1 @@
+/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/share/roseus/ros/bridge_px4/manifest.l

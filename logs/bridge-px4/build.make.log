@@ -1,0 +1,20 @@
+[  0%] Built target std_msgs_generate_messages_cpp
+[  0%] Built target std_msgs_generate_messages_lisp
+[  0%] Built target std_msgs_generate_messages_nodejs
+[  0%] Built target std_msgs_generate_messages_py
+[  0%] Built target std_msgs_generate_messages_eus
+[  0%] Built target _bridge-px4_generate_messages_check_deps_GcsCmd
+[ 42%] Built target bridge-px4_generate_messages_eus
+[ 42%] [34m[1mGenerating Python code from SRV bridge-px4/GcsCmd[0m
+[ 71%] Built target bridge-px4_generate_messages_cpp
+[ 71%] Built target bridge-px4_generate_messages_nodejs
+[ 85%] Built target bridge-px4_generate_messages_lisp
+ERROR:  
+ERROR: package name 'bridge-px4' is illegal and cannot be used in message generation.
+Please see http://ros.org/wiki/Names
+CMakeFiles/bridge-px4_generate_messages_py.dir/build.make:62: recipe for target '/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge-px4/lib/python2.7/dist-packages/bridge-px4/srv/_GcsCmd.py' failed
+make[2]: *** [/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge-px4/lib/python2.7/dist-packages/bridge-px4/srv/_GcsCmd.py] Error 2
+CMakeFiles/Makefile2:1457: recipe for target 'CMakeFiles/bridge-px4_generate_messages_py.dir/all' failed
+make[1]: *** [CMakeFiles/bridge-px4_generate_messages_py.dir/all] Error 2
+Makefile:140: recipe for target 'all' failed
+make: *** [all] Error 2

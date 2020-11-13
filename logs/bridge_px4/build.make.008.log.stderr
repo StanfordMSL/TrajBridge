@@ -1,0 +1,19 @@
+In file included from [01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/src/setpoint_publisher_node.cpp:1:0[m[K:
+[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:[m[K In member function ‘[01m[Kbool SetpointPublisher::gcs_commander(bridge_px4::GcsCmd::Request&, bridge_px4::GcsCmd::Response&)[m[K’:
+[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:40:13:[m[K [01;31m[Kerror: [m[K‘[01m[Kpose_init[m[K’ was not declared in this scope
+             [01;31m[Kpose_init[m[K[i] = 3.0f;
+             [01;31m[K^~~~~~~~~[m[K
+[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:40:13:[m[K [01;36m[Knote: [m[Ksuggested alternative: ‘[01m[Kmbsinit[m[K’
+             [01;36m[Kpose_init[m[K[i] = 3.0f;
+             [01;36m[K^~~~~~~~~[m[K
+             [32m[Kmbsinit[m[K
+[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:44:13:[m[K [01;31m[Kerror: [m[K‘[01m[Kpose_init[m[K’ was not declared in this scope
+             [01;31m[Kpose_init[m[K[i] = 0.0f;
+             [01;31m[K^~~~~~~~~[m[K
+[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:44:13:[m[K [01;36m[Knote: [m[Ksuggested alternative: ‘[01m[Kmbsinit[m[K’
+             [01;36m[Kpose_init[m[K[i] = 0.0f;
+             [01;36m[K^~~~~~~~~[m[K
+             [32m[Kmbsinit[m[K
+make[2]: *** [CMakeFiles/setpoint_publisher_node.dir/src/setpoint_publisher_node.cpp.o] Error 1
+make[1]: *** [CMakeFiles/setpoint_publisher_node.dir/all] Error 2
+make: *** [all] Error 2

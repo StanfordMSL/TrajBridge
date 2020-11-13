@@ -1,0 +1,9 @@
+CMakeFiles/setpoint_publisher_node.dir/src/setpoint_publisher_node.cpp.o: In function `SetpointPublisher::SetpointPublisher(ros::NodeHandle*)':
+setpoint_publisher_node.cpp:(.text+0x34): undefined reference to `vtable for SetpointPublisher'
+CMakeFiles/setpoint_publisher_node.dir/src/setpoint_publisher_node.cpp.o: In function `main':
+setpoint_publisher_node.cpp:(.text+0x1121): undefined reference to `SetpointPublisher::~SetpointPublisher()'
+setpoint_publisher_node.cpp:(.text+0x11f5): undefined reference to `SetpointPublisher::~SetpointPublisher()'
+collect2: error: ld returned 1 exit status
+make[2]: *** [/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/setpoint_publisher_node] Error 1
+make[1]: *** [CMakeFiles/setpoint_publisher_node.dir/all] Error 2
+make: *** [all] Error 2

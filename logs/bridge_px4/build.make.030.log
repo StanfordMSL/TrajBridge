@@ -1,0 +1,28 @@
+[  0%] Built target std_msgs_generate_messages_cpp
+[  0%] Built target std_msgs_generate_messages_lisp
+[  0%] Built target std_msgs_generate_messages_eus
+[  0%] Built target std_msgs_generate_messages_py
+[  0%] Built target std_msgs_generate_messages_nodejs
+[  0%] Built target _bridge_px4_generate_messages_check_deps_GcsCmd
+[ 44%] Built target bridge_px4_generate_messages_nodejs
+[ 55%] Built target bridge_px4_generate_messages_cpp
+[ 55%] Built target bridge_px4_generate_messages_lisp
+[ 55%] Built target bridge_px4_generate_messages_eus
+[ 77%] Built target bridge_px4_generate_messages_py
+[ 77%] Built target bridge_px4_gencpp
+[35m[1mScanning dependencies of target setpoint_publisher_node[0m
+[ 77%] Built target bridge_px4_generate_messages
+[ 88%] [32mBuilding CXX object CMakeFiles/setpoint_publisher_node.dir/src/setpoint_publisher_node.cpp.o[0m
+[100%] [32m[1mLinking CXX executable /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/setpoint_publisher_node[0m
+CMakeFiles/setpoint_publisher_node.dir/src/setpoint_publisher_node.cpp.o: In function `SetpointPublisher::SetpointPublisher(ros::NodeHandle*)':
+setpoint_publisher_node.cpp:(.text+0x34): undefined reference to `vtable for SetpointPublisher'
+CMakeFiles/setpoint_publisher_node.dir/src/setpoint_publisher_node.cpp.o: In function `main':
+setpoint_publisher_node.cpp:(.text+0x1121): undefined reference to `SetpointPublisher::~SetpointPublisher()'
+setpoint_publisher_node.cpp:(.text+0x11f5): undefined reference to `SetpointPublisher::~SetpointPublisher()'
+collect2: error: ld returned 1 exit status
+CMakeFiles/setpoint_publisher_node.dir/build.make:130: recipe for target '/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/setpoint_publisher_node' failed
+make[2]: *** [/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/setpoint_publisher_node] Error 1
+CMakeFiles/Makefile2:2673: recipe for target 'CMakeFiles/setpoint_publisher_node.dir/all' failed
+make[1]: *** [CMakeFiles/setpoint_publisher_node.dir/all] Error 2
+Makefile:140: recipe for target 'all' failed
+make: *** [all] Error 2

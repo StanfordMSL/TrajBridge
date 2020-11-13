@@ -1,0 +1,11 @@
+[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/src/setpoint_publisher_node.cpp:[m[K In function ‘[01m[Kint main(int, char**)[m[K’:
+[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/src/setpoint_publisher_node.cpp:12:13:[m[K [01;31m[Kerror: [m[K‘[01m[Kstate[m[K’ was not declared in this scope
+         if ([01;31m[Kstate[m[K == 0) {
+             [01;31m[K^~~~~[m[K
+[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/src/setpoint_publisher_node.cpp:12:13:[m[K [01;36m[Knote: [m[Ksuggested alternative: ‘[01m[Krate[m[K’
+         if ([01;36m[Kstate[m[K == 0) {
+             [01;36m[K^~~~~[m[K
+             [32m[Krate[m[K
+make[2]: *** [CMakeFiles/setpoint_publisher_node.dir/src/setpoint_publisher_node.cpp.o] Error 1
+make[1]: *** [CMakeFiles/setpoint_publisher_node.dir/all] Error 2
+make: *** [all] Error 2

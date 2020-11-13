@@ -1,0 +1,31 @@
+[36m--[0m Using CATKIN_DEVEL_PREFIX: /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge-px4
+[36m--[0m Using CMAKE_PREFIX_PATH: /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel;/opt/ros/melodic
+[36m--[0m This workspace overlays: /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel;/opt/ros/melodic
+[36m--[0m Found PythonInterp: /usr/bin/python2 (found suitable version "2.7.17", minimum required is "2")
+[36m--[0m Using PYTHON_EXECUTABLE: /usr/bin/python2
+[36m--[0m Using Debian Python package layout
+[36m--[0m Using empy: /usr/bin/empy
+[36m--[0m Using CATKIN_ENABLE_TESTING: ON
+[36m--[0m Call enable_testing()
+[36m--[0m Using CATKIN_TEST_RESULTS_DIR: /home/lowjunen/StanfordMSL/TrajBridge-PX4/build/bridge-px4/test_results
+[36m--[0m Found gtest sources under '/usr/src/googletest': gtests will be built
+[36m--[0m Found gmock sources under '/usr/src/googletest': gmock will be built
+[36m--[0m Found PythonInterp: /usr/bin/python2 (found version "2.7.17")
+[36m--[0m Using Python nosetests: /usr/bin/nosetests-2.7
+[36m--[0m catkin 0.7.28
+[36m--[0m BUILD_SHARED_LIBS is on
+[36m--[0m Using these message generators: gencpp;geneus;genlisp;gennodejs;genpy
+[36m--[0m bridge-px4: 0 messages, 1 services
+[31m[1mCMake Error[0m at /opt/ros/melodic/share/catkin/cmake/catkin_package.cmake:196 (message):
+  catkin_package() the catkin package 'std_msgs' has been find_package()-ed
+  but is not listed as a build dependency in the package.xml
+[36mCall Stack (most recent call first):[0m
+  /opt/ros/melodic/share/catkin/cmake/catkin_package.cmake:102 (_catkin_package)
+  CMakeLists.txt:108 (catkin_package)
+
+
+[36m--[0m Configuring incomplete, errors occurred!
+See also "/home/lowjunen/StanfordMSL/TrajBridge-PX4/build/bridge-px4/CMakeFiles/CMakeOutput.log".
+See also "/home/lowjunen/StanfordMSL/TrajBridge-PX4/build/bridge-px4/CMakeFiles/CMakeError.log".
+Makefile:1370: recipe for target 'cmake_check_build_system' failed
+make: *** [cmake_check_build_system] Error 1
