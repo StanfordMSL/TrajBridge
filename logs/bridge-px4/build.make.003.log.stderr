@@ -1,6 +1,0 @@
-ERROR:  
-ERROR: package name 'bridge-px4' is illegal and cannot be used in message generation.
-Please see http://ros.org/wiki/Names
-make[2]: *** [/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge-px4/lib/python2.7/dist-packages/bridge-px4/srv/_GcsCmd.py] Error 2
-make[1]: *** [CMakeFiles/bridge-px4_generate_messages_py.dir/all] Error 2
-make: *** [all] Error 2

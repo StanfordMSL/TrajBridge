@@ -1,6 +1,0 @@
-devel_space: /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel
-install: false
-install_space: /home/lowjunen/StanfordMSL/TrajBridge-PX4/install
-profile: default
-source_space: /home/lowjunen/StanfordMSL/TrajBridge-PX4/src
-workspace: /home/lowjunen/StanfordMSL/TrajBridge-PX4

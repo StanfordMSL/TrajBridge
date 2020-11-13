@@ -1,8 +1,0 @@
-In file included from [01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/src/setpoint_publisher_node.cpp:1:0[m[K:
-[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:[m[K In constructor ‘[01m[KSetpointPublisher::SetpointPublisher(ros::NodeHandle*)[m[K’:
-[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:31:4:[m[K [01;31m[Kerror: [m[Kexpected ‘[01m[K;[m[K’ before ‘[01m[K}[m[K’ token
-    [01;31m[K}[m[K
-    [01;31m[K^[m[K
-make[2]: *** [CMakeFiles/setpoint_publisher_node.dir/src/setpoint_publisher_node.cpp.o] Error 1
-make[1]: *** [CMakeFiles/setpoint_publisher_node.dir/all] Error 2
-make: *** [all] Error 2

@@ -1,1 +1,0 @@
-/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge-px4/share/bridge-px4/cmake/bridge-px4Config-version.cmake

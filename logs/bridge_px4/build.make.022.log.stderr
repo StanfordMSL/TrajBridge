@@ -1,6 +1,0 @@
-In file included from [01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/src/setpoint_publisher_node.cpp:1:0[m[K:
-[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:37:32:[m[K [01;35m[Kwarning: [m[Kcharacter constant too long for its type
-       pos_sp.header.frame_id = [01;35m[K'world'[m[K;
-                                [01;35m[K^~~~~~~[m[K
-[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:[m[K In constructor ‘[01m[KSetpointPublisher::SetpointPublisher(ros::NodeHandle*)[m[K’:
-[01m[K/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/bridge_px4/setpoint_publisher_node.h:37:32:[m[K [01;35m[Kwarning: [m[Koverflow in implicit constant conversion [[01;35m[K-Woverflow[m[K]

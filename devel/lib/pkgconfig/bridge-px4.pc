@@ -1,1 +1,0 @@
-/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge-px4/lib/pkgconfig/bridge-px4.pc

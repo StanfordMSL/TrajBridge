@@ -1,1 +1,0 @@
-/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/python2.7/dist-packages/bridge_px4/srv/__init__.py

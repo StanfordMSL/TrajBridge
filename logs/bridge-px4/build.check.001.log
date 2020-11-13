@@ -1,9 +1,0 @@
-[31m[1mCMake Error[0m at /home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge-px4/CMakeLists.txt:210:
-  Parse error.  Function missing ending ")".  End of file reached.
-
-
-[36m--[0m Configuring incomplete, errors occurred!
-See also "/home/lowjunen/StanfordMSL/TrajBridge-PX4/build/bridge-px4/CMakeFiles/CMakeOutput.log".
-See also "/home/lowjunen/StanfordMSL/TrajBridge-PX4/build/bridge-px4/CMakeFiles/CMakeError.log".
-Makefile:1370: recipe for target 'cmake_check_build_system' failed
-make: *** [cmake_check_build_system] Error 1
