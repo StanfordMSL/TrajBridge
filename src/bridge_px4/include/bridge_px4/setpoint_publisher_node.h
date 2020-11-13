@@ -16,6 +16,8 @@
 #include <mavros_msgs/State.h>
 #include <bridge_px4/GcsCmd.h>
 
+#include <Eigen/Dense>
+
 enum sp_state
 {
    SP_DISARMED,
@@ -29,9 +31,10 @@ private:
    ros::Subscriber pose_sub;
    ros::ServiceServer gcs_service;
 
-   mavros_msgs::State current_state;
+   mavros_msgs::State         curr_state;
    geometry_msgs::PoseStamped init_pose;
-   geometry_msgs::PoseStamped current_pose;
+   geometry_msgs::PoseStamped curr_pose;
+   geometry_msgs::PoseStamped targ_pose;
    geometry_msgs::PoseStamped pos_sp;
 
 public:

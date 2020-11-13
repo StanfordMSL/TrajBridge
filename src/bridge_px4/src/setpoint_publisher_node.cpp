@@ -1,5 +1,7 @@
 #include <bridge_px4/setpoint_publisher_node.h>
 
+using namespace Eigen;
+
 SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh)
 {
     state = SP_DISARMED;
@@ -10,23 +12,27 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh)
     gcs_service = nh->advertiseService("/gcs_commander",&SetpointPublisher::gcs_commander,this);
 
     ros::Rate rate(20);
-    while(ros::ok() && !current_state.connected){
+    while(ros::ok() && !curr_state.connected){
         ROS_INFO("Waiting for Connection to PX4.");
         ros::spinOnce();
         rate.sleep();
     }
     
     ROS_INFO("Connection Established. Setting initial position and setpoint position to current position.");
-    init_pose = current_pose;
+    init_pose = curr_pose;
+    
+    targ_pose = init_pose;
+    targ_pose.pose.position.z = init_pose.pose.position.z + 0.5;
+
     pos_sp    = init_pose;
 }
 
 void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
-    current_state = *msg;
+    curr_state = *msg;
 }
 
 void SetpointPublisher::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
-    current_pose = *msg;
+    curr_pose = *msg;
 }
 bool SetpointPublisher::gcs_commander(bridge_px4::GcsCmd::Request &req,
                       bridge_px4::GcsCmd::Response &res)
@@ -44,13 +50,22 @@ bool SetpointPublisher::gcs_commander(bridge_px4::GcsCmd::Request &req,
 }   
 
 void SetpointPublisher::update_setpoint()
-{
+{   
+    VectorXf s_error(3);
+    
+    s_error <<  curr_pose.pose.position.x-targ_pose.pose.position.x,
+                curr_pose.pose.position.y-targ_pose.pose.position.y,
+                curr_pose.pose.position.z-targ_pose.pose.position.z;
+    
+
     if (state == SP_ARMED) {
-        if (ros::Time::now() > t_start){        
-            pos_sp.pose.position.z = init_pose.pose.position.z + 0.5;
+        if ( (ros::Time::now() > t_start) && (s_error.norm() > 0.1) ) {        
+            pos_sp = targ_pose;
+        } else {        
+            pos_sp = init_pose;
         }
     } else {
-        pos_sp.pose.position.z = init_pose.pose.position.z;
+        pos_sp = init_pose;
     }
 }
    
