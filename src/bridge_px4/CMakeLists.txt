@@ -142,9 +142,9 @@ add_executable(setpoint_publisher_node src/setpoint_publisher_node.cpp)
 target_link_libraries(setpoint_publisher_node ${catkin_LIBRARIES})
 add_dependencies(setpoint_publisher_node bridge_px4_gencpp)
 
-add_executable(gcs_node src/gcs_node.cpp)
-target_link_libraries(gcs_node ${catkin_LIBRARIES})
-add_dependencies(gcs_node bridge_px4_gencpp)
+add_executable(offb_node src/offb_node.cpp)
+target_link_libraries(offb_node ${catkin_LIBRARIES})
+add_dependencies(offb_node bridge_px4_gencpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

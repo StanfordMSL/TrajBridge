@@ -14,6 +14,8 @@
 #include "ros/ros.h"
 #include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/State.h>
+#include <mavros_msgs/CommandBool.h>
+#include <mavros_msgs/SetMode.h>
 #include <bridge_px4/GcsCmd.h>
 
 #include <Eigen/Dense>
@@ -21,7 +23,8 @@
 enum sp_state
 {
    SP_DISARMED,
-   SP_ARMED
+   SP_ARMED,
+   SP_COMPLETE
 };
 
 class SetpointPublisher {
@@ -29,25 +32,31 @@ private:
    ros::Publisher pos_sp_pub;
    ros::Subscriber state_sub;
    ros::Subscriber pose_sub;
+   ros::ServiceClient arming_client;
+   ros::ServiceClient set_mode_client;
    ros::ServiceServer gcs_service;
 
    mavros_msgs::State         curr_state;
+   mavros_msgs::CommandBool   arm_cmd;
+   mavros_msgs::SetMode       offb_set_mode;
    geometry_msgs::PoseStamped init_pose;
-   geometry_msgs::PoseStamped curr_pose;
    geometry_msgs::PoseStamped targ_pose;
    geometry_msgs::PoseStamped pos_sp;
+   ros::Time                  last_request;
 
 public:
    SetpointPublisher(ros::NodeHandle *nh);
 
    sp_state state;
-   ros::Time t_start;
+
+   geometry_msgs::PoseStamped curr_pose;
 
    void state_cb(const mavros_msgs::State::ConstPtr& msg);
    void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
 
    bool gcs_commander(bridge_px4::GcsCmd::Request &req,bridge_px4::GcsCmd::Response &res);
-   
+
+   void offb_trigger();
    void update_setpoint();
    void publish_setpoint();
 };

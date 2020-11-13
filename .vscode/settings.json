@@ -3,6 +3,8 @@
         "/opt/ros/melodic/lib/python2.7/dist-packages"
     ],
     "files.associations": {
-        "dense": "cpp"
+        "dense": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp"
     }
 }

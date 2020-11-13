@@ -6,23 +6,19 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh)
 {
     state = SP_DISARMED;
 
-    pos_sp_pub  = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
-    state_sub   = nh->subscribe("mavros/state",1,&SetpointPublisher::state_cb,this);
-    pose_sub    = nh->subscribe("/mavros/local_position/pose",1,&SetpointPublisher::pose_cb,this);
-    gcs_service = nh->advertiseService("/gcs_commander",&SetpointPublisher::gcs_commander,this);
-
+    pos_sp_pub      = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
+    state_sub       = nh->subscribe("mavros/state",1,&SetpointPublisher::state_cb,this);
+    pose_sub        = nh->subscribe("/mavros/local_position/pose",1,&SetpointPublisher::pose_cb,this);
+    gcs_service     = nh->advertiseService("/gcs_commander",&SetpointPublisher::gcs_commander,this);
+    arming_client   = nh->serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+    set_mode_client = nh->serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+    
     ros::Rate rate(20);
     while(ros::ok() && !curr_state.connected){
         ROS_INFO("Waiting for Connection to PX4.");
         ros::spinOnce();
         rate.sleep();
     }
-    
-    ROS_INFO("Connection Established. Setting initial position and setpoint position to current position.");
-    init_pose = curr_pose;
-    
-    targ_pose = init_pose;
-    targ_pose.pose.position.z = init_pose.pose.position.z + 0.5;
 
     pos_sp    = init_pose;
 }
@@ -38,17 +34,46 @@ bool SetpointPublisher::gcs_commander(bridge_px4::GcsCmd::Request &req,
                       bridge_px4::GcsCmd::Response &res)
 {
     if (req.trigger == 1) {
-        t_start = ros::Time::now() + ros::Duration(3.0);
         state = SP_ARMED;
-        ROS_INFO("Setpoint Publisher Armed. Streaming Trajectory in 3s.");
+        last_request = ros::Time::now();
+
+	init_pose = curr_pose;
+	targ_pose = init_pose;
+	targ_pose.pose.position.z = init_pose.pose.position.z + 1.0;
+	pos_sp = targ_pose;
+
+        offb_set_mode.request.custom_mode = "OFFBOARD";
+        arm_cmd.request.value = true;
+
+        ROS_INFO("System Armed. Streaming Trajectory");
     } else {
         state = SP_DISARMED;
-        ROS_INFO("Setpoint Publisher Disarmed. Reverting Trajectory to Hover Immediately.");
+        ROS_INFO("System Disarmed. Landing Immediately.");
     }
       
      return true;
 }   
 
+void SetpointPublisher::offb_trigger()
+{
+    //std::cout << curr_state.mode << std::endl;
+
+    if (state == SP_ARMED) {
+        if ( !curr_state.armed && (ros::Time::now() - last_request > ros::Duration(5.0))) {
+            if (arming_client.call(arm_cmd) && arm_cmd.response.success){
+                    ROS_INFO("Vehicle Armed");
+                }
+            last_request = ros::Time::now();
+        } else {
+            if ( curr_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0)) ) {
+                if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) {
+                ROS_INFO("Offboard enabled");
+            }
+                last_request = ros::Time::now();
+            }
+        }
+    }
+}
 void SetpointPublisher::update_setpoint()
 {   
     VectorXf s_error(3);
@@ -59,7 +84,7 @@ void SetpointPublisher::update_setpoint()
     
 
     if (state == SP_ARMED) {
-        if ( (ros::Time::now() > t_start) && (s_error.norm() > 0.1) ) {        
+        if (s_error.norm() > 0.1 ) {        
             pos_sp = targ_pose;
         } else {        
             pos_sp = init_pose;
@@ -67,6 +92,7 @@ void SetpointPublisher::update_setpoint()
     } else {
         pos_sp = init_pose;
     }
+    pos_sp.pose.position.z = targ_pose.pose.position.z + 0.5;
 }
    
 void SetpointPublisher::publish_setpoint()
@@ -84,9 +110,10 @@ int main(int argc, char **argv)
 
     ros::Rate rate(20);
     while(ros::ok()){
+        sp.offb_trigger();
         sp.update_setpoint();
         sp.publish_setpoint();
-            
+        
         ros::spinOnce();
         rate.sleep();
     }
