@@ -24,10 +24,10 @@ int main(int argc, char **argv)
         pose.pose.position.y = 0;
         pose.pose.position.z = 2;
 
-        pose.pose.orientation.w = 2;
-        pose.pose.orientation.x = 2;
-        pose.pose.orientation.y = 2;
-        pose.pose.orientation.z = 2;
+        pose.pose.orientation.w = 1;
+        pose.pose.orientation.x = 0;
+        pose.pose.orientation.y = 0;
+        pose.pose.orientation.z = 0;
 
         local_pos_pub.publish(pose);
 
