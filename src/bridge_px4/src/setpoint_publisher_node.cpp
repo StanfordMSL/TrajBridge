@@ -1,105 +1,108 @@
 #include <bridge_px4/setpoint_publisher_node.h>
 
-using namespace Eigen;
 
 SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh)
 {
-    state = SP_DISARMED;
+    // ROS Initialization
+    pose_sp_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
+    state_sub   = nh->subscribe("mavros/state",1,&SetpointPublisher::state_cb,this);
+    pose_sub    = nh->subscribe("/mavros/local_position/pose",1,&SetpointPublisher::pose_cb,this);
+       
+    ROS_INFO("ROS Components Initialized");
 
-    pos_sp_pub      = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
-    state_sub       = nh->subscribe("mavros/state",1,&SetpointPublisher::state_cb,this);
-    pose_sub        = nh->subscribe("/mavros/local_position/pose",1,&SetpointPublisher::pose_cb,this);
-    gcs_service     = nh->advertiseService("/gcs_commander",&SetpointPublisher::gcs_commander,this);
-    arming_client   = nh->serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
-    set_mode_client = nh->serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
-    
-    ros::Rate rate(20);
-    while(ros::ok() && !curr_state.connected){
+    // Trajectory Initialization
+    MatrixXf m(4,3);
+    m << 0.0, 3.0, 6.0,
+         0.0, 0.0, 0.0,
+         0.0, 0.0, 0.0,
+         0.0, 1.0, 0.0;
+
+    traj.block<4,3>(0,0) = m;
+
+    // Quad Connection Initialization
+    ros::Rate rate(1);
+    while(ros::ok() && !mode_curr.connected){
         ROS_INFO("Waiting for Connection to PX4.");
         ros::spinOnce();
         rate.sleep();
     }
+    ROS_INFO("Quad Connection Established. Quad believes it as at: %f, %f, %f.",
+            pose_curr.pose.position.x,
+            pose_curr.pose.position.y,
+            pose_curr.pose.position.z);
 
-    pos_sp    = init_pose;
+    // Setpoint Value Initialization
+    sp_status = SP_STREAM_OFF;
+    pose_sp = pose_curr;
+    ROS_INFO("Quad Setpoint Initialized at: %f, %f, %f.",
+            pose_sp.pose.position.x,
+            pose_sp.pose.position.y,
+            pose_sp.pose.position.z);
+
+    // Counter and Time Initialization
+    count_total = 0;
+    count_traj  = 0;
+    ROS_INFO("Counters Initialized.");
+}
+
+bool SetpointPublisher::last_req_check() {
+    ros::Time t_now = ros::Time::now();
+    ros::Duration t_delta = ros::Duration(5.0);
+
+    if (t_now - last_request > t_delta) {
+        last_request = t_now;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
-    curr_state = *msg;
+    mode_curr = *msg;
+
+    ros::Time t_now = ros::Time::now();
+    if ((mode_curr.mode == "OFFBOARD") && last_req_check()) {
+        t_start_ns = t_now.nsec;
+        sp_status = SP_STREAM_ON;
+    } else {
+        sp_status = SP_STREAM_OFF;
+    }
 }
 
 void SetpointPublisher::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
-    curr_pose = *msg;
+    pose_curr = *msg;
 }
-bool SetpointPublisher::gcs_commander(bridge_px4::GcsCmd::Request &req,
-                      bridge_px4::GcsCmd::Response &res)
-{
-    if (req.trigger == 1) {
-        state = SP_ARMED;
-        last_request = ros::Time::now();
 
-	init_pose = curr_pose;
-	targ_pose = init_pose;
-	targ_pose.pose.position.z = init_pose.pose.position.z + 1.0;
-	pos_sp = targ_pose;
-
-        offb_set_mode.request.custom_mode = "OFFBOARD";
-        arm_cmd.request.value = true;
-
-        ROS_INFO("System Armed. Streaming Trajectory");
-    } else {
-        state = SP_DISARMED;
-        ROS_INFO("System Disarmed. Landing Immediately.");
-    }
-      
-     return true;
-}   
-
-void SetpointPublisher::offb_trigger()
-{
-    //std::cout << curr_state.mode << std::endl;
-
-    if (state == SP_ARMED) {
-        if ( !curr_state.armed && (ros::Time::now() - last_request > ros::Duration(5.0))) {
-            if (arming_client.call(arm_cmd) && arm_cmd.response.success){
-                    ROS_INFO("Vehicle Armed");
-                }
-            last_request = ros::Time::now();
-        } else {
-            if ( curr_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0)) ) {
-                if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent) {
-                ROS_INFO("Offboard enabled");
-            }
-                last_request = ros::Time::now();
-            }
-        }
-    }
-}
 void SetpointPublisher::update_setpoint()
 {   
-    VectorXf s_error(3);
-    
-    s_error <<  curr_pose.pose.position.x-targ_pose.pose.position.x,
-                curr_pose.pose.position.y-targ_pose.pose.position.y,
-                curr_pose.pose.position.z-targ_pose.pose.position.z;
-    
+    ros::Time t_now = ros::Time::now();
 
-    if (state == SP_ARMED) {
-        if (s_error.norm() > 0.1 ) {        
-            pos_sp = targ_pose;
-        } else {        
-            pos_sp = init_pose;
+    if (sp_status == SP_STREAM_ON) {
+        uint32_t t_check = (uint32_t)traj(0,count_traj) * pow(10,9);
+        if ( (t_now.nsec - t_start_ns) > t_check ) {
+            pose_sp.pose.position.x = traj(1,count_traj);
+            pose_sp.pose.position.y = traj(2,count_traj);
+            pose_sp.pose.position.z = traj(3,count_traj);
+            
+            count_traj++;
+        } else {
+            // Carry on
         }
     } else {
-        pos_sp = init_pose;
+        pose_sp = pose_curr;
+        pose_sp.pose.position.z = 0;
+
+        count_traj = 0;
     }
-    pos_sp.pose.position.z = targ_pose.pose.position.z + 0.5;
+
+    pose_sp.header.stamp = ros::Time::now();
+    pose_sp.header.seq   = count_total;
+    pose_sp.header.frame_id = 1;
+    count_total++;
+
+    pose_sp_pub.publish(pose_sp);
 }
    
-void SetpointPublisher::publish_setpoint()
-{
-    pos_sp_pub.publish(pos_sp);
-}
-
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "setpoint_publisher_node");
@@ -110,9 +113,7 @@ int main(int argc, char **argv)
 
     ros::Rate rate(20);
     while(ros::ok()){
-        sp.offb_trigger();
         sp.update_setpoint();
-        sp.publish_setpoint();
         
         ros::spinOnce();
         rate.sleep();
