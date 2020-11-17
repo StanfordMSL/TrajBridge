@@ -29,7 +29,7 @@ private:
    ros::Subscriber    pose_sub;
 
    // Trajectory Variables
-   MatrixXf                   traj = MatrixXf::Zero(4,1000);
+   MatrixXf                   traj = MatrixXf::Zero(4,10);
    
    // Quad State Variables
    mavros_msgs::State         mode_curr;
@@ -37,18 +37,19 @@ private:
 
    // Setpoint Variables
    enum sp_stream_status {
-      SP_STREAM_OFF,
-      SP_STREAM_ON
+      SP_STREAM_READY,
+      SP_STREAM_ACTIVE,
+      SP_STREAM_COMPLETE
    } sp_status;
    geometry_msgs::PoseStamped pose_sp;
 
    // Counters and Time Variables
-   int count_total;
+   int count_main;
    int count_traj;
+   int N_traj;
 
-   ros::Time  last_request;   
-   uint32_t   t_start_ns; 
-   uint32_t   t_traj_ns;
+   ros::Time   t_start; 
+   ros::Time   t_traj;
 
 public:
    // Constructor
