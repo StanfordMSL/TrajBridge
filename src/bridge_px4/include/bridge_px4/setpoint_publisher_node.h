@@ -29,7 +29,7 @@ private:
    ros::Subscriber    pose_sub;
 
    // Trajectory Variables
-   MatrixXf                   traj = MatrixXf::Zero(4,10);
+   MatrixXf                   traj = MatrixXf::Zero(5,20);
    
    // Quad State Variables
    mavros_msgs::State         mode_curr;

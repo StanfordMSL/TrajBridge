@@ -11,14 +11,30 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh)
     ROS_INFO("ROS Components Initialized");
 
     // Trajectory Initialization
-    MatrixXf m(4,6);
-    m << 5.0, 15.0, 20.0, 30.0, 35.0, 40.0,
-         0.0,  6.0,  6.0,  0.0,  0.0,  0.0,
-         0.0,  0.0,  3.0,  3.0,  0.0,  0.0,
-         1.0,  1.0,  1.0,  1.0,  1.0,  0.0;
-
-    traj.block<4,6>(0,0) = m;
+    /*
     N_traj = 6;
+
+    MatrixXf m_pose(5,6);
+    m_pose << 5.0,  15.0,  20.0,  30.0,  35.0,  40.0,
+              0.0,   6.0,   6.0,   0.0,   0.0,   0.0,
+              0.0,   0.0,   3.0,   3.0,   0.0,   0.0,
+              1.0,   1.0,   1.0,   1.0,   1.0,   0.0,
+              0.0,   0.0,   0.0,   0.0,   0.0,   0.0;
+
+    traj.block<5,6>(0,0) = m_pose;
+
+    */
+    N_traj = 13;
+
+    MatrixXf m_pose(5,13);
+    //m_pose <<  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0, 10.0, 11.0,
+    m_pose <<  3,7,8.1,9.2,10.3,11.4,12.5,13.6,14.7,15.8,16.9,18,21,
+               0,-0.5,-0.214,0.536,1.46,2.21,2.5,2.21,1.46,0.536,-0.214,-0.5,-0.5,
+               0,1,0.118,-0.427,-0.427,0.118,1,1.88,2.43,2.43,1.88,1,1,
+               1,1,1,1,1,1,1,1,1,1,1,1,0,
+               0,0,0.628,1.26,1.88,2.51,3.14,3.77,4.4,5.03,5.65,6.28,6.28;
+
+    traj.block<5,13>(0,0) = m_pose;
 
     // Setpoint Stream Initialization
     sp_status = SP_STREAM_READY;
@@ -57,6 +73,22 @@ void SetpointPublisher::update_setpoint()
             pose_sp.pose.position.y = traj(2,count_traj);
             pose_sp.pose.position.z = traj(3,count_traj);
             
+            double roll  = 0.0f;
+            double pitch = 0.0f;
+            double yaw   = traj(4,count_traj);
+            
+            double cy = cos(yaw * 0.5);
+            double sy = sin(yaw * 0.5);
+            double cp = cos(pitch * 0.5);
+            double sp = sin(pitch * 0.5);
+            double cr = cos(roll * 0.5);
+            double sr = sin(roll * 0.5);
+            
+            pose_sp.pose.orientation.w = cr * cp * cy + sr * sp * sy;
+            pose_sp.pose.orientation.x = sr * cp * cy - cr * sp * sy;
+            pose_sp.pose.orientation.y = cr * sp * cy + sr * cp * sy;
+            pose_sp.pose.orientation.z = cr * cp * sy - sr * sp * cy;
+
             count_traj++;
         } else if (count_traj >= N_traj) {
             ROS_INFO("Trajectory Complete.");
@@ -67,13 +99,13 @@ void SetpointPublisher::update_setpoint()
         pose_sp.pose.position.y = 0.0f;
         pose_sp.pose.position.z = 0.0f;
 
+        pose_sp.pose.orientation.w = 1.0f;
+        pose_sp.pose.orientation.x = 0.0f;
+        pose_sp.pose.orientation.y = 0.0f;
+        pose_sp.pose.orientation.z = 0.0f;
+
         count_traj = 0;
     }
-
-    pose_sp.pose.orientation.w = 1.0f;
-    pose_sp.pose.orientation.x = 0.0f;
-    pose_sp.pose.orientation.y = 0.0f;
-    pose_sp.pose.orientation.z = 0.0f;
 
     pose_sp.header.stamp = ros::Time::now();
     pose_sp.header.seq   = count_main;
