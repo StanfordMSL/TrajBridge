@@ -1,7 +1,7 @@
 #include <bridge_px4/setpoint_publisher_node.h>
 
 
-SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name)
+SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_id)
 {
     // ROS Initialization
     pose_sp_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
@@ -11,7 +11,7 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& tra
     
     ROS_INFO("ROS Components Initialized");
 
-    MatrixXd m_pose = load_trajectory(traj_name);
+    MatrixXd m_pose = load_trajectory(traj_id);
     N_traj = m_pose.cols();
     int N_x = m_pose.rows();
 
@@ -24,6 +24,9 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& tra
     count_main = 0;
     count_traj  = 0;
     ROS_INFO("Counters Initialized.");
+
+    ROS_INFO("Setpoint Publisher Ready.");
+
 }
 
 void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
@@ -113,46 +116,43 @@ void SetpointPublisher::update_setpoint()
 
 MatrixXd SetpointPublisher::load_trajectory(const std::string& input)
 {
-    int rows = 0;
-    int cols = 0;
+    MatrixXd m_pose = MatrixXd::Zero(5,1);
 
-    string target = "trajectories/" + input + ".csv";
+    ifstream data(input);
+    if (data.is_open()) {
+        int rows = 0;
+        int cols = 0;
+        
+        string line;
+        vector<vector<double>> parsedCsv;
 
-    ifstream data(target);
-    if (!data.is_open()) {
-        data.close();
-        data.clear();
-        cout << "Trajectory does not exist. Defaulting to TakeOff Trajectory." << endl;
-        data.open("trajectories/takeoff.csv");
-    }
-    
-    string line;
-    vector<vector<double>> parsedCsv;
-
-    while(getline(data,line))
-    {
-        stringstream lineStream(line);
-        string cell;
-        vector<double> parsedRow;
-        while(getline(lineStream,cell,','))
+        while(getline(data,line))
         {
-            parsedRow.push_back(stod(cell));
+            stringstream lineStream(line);
+            string cell;
+            vector<double> parsedRow;
+            while(getline(lineStream,cell,','))
+            {
+                parsedRow.push_back(stod(cell));
             
-            if (rows == 0) {
-                cols += 1;
+                if (rows == 0) {
+                    cols += 1;
+                }
+            }
+            parsedCsv.push_back(parsedRow);
+            rows += 1;
+        }
+        m_pose.resize(rows,cols);
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols ; j++) {
+                m_pose(i,j) = parsedCsv[i][j];
             }
         }
-        parsedCsv.push_back(parsedRow);
-        rows += 1;
+    } else {
+        cout << "Trajectory does not exist. Defaulting to Origin." << endl;
     }
-    MatrixXd m_pose = MatrixXd(rows,cols);
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols ; j++) {
-            m_pose(i,j) = parsedCsv[i][j];
-        }
-    }
-
+    
     return m_pose;
 }
 
@@ -160,13 +160,12 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "setpoint_publisher_node");
 
-    string traj_name;
-    ros::param::get("~traj_name", traj_name);
-    cout << traj_name << endl;
-
+    string traj_id;
+    ros::param::get("~traj_id", traj_id);
+    
     ros::NodeHandle nh;
 
-    SetpointPublisher sp = SetpointPublisher(&nh,traj_name);
+    SetpointPublisher sp = SetpointPublisher(&nh,traj_id);
 
     ros::Rate rate(20);
     while(ros::ok()){

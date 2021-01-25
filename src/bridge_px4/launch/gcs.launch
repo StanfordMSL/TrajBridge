@@ -1,7 +1,8 @@
 <launch>
+   <arg name="traj_file" default="$(find bridge_px4)/trajectories/takeoff.csv"/>
    <group ns="drone1">
    	<node pkg="bridge_px4" type="setpoint_publisher_node" name ="setpoint_publisher_node" output="screen">
-	   <param name="traj_name" value="takeoff"/>
+	   <param name="traj_id" value="$(arg traj_file)"/>
 	</node>
    </group>
 </launch>
