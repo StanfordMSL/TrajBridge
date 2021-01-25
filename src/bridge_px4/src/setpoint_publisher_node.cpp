@@ -1,57 +1,21 @@
 #include <bridge_px4/setpoint_publisher_node.h>
 
 
-SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh)
+SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name)
 {
     // ROS Initialization
     pose_sp_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
     state_sub   = nh->subscribe("mavros/state",1,&SetpointPublisher::state_cb,this);
     pose_sub    = nh->subscribe("/mavros/local_position/pose",1,&SetpointPublisher::pose_cb,this);
-       
+    land_client = nh->serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
+    
     ROS_INFO("ROS Components Initialized");
 
-    // Trajectory Initialization
+    MatrixXd m_pose = load_trajectory(traj_name);
+    N_traj = m_pose.cols();
+    int N_x = m_pose.rows();
 
-    //===============================================================================================
-    /*
-    N_traj = 3;
-
-    MatrixXf m_pose(5,3);
-    m_pose << 5.0,  10.0,  15.0,
-              0.0,   3.0,   3.0,
-              0.0,   0.0,   0.0,
-              1.0,   1.0,   0.0,
-              0.0,   0.0,   0.0;
-
-    traj.block<5,3>(0,0) = m_pose;
-    */
-    //===============================================================================================
-    /*
-    N_traj = 6;
-
-    MatrixXf m_pose(5,6);
-    m_pose << 5.0,  10.0,  15.0,  20.0,  25.0,  30.0,
-              0.0,   3.0,   3.0,   0.0,   0.0,   0.0,
-              0.0,   0.0,   3.0,   3.0,   0.0,   0.0,
-              1.0,   1.0,   1.0,   1.0,   1.0,   0.0,
-              0.0,   0.0,   0.0,   0.0,   0.0,   0.0;
-
-    traj.block<5,6>(0,0) = m_pose;
-    */
-    //===============================================================================================
-    
-    N_traj = 13;
-
-    MatrixXf m_pose(5,13);
-    m_pose <<  3,7,8.1,9.2,10.3,11.4,12.5,13.6,14.7,15.8,16.9,18,21,
-               0,-0.5,-0.214,0.536,1.46,2.21,2.5,2.21,1.46,0.536,-0.214,-0.5,-0.5,
-               0,1,0.118,-0.427,-0.427,0.118,1,1.88,2.43,2.43,1.88,1,1,
-               1,1,1,1,1,1,1,1,1,1,1,1,0,
-               0,0,0.628,1.26,1.88,2.51,3.14,3.77,4.4,5.03,5.65,6.28,6.28;
-
-    traj.block<5,13>(0,0) = m_pose;
-
-    //===============================================================================================
+    traj.block(0,0,N_x,N_traj) = m_pose;
 
     // Setpoint Stream Initialization
     sp_status = SP_STREAM_READY;
@@ -68,6 +32,8 @@ void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
     if ((mode_curr.mode == "OFFBOARD") && sp_status == SP_STREAM_READY) {
         t_start = ros::Time::now();
         sp_status = SP_STREAM_ACTIVE;
+        ROS_INFO("Trajectory Activated.");
+        cout << "Heading to: \n" << pose_sp.pose.position << endl;
     } else if (mode_curr.mode != "OFFBOARD") {
         // Reset sp stream.
         sp_status = SP_STREAM_READY;
@@ -86,6 +52,7 @@ void SetpointPublisher::update_setpoint()
         float t_check = traj(0,count_traj);
         if ( (count_traj < N_traj) &&
              (ros::Time::now() - t_start > ros::Duration(t_check)) ) {
+            
             pose_sp.pose.position.x = traj(1,count_traj);
             pose_sp.pose.position.y = traj(2,count_traj);
             pose_sp.pose.position.z = traj(3,count_traj);
@@ -107,9 +74,21 @@ void SetpointPublisher::update_setpoint()
             pose_sp.pose.orientation.z = cr * cp * sy - sr * sp * cy;
 
             count_traj++;
+
+            cout << "Heading to: \n" << pose_sp.pose.position << endl;
+
         } else if (count_traj >= N_traj) {
-            ROS_INFO("Trajectory Complete.");
-            sp_status == SP_STREAM_COMPLETE;
+            if (sp_status == SP_STREAM_ACTIVE) {
+                ROS_INFO("Trajectory Complete. Attempting to Land.");
+                mavros_msgs::CommandTOL srv_land;
+
+                if (land_client.call(srv_land) && srv_land.response.success) {
+                    ROS_INFO("land sent %d", srv_land.response.success);
+                    sp_status = SP_STREAM_COMPLETE;
+                }
+            } else {
+                // Trajectory Complete. Nothing to do here.
+            }
         }
     } else {
         pose_sp.pose.position.x = 0.0f;
@@ -131,13 +110,63 @@ void SetpointPublisher::update_setpoint()
 
     pose_sp_pub.publish(pose_sp);
 }
-   
+
+MatrixXd SetpointPublisher::load_trajectory(const std::string& input)
+{
+    int rows = 0;
+    int cols = 0;
+
+    string target = "trajectories/" + input + ".csv";
+
+    ifstream data(target);
+    if (!data.is_open()) {
+        data.close();
+        data.clear();
+        cout << "Trajectory does not exist. Defaulting to TakeOff Trajectory." << endl;
+        data.open("trajectories/takeoff.csv");
+    }
+    
+    string line;
+    vector<vector<double>> parsedCsv;
+
+    while(getline(data,line))
+    {
+        stringstream lineStream(line);
+        string cell;
+        vector<double> parsedRow;
+        while(getline(lineStream,cell,','))
+        {
+            parsedRow.push_back(stod(cell));
+            
+            if (rows == 0) {
+                cols += 1;
+            }
+        }
+        parsedCsv.push_back(parsedRow);
+        rows += 1;
+    }
+    MatrixXd m_pose = MatrixXd(rows,cols);
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols ; j++) {
+            m_pose(i,j) = parsedCsv[i][j];
+        }
+    }
+
+    return m_pose;
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "setpoint_publisher_node");
+
+    string traj_name;
+    ros::param::get("~traj_name", traj_name);
+    cout << traj_name << endl;
+
     ros::NodeHandle nh;
 
-    SetpointPublisher sp = SetpointPublisher(&nh);
+    SetpointPublisher sp = SetpointPublisher(&nh,traj_name);
 
     ros::Rate rate(20);
     while(ros::ok()){

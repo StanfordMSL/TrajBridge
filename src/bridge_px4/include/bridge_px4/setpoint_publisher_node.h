@@ -13,13 +13,21 @@
 
 #include "ros/ros.h"
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include <geometry_msgs/PoseStamped.h>
 
 #include <mavros_msgs/State.h>
+#include <mavros_msgs/CommandTOL.h>
 
 #include <Eigen/Dense>
 
 using namespace Eigen;
+using namespace std;
 
 class SetpointPublisher {
 private:
@@ -27,9 +35,10 @@ private:
    ros::Publisher     pose_sp_pub;
    ros::Subscriber    state_sub;
    ros::Subscriber    pose_sub;
+   ros::ServiceClient land_client;
 
    // Trajectory Variables
-   MatrixXf                   traj = MatrixXf::Zero(5,20);
+   MatrixXd    traj = MatrixXd::Zero(5,20);
    
    // Quad State Variables
    mavros_msgs::State         mode_curr;
@@ -53,7 +62,7 @@ private:
 
 public:
    // Constructor
-   SetpointPublisher(ros::NodeHandle *nh);
+   SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name);
 
    // Last Request Check
    bool last_req_check();
@@ -65,7 +74,7 @@ public:
    // Setpoint Function(s)
    void update_setpoint();
 
-
+   MatrixXd load_trajectory(const std::string& input);
 
 };
 

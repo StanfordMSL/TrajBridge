@@ -1,0 +1,7 @@
+<launch>
+   <group ns="drone1">
+   	<node pkg="bridge_px4" type="setpoint_publisher_node" name ="setpoint_publisher_node" output="screen">
+	   <param name="traj_name" value="takeoff"/>
+	</node>
+   </group>
+</launch>
