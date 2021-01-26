@@ -1,6 +1,6 @@
 <launch>
-   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/square1.csv"/>
-   <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/square2.csv"/>
+   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/ysmrr1.csv"/>
+   <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/ysmrr2.csv"/>
 
    <group ns="drone1">
    	<node pkg="bridge_px4" type="setpoint_publisher_node" name ="setpoint_publisher_node" output="screen">
