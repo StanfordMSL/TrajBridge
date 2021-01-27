@@ -1,4 +1,4 @@
-#include <bridge_px4/setpoint_publisher_node.h>
+#include <bridge_px4/sp_pos_t_node.h>
 
 
 SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_id)
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
     SetpointPublisher sp = SetpointPublisher(&nh,traj_id);
 
-    ros::Rate rate(20);
+    ros::Rate rate(50);
     while(ros::ok()){
         sp.update_setpoint();
         

@@ -1,18 +1,23 @@
 <launch>
    <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/ysmrr1.csv"/>
    <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/ysmrr2.csv"/>
+   <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/line.csv"/>
 
    <group ns="drone1">
-   	<node pkg="bridge_px4" type="setpoint_publisher_node" name ="setpoint_publisher_node" output="screen">
+   	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
 	   <param name="traj_id" value="$(arg traj_drone1)"/>
 	</node>
    </group>
 
-
    <group ns="drone2">
-   	<node pkg="bridge_px4" type="setpoint_publisher_node" name ="setpoint_publisher_node" output="screen">
+   	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
 	   <param name="traj_id" value="$(arg traj_drone2)"/>
 	</node>
    </group>
 
+   <group ns="drone3">
+   	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
+	   <param name="traj_id" value="$(arg traj_drone3)"/>
+	</node>
+   </group>
 </launch>
