@@ -79,7 +79,7 @@ void SetpointPublisher::update_setpoint()
 
         cout << "Position Z: " << pose_sp.pose.position.z << endl;
 
-        if ((err_pos < err_tol) && (count_traj <= N_traj))
+        if ((err_pos < err_tol) && (count_traj < N_traj))
         {
             pose_sp.pose.position.x = traj(1, count_traj) + pose_0.pose.position.x;
             pose_sp.pose.position.y = traj(2, count_traj) + pose_0.pose.position.y;
@@ -105,7 +105,7 @@ void SetpointPublisher::update_setpoint()
             cout << "Error Ball Reached. Now heading to: \n"
                  << pose_sp.pose.position << endl;
         }
-        else if ((err_pos < err_tol) && (count_traj > N_traj)) {
+        else if ((err_pos < err_tol) && (count_traj >= N_traj)) {
             count_traj = 0;
         }
         else
