@@ -23,6 +23,7 @@
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandTOL.h>
+#include <mavros_msgs/ParamSet.h>
 
 #include <Eigen/Dense>
 
@@ -36,19 +37,23 @@ private:
    ros::Subscriber    state_sub;
    ros::Subscriber    pose_sub;
    ros::ServiceClient land_client;
-
+   ros::ServiceClient tune_client;
+   
    // Trajectory Variables
    MatrixXd    traj = MatrixXd::Zero(5,30);
    
-   // Quad State Variables
+   // Quad State/Parameter Variables
    mavros_msgs::State         mode_curr;
    geometry_msgs::PoseStamped pose_curr;
+   geometry_msgs::PoseStamped pose_0;
+   float                      Kp;
 
    // Setpoint Variables
    enum sp_stream_status {
       SP_STREAM_READY,
       SP_STREAM_ACTIVE,
-      SP_STREAM_COMPLETE
+      SP_STREAM_COMPLETE,
+      SP_STREAM_FAILSAFE,
    } sp_status;
    geometry_msgs::PoseStamped pose_sp;
 
@@ -62,7 +67,7 @@ private:
 
 public:
    // Constructor
-   SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name);
+   SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name, const float& Kp_pos);
 
    // Last Request Check
    bool last_req_check();
@@ -74,6 +79,8 @@ public:
    // Setpoint Function(s)
    void update_setpoint();
 
+   // Param Update
+   void param_update();
    MatrixXd load_trajectory(const std::string& input);
 
 };

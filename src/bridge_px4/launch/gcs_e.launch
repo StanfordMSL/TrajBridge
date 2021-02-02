@@ -1,0 +1,28 @@
+<launch>
+   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/square1.csv"/>
+   <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/square1.csv"/>
+   <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/square1.csv"/>
+
+   <arg name="Kp_pos" default="0.95"/>
+
+   <group ns="drone1">
+   	<node pkg="bridge_px4" type="sp_pos_e_node" name ="sp_pos_e_node" output="screen">
+      <param name="Kp_pos" value="$(arg Kp_pos)"/>
+	   <param name="traj_id" value="$(arg traj_drone1)"/>
+	</node>
+   </group>
+
+   <group ns="drone2">
+   	<node pkg="bridge_px4" type="sp_pos_e_node" name ="sp_pos_e_node" output="screen">
+      <param name="Kp_pos" value="$(arg Kp_pos)"/>
+	   <param name="traj_id" value="$(arg traj_drone2)"/>
+	</node>
+   </group>
+
+   <group ns="drone3">
+   	<node pkg="bridge_px4" type="sp_pos_e_node" name ="sp_pos_e_node" output="screen">
+      <param name="Kp_pos" value="$(arg Kp_pos)"/>
+	   <param name="traj_id" value="$(arg traj_drone3)"/>
+	</node>
+   </group>
+</launch>

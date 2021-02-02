@@ -36,6 +36,7 @@ void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
         t_start = ros::Time::now();
         sp_status = SP_STREAM_ACTIVE;
         ROS_INFO("Trajectory Activated.");
+
         cout << "Heading to: \n" << pose_sp.pose.position << endl;
     } else if (mode_curr.mode != "OFFBOARD") {
         // Reset sp stream.
@@ -49,12 +50,12 @@ void SetpointPublisher::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 
 void SetpointPublisher::update_setpoint()
 {   
-    ros::Time t_now = ros::Time::now();
+    ros::Duration t_now = ros::Time::now() - t_start;
 
     if (sp_status == SP_STREAM_ACTIVE) {
-        float t_check = traj(0,count_traj);
-        if ( (count_traj < N_traj) &&
-             (ros::Time::now() - t_start > ros::Duration(t_check)) ) {
+        ros::Duration t_check = ros::Duration(traj(0,count_traj));
+
+        if ( (count_traj < N_traj) && (t_now - t_check > ros::Duration(0)) ) {
             
             pose_sp.pose.position.x = traj(1,count_traj);
             pose_sp.pose.position.y = traj(2,count_traj);
@@ -92,6 +93,8 @@ void SetpointPublisher::update_setpoint()
             } else {
                 // Trajectory Complete. Nothing to do here.
             }
+        } else {
+            // Keep publishing setpoint but don't need to update its value.
         }
     } else {
         pose_sp.pose.position.x = 0.0f;
