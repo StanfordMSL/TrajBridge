@@ -1,7 +1,7 @@
 <launch>
-   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/square1.csv"/>
-   <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/square1.csv"/>
-   <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/square1.csv"/>
+   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/square_relative.csv"/>
+   <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/square_relative.csv"/>
+   <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/square_relative.csv"/>
 
    <arg name="Kp_pos" default="0.95"/>
 

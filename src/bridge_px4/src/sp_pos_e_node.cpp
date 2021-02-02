@@ -58,7 +58,7 @@ void SetpointPublisher::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 void SetpointPublisher::update_setpoint()
 {   
     ros::Duration t_now = ros::Time::now() - t_start;
-    ros::Duration t_fs = ros::Duration(60);
+    ros::Duration t_fs = ros::Duration(120);
     //cout << sp_status << endl;
 
     switch (sp_status)
@@ -75,9 +75,9 @@ void SetpointPublisher::update_setpoint()
         double err_z = pose_sp.pose.position.z - pose_curr.pose.position.z;
 
         double err_pos = sqrt(pow(err_x, 2) + pow(err_y, 2) + pow(err_z, 2));
-        double err_tol = 0.15;
+        double err_tol = 0.20;
 
-        cout << "Position Error: " << err_pos << endl;
+        cout << "Position Z: " << pose_sp.pose.position.z << endl;
 
         if ((err_pos < err_tol) && (count_traj <= N_traj))
         {
@@ -106,8 +106,7 @@ void SetpointPublisher::update_setpoint()
                  << pose_sp.pose.position << endl;
         }
         else if ((err_pos < err_tol) && (count_traj > N_traj)) {
-            pose_sp.pose.position.z = 0;
-            sp_status = SP_STREAM_COMPLETE;
+            count_traj = 0;
         }
         else
         {
@@ -122,7 +121,7 @@ void SetpointPublisher::update_setpoint()
     break;
     case SP_STREAM_COMPLETE:
     {
-        pose_sp.pose.position.z = 0.0f;
+//        pose_sp.pose.position.z = 0.0f;
 
         mavros_msgs::CommandTOL srv_land;
         if (land_client.call(srv_land) && srv_land.response.success)
