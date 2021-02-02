@@ -1,7 +1,7 @@
 #include <bridge_px4/sp_pos_e_node.h>
 
 
-SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_id, const float& t_fs_input)
+SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_id, const float& t_fs_i, const float& err_tol_i)
 {
     // ROS Initialization
     pose_sp_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
@@ -27,7 +27,8 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& tra
     ROS_INFO("Counters Initialized.");
 
     // Drone Parameters
-    t_fs = t_fs_input;
+    t_fs = t_fs_i;
+    err_tol = err_tol_i;
     ROS_INFO("Tuning Parameters Loaded.");
 
     ROS_INFO("Setpoint Publisher Ready.");
@@ -58,7 +59,6 @@ void SetpointPublisher::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 void SetpointPublisher::update_setpoint()
 {   
     ros::Duration t_now = ros::Time::now() - t_start;
-//    ros::Duration t_fs = ros::Duration(t_fs);
     
     //cout << sp_status << endl;
 
@@ -76,7 +76,6 @@ void SetpointPublisher::update_setpoint()
         double err_z = pose_sp.pose.position.z - pose_curr.pose.position.z;
 
         double err_pos = sqrt(pow(err_x, 2) + pow(err_y, 2) + pow(err_z, 2));
-        double err_tol = 0.20;
 
         cout << "Position Error: " << err_pos << endl;
 
@@ -118,15 +117,13 @@ void SetpointPublisher::update_setpoint()
             pose_sp.pose.position.x = pose_curr.pose.position.x;
             pose_sp.pose.position.y = pose_curr.pose.position.y;
             pose_sp.pose.position.z = pose_curr.pose.position.z;
-            //pose_sp.pose.position.z = 0;
+
             sp_status = SP_STREAM_COMPLETE;
         }
     }
     break;
     case SP_STREAM_COMPLETE:
     {
-//        pose_sp.pose.position.z = 0.0f;
-
         mavros_msgs::CommandTOL srv_land;
         if (land_client.call(srv_land) && srv_land.response.success)
         {
@@ -215,12 +212,14 @@ int main(int argc, char **argv)
 
     string traj_id;
     float t_fs;
+    float err_tol;
 
     ros::param::get("~traj_id", traj_id);
     ros::param::get("~t_fs", t_fs);
+    ros::param::get("~err_tol",err_tol);
     ros::NodeHandle nh;
 
-    SetpointPublisher sp = SetpointPublisher(&nh,traj_id,t_fs);
+    SetpointPublisher sp = SetpointPublisher(&nh,traj_id,t_fs,err_tol);
 
     ros::Rate rate(50);
     while(ros::ok()){

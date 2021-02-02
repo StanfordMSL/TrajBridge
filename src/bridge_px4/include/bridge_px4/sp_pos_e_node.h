@@ -47,6 +47,7 @@ private:
    geometry_msgs::PoseStamped pose_curr;
    geometry_msgs::PoseStamped pose_0;
    float                      t_fs;
+   float                      err_tol;
 
    // Setpoint Variables
    enum sp_stream_status {
@@ -67,7 +68,7 @@ private:
 
 public:
    // Constructor
-   SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name, const float& Kp_pos);
+   SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name, const float& t_fs_i, const float& err_tol_i);
 
    // Last Request Check
    bool last_req_check();
