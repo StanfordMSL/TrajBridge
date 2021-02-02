@@ -46,7 +46,7 @@ private:
    mavros_msgs::State         mode_curr;
    geometry_msgs::PoseStamped pose_curr;
    geometry_msgs::PoseStamped pose_0;
-   float                      Kp;
+   float                      t_fs;
 
    // Setpoint Variables
    enum sp_stream_status {

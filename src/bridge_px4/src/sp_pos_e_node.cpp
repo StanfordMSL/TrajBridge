@@ -1,7 +1,7 @@
 #include <bridge_px4/sp_pos_e_node.h>
 
 
-SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_id, const float& Kp_pos)
+SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_id, const float& t_fs_input)
 {
     // ROS Initialization
     pose_sp_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
@@ -27,7 +27,7 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& tra
     ROS_INFO("Counters Initialized.");
 
     // Drone Parameters
-    Kp = Kp_pos;
+    t_fs = t_fs_input;
     ROS_INFO("Tuning Parameters Loaded.");
 
     ROS_INFO("Setpoint Publisher Ready.");
@@ -58,7 +58,7 @@ void SetpointPublisher::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 void SetpointPublisher::update_setpoint()
 {   
     ros::Duration t_now = ros::Time::now() - t_start;
-    ros::Duration t_fs = ros::Duration(120);
+    ros::Duration t_fs = ros::Duration(30);
     //cout << sp_status << endl;
 
     switch (sp_status)
@@ -77,7 +77,7 @@ void SetpointPublisher::update_setpoint()
         double err_pos = sqrt(pow(err_x, 2) + pow(err_y, 2) + pow(err_z, 2));
         double err_tol = 0.20;
 
-        cout << "Position Z: " << pose_sp.pose.position.z << endl;
+        cout << "Position Error: " << err_pos << endl;
 
         if ((err_pos < err_tol) && (count_traj < N_traj))
         {
@@ -210,13 +210,13 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "setpoint_publisher_node");
 
     string traj_id;
-    float Kp_pos;
+    float t_fs;
 
     ros::param::get("~traj_id", traj_id);
-    ros::param::get("~Kp_pos", Kp_pos);
+    ros::param::get("~t_fs", t_fs);
     ros::NodeHandle nh;
 
-    SetpointPublisher sp = SetpointPublisher(&nh,traj_id,Kp_pos);
+    SetpointPublisher sp = SetpointPublisher(&nh,traj_id,t_fs);
 
     ros::Rate rate(50);
     while(ros::ok()){
