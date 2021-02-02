@@ -3,7 +3,7 @@
    <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/square_relative.csv"/>
    <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/square_relative.csv"/>
 
-   <arg name="t_fs" default="30"/>
+   <arg name="t_fs" default="60"/>
 
    <group ns="drone1">
    	<node pkg="bridge_px4" type="sp_pos_e_node" name ="sp_pos_e_node" output="screen">

@@ -58,7 +58,8 @@ void SetpointPublisher::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 void SetpointPublisher::update_setpoint()
 {   
     ros::Duration t_now = ros::Time::now() - t_start;
-    ros::Duration t_fs = ros::Duration(30);
+//    ros::Duration t_fs = ros::Duration(t_fs);
+    
     //cout << sp_status << endl;
 
     switch (sp_status)
@@ -113,8 +114,11 @@ void SetpointPublisher::update_setpoint()
             // Still Tracking Waypoints
         }
         
-        if (t_now > t_fs) {
-            pose_sp.pose.position.z = 0;
+        if (t_now > ros::Duration(t_fs)) {
+            pose_sp.pose.position.x = pose_curr.pose.position.x;
+            pose_sp.pose.position.y = pose_curr.pose.position.y;
+            pose_sp.pose.position.z = pose_curr.pose.position.z;
+            //pose_sp.pose.position.z = 0;
             sp_status = SP_STREAM_COMPLETE;
         }
     }
