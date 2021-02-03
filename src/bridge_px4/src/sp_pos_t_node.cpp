@@ -1,14 +1,15 @@
-#include <bridge_px4/sp_pos_t_node.h>
+#include <bridge_px4/sp_pos_e_node.h>
 
 
-SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_id)
+SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_id, const float& t_fs_i, const float& err_tol_i)
 {
     // ROS Initialization
     pose_sp_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
     state_sub   = nh->subscribe("mavros/state",1,&SetpointPublisher::state_cb,this);
-    pose_sub    = nh->subscribe("/mavros/local_position/pose",1,&SetpointPublisher::pose_cb,this);
+    pose_sub    = nh->subscribe("mavros/local_position/pose",1,&SetpointPublisher::pose_cb,this);
     land_client = nh->serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
-    
+    tune_client = nh->serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
+
     ROS_INFO("ROS Components Initialized");
 
     MatrixXd m_pose = load_trajectory(traj_id);
@@ -22,21 +23,29 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& tra
 
     // Counter and Time Initialization
     count_main = 0;
-    count_traj  = 0;
+    count_traj = 0;
+    count_loop = 0;
     ROS_INFO("Counters Initialized.");
 
-    ROS_INFO("Setpoint Publisher Ready.");
+    // Drone Parameters
+    t_fs = t_fs_i;
+    err_tol = err_tol_i;
+    ROS_INFO("Tuning Parameters Loaded.");
 
+    ROS_INFO("Setpoint Publisher Ready.");
 }
 
 void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
     mode_curr = *msg;
 
     if ((mode_curr.mode == "OFFBOARD") && sp_status == SP_STREAM_READY) {
-        t_start = ros::Time::now();
         sp_status = SP_STREAM_ACTIVE;
-        ROS_INFO("Trajectory Activated.");
 
+        t_start = ros::Time::now();
+        pose_0 = pose_curr;
+        count_traj = 0;
+
+        ROS_INFO("Trajectory Activated.");
         cout << "Heading to: \n" << pose_sp.pose.position << endl;
     } else if (mode_curr.mode != "OFFBOARD") {
         // Reset sp stream.
@@ -51,52 +60,76 @@ void SetpointPublisher::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 void SetpointPublisher::update_setpoint()
 {   
     ros::Duration t_now = ros::Time::now() - t_start;
+    
+    //cout << sp_status << endl;
 
-    if (sp_status == SP_STREAM_ACTIVE) {
-        ros::Duration t_check = ros::Duration(traj(0,count_traj));
+    switch (sp_status)
+    {
+    case SP_STREAM_READY:
+    {
+        pose_sp = pose_curr;
+    }
+    break;
+    case SP_STREAM_ACTIVE:
+    {
+        ros::Duration t_wp = ros::Duration(traj(0,count_traj)) + ros::Duration(count_loop*traj(0,N_traj-1));
 
-        if ( (count_traj < N_traj) && (t_now - t_check > ros::Duration(0)) ) {
-            
-            pose_sp.pose.position.x = traj(1,count_traj);
-            pose_sp.pose.position.y = traj(2,count_traj);
-            pose_sp.pose.position.z = traj(3,count_traj);
-            
-            double roll  = 0.0f;
+        //cout << t_wp << endl;
+        //cout << count_loop << endl;
+
+        if ((t_now > t_wp) && (count_traj < N_traj))
+        {
+            pose_sp.pose.position.x = traj(1, count_traj) + pose_0.pose.position.x;
+            pose_sp.pose.position.y = traj(2, count_traj) + pose_0.pose.position.y;
+            pose_sp.pose.position.z = traj(3, count_traj) + pose_0.pose.position.z;
+
+            double roll = 0.0f;
             double pitch = 0.0f;
-            double yaw   = traj(4,count_traj);
-            
+            double yaw = traj(4, count_traj);
+
             double cy = cos(yaw * 0.5);
             double sy = sin(yaw * 0.5);
             double cp = cos(pitch * 0.5);
             double sp = sin(pitch * 0.5);
             double cr = cos(roll * 0.5);
             double sr = sin(roll * 0.5);
-            
+
             pose_sp.pose.orientation.w = cr * cp * cy + sr * sp * sy;
             pose_sp.pose.orientation.x = sr * cp * cy - cr * sp * sy;
             pose_sp.pose.orientation.y = cr * sp * cy + sr * cp * sy;
             pose_sp.pose.orientation.z = cr * cp * sy - sr * sp * cy;
 
             count_traj++;
-
-            cout << "Heading to: \n" << pose_sp.pose.position << endl;
-
-        } else if (count_traj >= N_traj) {
-            if (sp_status == SP_STREAM_ACTIVE) {
-                ROS_INFO("Trajectory Complete. Attempting to Land.");
-                mavros_msgs::CommandTOL srv_land;
-
-                if (land_client.call(srv_land) && srv_land.response.success) {
-                    ROS_INFO("land sent %d", srv_land.response.success);
-                    sp_status = SP_STREAM_COMPLETE;
-                }
-            } else {
-                // Trajectory Complete. Nothing to do here.
-            }
-        } else {
-            // Keep publishing setpoint but don't need to update its value.
         }
-    } else {
+        else if ((t_now > t_wp) && (count_traj >= N_traj)) {
+            count_traj = 0;
+            count_loop++;
+        }
+        else
+        {
+            // Still Tracking Waypoints
+        }
+        
+        if (t_now > ros::Duration(t_fs)) {
+            pose_sp.pose.position.x = pose_curr.pose.position.x;
+            pose_sp.pose.position.y = pose_curr.pose.position.y;
+            pose_sp.pose.position.z = pose_curr.pose.position.z;
+
+            sp_status = SP_STREAM_COMPLETE;
+        }
+    }
+    break;
+    case SP_STREAM_COMPLETE:
+    {
+        mavros_msgs::CommandTOL srv_land;
+        if (land_client.call(srv_land) && srv_land.response.success)
+        {
+            ROS_INFO("Land Sent %d", srv_land.response.success);
+        }
+    }
+    break;
+    default:
+    {
         pose_sp.pose.position.x = 0.0f;
         pose_sp.pose.position.y = 0.0f;
         pose_sp.pose.position.z = 0.0f;
@@ -105,8 +138,7 @@ void SetpointPublisher::update_setpoint()
         pose_sp.pose.orientation.x = 0.0f;
         pose_sp.pose.orientation.y = 0.0f;
         pose_sp.pose.orientation.z = 0.0f;
-
-        count_traj = 0;
+    }
     }
 
     pose_sp.header.stamp = ros::Time::now();
@@ -115,6 +147,18 @@ void SetpointPublisher::update_setpoint()
     count_main++;
 
     pose_sp_pub.publish(pose_sp);
+}
+
+void SetpointPublisher::param_update() {
+    mavros_msgs::ParamSet srv_tune;
+//    srv_tune.request.param_id = "MPC_XY_P";
+    srv_tune.request.param_id = "MC_PITCH_P";
+    srv_tune.request.value.integer = 0;
+    srv_tune.request.value.real = 6.5;
+    
+    if (tune_client.call(srv_tune) && srv_tune.response.success) {
+        // Service sent.
+    }    
 }
 
 MatrixXd SetpointPublisher::load_trajectory(const std::string& input)
@@ -164,14 +208,19 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "setpoint_publisher_node");
 
     string traj_id;
+    float t_fs;
+    float err_tol;
+
     ros::param::get("~traj_id", traj_id);
-    
+    ros::param::get("~t_fs", t_fs);
+    ros::param::get("~err_tol",err_tol);
     ros::NodeHandle nh;
 
-    SetpointPublisher sp = SetpointPublisher(&nh,traj_id);
+    SetpointPublisher sp = SetpointPublisher(&nh,traj_id,t_fs,err_tol);
 
     ros::Rate rate(50);
     while(ros::ok()){
+        //sp.param_update();
         sp.update_setpoint();
         
         ros::spinOnce();

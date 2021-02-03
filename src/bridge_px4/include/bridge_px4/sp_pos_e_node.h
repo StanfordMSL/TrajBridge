@@ -61,6 +61,7 @@ private:
    // Counters and Time Variables
    int count_main;
    int count_traj;
+   int count_loop;
    int N_traj;
 
    ros::Time   t_start; 

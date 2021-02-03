@@ -1,15 +1,15 @@
 
 /**************************************************************************
-  File Name    : setpoint_publisher_node.h
+  File Name    : sp_pos_e_node.h
   Author       : JunEn Low
                  Multi-Robot Systems Lab (MSL), Stanford University
   Contact      : jelow@stanford.edu
-  Create Time  : Nov 11, 2020.
-  Description  : Publisher to Handle Various Setpoint Methods Over Mavlink
+  Create Time  : Jan 27, 2020.
+  Description  : Publisher to Handle Setpoint by Error Over Mavlink
 **************************************************************************/
 
-#ifndef __SETPOINT_PUBLISHER_NODE_H__
-#define __SETPOINT_PUBLISHER_NODE_H__
+#ifndef __SETPOINT_POS_E_NODE_H__
+#define __SETPOINT_POS_E_NODE_H__
 
 #include "ros/ros.h"
 
@@ -23,6 +23,7 @@
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandTOL.h>
+#include <mavros_msgs/ParamSet.h>
 
 #include <Eigen/Dense>
 
@@ -36,19 +37,24 @@ private:
    ros::Subscriber    state_sub;
    ros::Subscriber    pose_sub;
    ros::ServiceClient land_client;
-
+   ros::ServiceClient tune_client;
+   
    // Trajectory Variables
    MatrixXd    traj = MatrixXd::Zero(5,30);
    
-   // Quad State Variables
+   // Quad State/Parameter Variables
    mavros_msgs::State         mode_curr;
    geometry_msgs::PoseStamped pose_curr;
+   geometry_msgs::PoseStamped pose_0;
+   float                      t_fs;
+   float                      err_tol;
 
    // Setpoint Variables
    enum sp_stream_status {
       SP_STREAM_READY,
       SP_STREAM_ACTIVE,
-      SP_STREAM_COMPLETE
+      SP_STREAM_COMPLETE,
+      SP_STREAM_FAILSAFE,
    } sp_status;
    geometry_msgs::PoseStamped pose_sp;
 
@@ -62,7 +68,7 @@ private:
 
 public:
    // Constructor
-   SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name);
+   SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name, const float& t_fs_i, const float& err_tol_i);
 
    // Last Request Check
    bool last_req_check();
@@ -74,6 +80,8 @@ public:
    // Setpoint Function(s)
    void update_setpoint();
 
+   // Param Update
+   void param_update();
    MatrixXd load_trajectory(const std::string& input);
 
 };
