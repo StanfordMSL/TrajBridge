@@ -5,8 +5,8 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& tra
 {
     // ROS Initialization
     pose_sp_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
-    state_sub   = nh->subscribe("mavros/state",1,&SetpointPublisher::state_cb,this);
-    pose_sub    = nh->subscribe("mavros/local_position/pose",1,&SetpointPublisher::pose_cb,this);
+    state_sub   = nh->subscribe("mavros/state",10,&SetpointPublisher::state_cb,this);
+    pose_sub    = nh->subscribe("mavros/local_position/pose",10,&SetpointPublisher::pose_cb,this);
     land_client = nh->serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
     tune_client = nh->serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
 
