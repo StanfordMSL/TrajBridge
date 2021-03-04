@@ -79,9 +79,9 @@ void SetpointPublisher::update_setpoint()
 
         if ((t_now > t_wp) && (count_traj < N_traj))
         {
-            pose_sp.pose.position.x = traj(1, count_traj) + pose_0.pose.position.x;
-            pose_sp.pose.position.y = traj(2, count_traj) + pose_0.pose.position.y;
-            pose_sp.pose.position.z = traj(3, count_traj) + pose_0.pose.position.z;
+            pose_sp.pose.position.x = traj(1, count_traj);
+            pose_sp.pose.position.y = traj(2, count_traj);
+            pose_sp.pose.position.z = traj(3, count_traj);
 
             double roll = 0.0f;
             double pitch = 0.0f;
