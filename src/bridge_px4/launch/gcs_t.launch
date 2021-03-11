@@ -1,7 +1,10 @@
 <launch>
-   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/square_relative_small.csv"/>
-   <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/square_relative_small.csv"/>
-   <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/square_relative_small.csv"/>
+   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/square_grp_drone1.csv"/>
+   <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/square_grp_drone2.csv"/>
+   <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/square_grp_drone3.csv"/>
+   <arg name="traj_drone4" default="$(find bridge_px4)/trajectories/square_grp_drone4.csv"/>
+   <arg name="traj_drone5" default="$(find bridge_px4)/trajectories/square_grp_drone5.csv"/>
+   <arg name="traj_drone6" default="$(find bridge_px4)/trajectories/square_grp_drone6.csv"/>
 
    <arg name="t_fs" default="60"/>
    <arg name="err_tol" default="0.225"/>
@@ -13,6 +16,8 @@
 	   <param name="traj_id" value="$(arg traj_drone1)"/>
 	   </node>
    </group>
+   <remap from="/drone1/t_start" to="clock_sync/drone1" />
+
 
    <group ns="drone2">
    	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
@@ -21,6 +26,7 @@
 	      <param name="traj_id" value="$(arg traj_drone2)"/>
 	   </node>
    </group>
+   <remap from="/drone2/t_start" to="clock_sync/drone2" />
 
    <group ns="drone3">
    	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
@@ -29,6 +35,7 @@
 	      <param name="traj_id" value="$(arg traj_drone3)"/>
 	   </node>
    </group>
+   <remap from="/drone3/t_start" to="clock_sync/drone3" />
 
    <group ns="drone4">
    	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
@@ -37,6 +44,7 @@
 	      <param name="traj_id" value="$(arg traj_drone4)"/>
 	   </node>
    </group>
+   <remap from="/drone4/t_start" to="clock_sync/drone4" />
 
    <group ns="drone5">
    	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
@@ -45,6 +53,7 @@
 	      <param name="traj_id" value="$(arg traj_drone5)"/>
 	   </node>
    </group>
+   <remap from="/drone5/t_start" to="clock_sync/drone5" />
 
    <group ns="drone6">
    	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
@@ -53,4 +62,6 @@
 	      <param name="traj_id" value="$(arg traj_drone6)"/>
 	   </node>
    </group>
+   <remap from="/drone6/t_start" to="clock_sync/drone6" />
+
 </launch>

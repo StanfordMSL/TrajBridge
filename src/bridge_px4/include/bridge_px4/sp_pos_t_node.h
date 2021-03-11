@@ -1,6 +1,6 @@
 
 /**************************************************************************
-  File Name    : sp_pos_e_node.h
+  File Name    : sp_pos_t_node.h
   Author       : JunEn Low
                  Multi-Robot Systems Lab (MSL), Stanford University
   Contact      : jelow@stanford.edu
@@ -8,8 +8,8 @@
   Description  : Publisher to Handle Setpoint by Error Over Mavlink
 **************************************************************************/
 
-#ifndef __SETPOINT_POS_E_NODE_H__
-#define __SETPOINT_POS_E_NODE_H__
+#ifndef __SETPOINT_POS_T_NODE_H__
+#define __SETPOINT_POS_T_NODE_H__
 
 #include "ros/ros.h"
 
@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Time.h>
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandTOL.h>
@@ -34,13 +35,14 @@ class SetpointPublisher {
 private:
    // ROS variables
    ros::Publisher     pose_sp_pub;
+   ros::Publisher     t_start_pub;
    ros::Subscriber    state_sub;
    ros::Subscriber    pose_sub;
    ros::ServiceClient land_client;
    ros::ServiceClient tune_client;
    
    // Trajectory Variables
-   MatrixXd    traj = MatrixXd::Zero(5,501);
+   MatrixXd    traj = MatrixXd::Zero(5,2000);
    
    // Quad State/Parameter Variables
    mavros_msgs::State         mode_curr;
@@ -61,8 +63,10 @@ private:
    // Counters and Time Variables
    int count_main;
    int count_traj;
+   int count_loop;
    int N_traj;
 
+   std_msgs::Time t_start_out;
    ros::Time   t_start; 
    ros::Time   t_traj;
 
