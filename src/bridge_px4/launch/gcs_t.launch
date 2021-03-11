@@ -11,22 +11,46 @@
            <param name="t_fs" value="$(arg t_fs)"/>
 	   <param name="err_tol" value="$(arg err_tol)"/>
 	   <param name="traj_id" value="$(arg traj_drone1)"/>
-	</node>
+	   </node>
    </group>
 
    <group ns="drone2">
    	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
-        <param name="t_fs" value="$(arg t_fs)"/>
-	<param name="err_tol" value="$(arg err_tol)"/>
-	<param name="traj_id" value="$(arg traj_drone2)"/>
-	</node>
+         <param name="t_fs" value="$(arg t_fs)"/>
+	      <param name="err_tol" value="$(arg err_tol)"/>
+	      <param name="traj_id" value="$(arg traj_drone2)"/>
+	   </node>
    </group>
 
    <group ns="drone3">
    	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
-        <param name="t_fs" value="$(arg t_fs)"/>
-	<param name="err_tol" value="$(arg err_tol)"/>
-	<param name="traj_id" value="$(arg traj_drone3)"/>
-	</node>
+         <param name="t_fs" value="$(arg t_fs)"/>
+	      <param name="err_tol" value="$(arg err_tol)"/>
+	      <param name="traj_id" value="$(arg traj_drone3)"/>
+	   </node>
+   </group>
+
+   <group ns="drone4">
+   	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
+         <param name="t_fs" value="$(arg t_fs)"/>
+	      <param name="err_tol" value="$(arg err_tol)"/>
+	      <param name="traj_id" value="$(arg traj_drone4)"/>
+	   </node>
+   </group>
+
+   <group ns="drone5">
+   	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
+         <param name="t_fs" value="$(arg t_fs)"/>
+	      <param name="err_tol" value="$(arg err_tol)"/>
+	      <param name="traj_id" value="$(arg traj_drone5)"/>
+	   </node>
+   </group>
+
+   <group ns="drone6">
+   	<node pkg="bridge_px4" type="sp_pos_t_node" name ="sp_pos_t_node" output="screen">
+         <param name="t_fs" value="$(arg t_fs)"/>
+	      <param name="err_tol" value="$(arg err_tol)"/>
+	      <param name="traj_id" value="$(arg traj_drone6)"/>
+	   </node>
    </group>
 </launch>
