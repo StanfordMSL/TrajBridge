@@ -1,9 +1,9 @@
 <launch>
-   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/square_grp_drone1.csv"/>
+   <arg name="traj_drone1" default="$(find bridge_px4)/trajectories/square_grp_drone4.csv"/>
    <arg name="traj_drone2" default="$(find bridge_px4)/trajectories/square_grp_drone2.csv"/>
-   <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/square_grp_drone3.csv"/>
-   <arg name="traj_drone4" default="$(find bridge_px4)/trajectories/square_grp_drone4.csv"/>
-   <arg name="traj_drone5" default="$(find bridge_px4)/trajectories/square_grp_drone5.csv"/>
+   <arg name="traj_drone3" default="$(find bridge_px4)/trajectories/square_grp_drone5.csv"/>
+   <arg name="traj_drone4" default="$(find bridge_px4)/trajectories/square_grp_drone1.csv"/>
+   <arg name="traj_drone5" default="$(find bridge_px4)/trajectories/square_grp_drone3.csv"/>
    <arg name="traj_drone6" default="$(find bridge_px4)/trajectories/square_grp_drone6.csv"/>
 
    <arg name="t_fs" default="60"/>
@@ -14,7 +14,7 @@
            <param name="t_fs" value="$(arg t_fs)"/>
 	   <param name="err_tol" value="$(arg err_tol)"/>
 	   <param name="traj_id" value="$(arg traj_drone1)"/>
-	   </node>
+	</node>
    </group>
    <remap from="/drone1/t_start" to="clock_sync/drone1" />
 
@@ -24,7 +24,7 @@
          <param name="t_fs" value="$(arg t_fs)"/>
 	      <param name="err_tol" value="$(arg err_tol)"/>
 	      <param name="traj_id" value="$(arg traj_drone2)"/>
-	   </node>
+	</node>
    </group>
    <remap from="/drone2/t_start" to="clock_sync/drone2" />
 
@@ -33,7 +33,7 @@
          <param name="t_fs" value="$(arg t_fs)"/>
 	      <param name="err_tol" value="$(arg err_tol)"/>
 	      <param name="traj_id" value="$(arg traj_drone3)"/>
-	   </node>
+	</node>
    </group>
    <remap from="/drone3/t_start" to="clock_sync/drone3" />
 
@@ -42,7 +42,7 @@
          <param name="t_fs" value="$(arg t_fs)"/>
 	      <param name="err_tol" value="$(arg err_tol)"/>
 	      <param name="traj_id" value="$(arg traj_drone4)"/>
-	   </node>
+	</node>
    </group>
    <remap from="/drone4/t_start" to="clock_sync/drone4" />
 
@@ -60,7 +60,7 @@
          <param name="t_fs" value="$(arg t_fs)"/>
 	      <param name="err_tol" value="$(arg err_tol)"/>
 	      <param name="traj_id" value="$(arg traj_drone6)"/>
-	   </node>
+	</node>
    </group>
    <remap from="/drone6/t_start" to="clock_sync/drone6" />
 

@@ -30,5 +30,5 @@
 
     <!-- Drone6 Remap -->
     <remap from="/vrpn_client_node/drone6/pose" to="drone6/mavros/vision_pose/pose" />
-    </node>
+  </node>
 </launch>
