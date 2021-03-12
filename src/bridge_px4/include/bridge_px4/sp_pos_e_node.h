@@ -40,7 +40,7 @@ private:
    ros::ServiceClient tune_client;
    
    // Trajectory Variables
-   MatrixXd    traj = MatrixXd::Zero(5,2000);
+   MatrixXd    traj = MatrixXd::Zero(5,501);
    
    // Quad State/Parameter Variables
    mavros_msgs::State         mode_curr;

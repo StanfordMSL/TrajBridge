@@ -48,7 +48,6 @@ void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
         count_traj = 0;
 
         ROS_INFO("Trajectory Activated.");
-        cout << "Heading to: \n" << pose_sp.pose.position << endl;
     } else if (mode_curr.mode != "OFFBOARD") {
         // Reset sp stream.
         sp_status = SP_STREAM_READY;
@@ -78,6 +77,7 @@ void SetpointPublisher::update_setpoint()
 
         //cout << t_wp << endl;
         //cout << count_loop << endl;
+        cout << "t_wp: \n" << t_wp << endl;
 
         if ((t_now > t_wp) && (count_traj < N_traj))
         {
@@ -102,6 +102,7 @@ void SetpointPublisher::update_setpoint()
             pose_sp.pose.orientation.z = cr * cp * sy - sr * sp * cy;
 
             count_traj++;
+            cout << "Heading to: \n" << pose_sp.pose.position << endl;
         }
         else if ((t_now > t_wp) && (count_traj >= N_traj)) {
             count_traj = 0;
