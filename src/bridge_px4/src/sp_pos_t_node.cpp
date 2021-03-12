@@ -5,7 +5,7 @@ SetpointPublisher::SetpointPublisher(ros::NodeHandle *nh, const std::string& tra
 {
     // ROS Initialization
     pose_sp_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
-    t_start_pub = nh->advertise<std_msgs::Time>("t_start",1);
+//    t_start_pub = nh->advertise<std_msgs::Time>("t_start",1);
     state_sub   = nh->subscribe("mavros/state",10,&SetpointPublisher::state_cb,this);
     pose_sub    = nh->subscribe("mavros/local_position/pose",10,&SetpointPublisher::pose_cb,this);
     land_client = nh->serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
@@ -43,7 +43,7 @@ void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
         sp_status = SP_STREAM_ACTIVE;
 
         t_start = ros::Time::now();
-        t_start_out.data = t_start;
+        //t_start_out.data = t_start;
         pose_0 = pose_curr;
         count_traj = 0;
 
@@ -149,7 +149,7 @@ void SetpointPublisher::update_setpoint()
     count_main++;
 
     pose_sp_pub.publish(pose_sp);
-    t_start_pub.publish(t_start_out);
+    //t_start_pub.publish(t_start_out);
 }
 
 void SetpointPublisher::param_update() {
