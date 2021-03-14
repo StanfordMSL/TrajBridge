@@ -12,6 +12,7 @@
 #define __SETPOINT_POS_T_NODE_H__
 
 #include "ros/ros.h"
+#include <rosbag/bag.h>
 
 #include <fstream>
 #include <iostream>
@@ -20,7 +21,6 @@
 #include <vector>
 
 #include <geometry_msgs/PoseStamped.h>
-#include <std_msgs/Time.h>
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandTOL.h>
@@ -35,14 +35,13 @@ class SetpointPublisher {
 private:
    // ROS variables
    ros::Publisher     pose_sp_pub;
-   ros::Publisher     t_start_pub;
    ros::Subscriber    state_sub;
    ros::Subscriber    pose_sub;
    ros::ServiceClient land_client;
    ros::ServiceClient tune_client;
    
    // Trajectory Variables
-   MatrixXd    traj = MatrixXd::Zero(5,2000);
+   MatrixXd    traj = MatrixXd::Zero(5,501);
    
    // Quad State/Parameter Variables
    mavros_msgs::State         mode_curr;
@@ -66,10 +65,10 @@ private:
    int count_loop;
    int N_traj;
 
-   std_msgs::Time t_start_out;
    ros::Time   t_start; 
    ros::Time   t_traj;
 
+   rosbag::Bag bag;
 public:
    // Constructor
    SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name, const float& t_fs_i, const float& err_tol_i);
