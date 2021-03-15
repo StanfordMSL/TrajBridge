@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
     mavlink
     std_msgs
     message_generation
+    rosbag
     )
 
 ## System dependencies are found with CMake's conventions

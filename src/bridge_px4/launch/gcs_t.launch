@@ -6,7 +6,7 @@
    <arg name="traj_drone5" default="$(find bridge_px4)/trajectories/square_grp_drone5.csv"/>
    <arg name="traj_drone6" default="$(find bridge_px4)/trajectories/square_grp_drone6.csv"/>
 
-   <arg name="t_fs" default="60"/>
+   <arg name="t_fs" default="30"/>
    <arg name="err_tol" default="0.225"/>
 
    <group ns="drone1">

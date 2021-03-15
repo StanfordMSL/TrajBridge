@@ -40,6 +40,11 @@ private:
    ros::ServiceClient land_client;
    ros::ServiceClient tune_client;
    
+   ros::Time   t_start; 
+   ros::Time   t_traj;
+
+   rosbag::Bag bag;
+   
    // Trajectory Variables
    MatrixXd    traj = MatrixXd::Zero(5,501);
    
@@ -64,11 +69,6 @@ private:
    int count_traj;
    int count_loop;
    int N_traj;
-
-   ros::Time   t_start; 
-   ros::Time   t_traj;
-
-   rosbag::Bag bag;
 public:
    // Constructor
    SetpointPublisher(ros::NodeHandle *nh, const std::string& traj_name, const float& t_fs_i, const float& err_tol_i);

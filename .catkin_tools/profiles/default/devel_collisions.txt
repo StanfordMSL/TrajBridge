@@ -1,4 +1,4 @@
 /root/TrajBridge-PX4-orig/devel/./cmake.lock 3
-/home/carl/StanfordMSL/TrajBridge-PX4/devel/./cmake.lock 58
 /root/TrajBridge-PX4-new/devel/./cmake.lock 6
-/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/./cmake.lock 142
+/home/carl/StanfordMSL/TrajBridge-PX4/devel/./cmake.lock 58
+/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/./cmake.lock 143
