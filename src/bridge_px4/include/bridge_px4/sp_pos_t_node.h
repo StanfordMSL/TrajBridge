@@ -43,7 +43,7 @@ private:
    ros::Time   t_start; 
    ros::Time   t_traj;
 
-   rosbag::Bag bag;
+   // rosbag::Bag bag;
    
    // Trajectory Variables
    MatrixXd    traj = MatrixXd::Zero(5,501);

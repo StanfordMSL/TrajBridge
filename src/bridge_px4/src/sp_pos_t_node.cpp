@@ -48,7 +48,7 @@ void SetpointPublisher::state_cb(const mavros_msgs::State::ConstPtr& msg){
         count_traj = 0;
 
         // ROS bag
-        bag.open("test.bag", rosbag::bagmode::Write);
+        //bag.open("test.bag", rosbag::bagmode::Write);
 
         ROS_INFO("Trajectory Activated.");
     } else if (mode_curr.mode != "OFFBOARD") {
@@ -108,8 +108,8 @@ void SetpointPublisher::update_setpoint()
             cout << "Heading to: \n" << pose_sp.pose.position << endl;
 
             // Save data
-            bag.write("position_sp",ros::Time::now(),pose_sp.pose.position);
-            bag.write("position_curr",ros::Time::now(),pose_curr.pose.position); 
+            // bag.write("position_sp",ros::Time::now(),pose_sp.pose.position);
+            // bag.write("position_curr",ros::Time::now(),pose_curr.pose.position); 
         }
         else if ((t_now > t_wp) && (count_traj >= N_traj)) {
             count_traj = 0;
@@ -138,7 +138,7 @@ void SetpointPublisher::update_setpoint()
         }
         
         // ROS bag
-        bag.close();
+        // bag.close();
     }
     break;
     default:
