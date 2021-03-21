@@ -21,6 +21,8 @@ bridge_px4
 /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/python2.7/dist-packages/bridge_px4/srv/_GcsCmd.py /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/python2.7/dist-packages/bridge_px4/srv/_GcsCmd.py
 /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/python2.7/dist-packages/bridge_px4/srv/__init__.py /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/python2.7/dist-packages/bridge_px4/srv/__init__.py
 /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/sp_pos_e_node /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/bridge_px4/sp_pos_e_node
+/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/setpoint_publisher /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/bridge_px4/setpoint_publisher
 /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/sp_pos_t_node /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/bridge_px4/sp_pos_t_node
 /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/setpoint_publisher_node /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/bridge_px4/setpoint_publisher_node
+/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/GCS /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/bridge_px4/GCS
 /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/.private/bridge_px4/lib/bridge_px4/offb_node /home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/bridge_px4/offb_node
