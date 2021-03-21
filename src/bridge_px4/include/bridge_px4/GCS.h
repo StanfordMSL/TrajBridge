@@ -27,6 +27,10 @@
 using namespace Eigen;
 using namespace std;
 
+using OneD = vector<double>;
+using TwoD = vector<vector<double>>;
+using ThreeD = vector<vector<vector<double>>>;
+
 class GCS
 {
 public:
@@ -46,7 +50,8 @@ private:
 
   // Trajectory Variables
   string traj_id;
-  vector<vector<vector<double>>> traj;
+  OneD t_traj;
+  ThreeD st_traj;
   int n_dr;
   int n_fr;
 
@@ -54,16 +59,16 @@ private:
   ros::Time t_start;
   float t_final;
 
-  geometry_msgs::PoseStamped pose_sp;
+  geometry_msgs::PoseStamped pose_sp[10];
 
   // Counters and Time Variables
-  int count_main;
-  int count_traj;
-  int count_loop;
+  int k_main;
+  int k_traj;
+  int k_loop;
   int N_traj;
 
   // Functions
-  vector<vector<vector<double>>>  load_trajectory(const string &input);
+  void load_trajectory(const string &input);
 };
 
 #endif

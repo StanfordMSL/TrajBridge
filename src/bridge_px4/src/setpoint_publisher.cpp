@@ -1,6 +1,5 @@
 #include <bridge_px4/setpoint_publisher.h>
 
-
 SetpointPublisher::SetpointPublisher()
 {
     ros::param::get("~sp_out_hz", sp_out_hz);

@@ -5,34 +5,26 @@ GCS::GCS()
     ros::param::get("~traj_id", traj_id);
     ros::param::get("~t_final", t_final);
 
-    traj = load_traj(traj_id);
-    n_dr = traj.size();
-    n_fr = 
-    drone_ids = 
-
-
+    load_trajectory(traj_id);
+    /*
+    n_dr = st_traj.size();
+    n_fr = st_traj[0][0].size();
+    ROS_INFO("Trajectory Loaded");
+    
     // ROS Initialization
     for (int i=0; i<n_dr; i++) {
-        pose_sp_pub[i] = nh.advertise<geometry_msgs::PoseStamped>(drone_id[i]+"/gcs/setpoint/pose",1);
+        string drone_topic = "drone" + to_string(i+1) + "/gcs/setpoint/pose";
+        pose_sp_pub[i] = nh.advertise<geometry_msgs::PoseStamped>(drone_topic,1);
     }
+    ROS_INFO("ROS Publishers Initialized");
 
-    ROS_INFO("ROS Components Initialized");
-
-    vector<vector<double>> traj_dr = load_traj(traj_id);
-    int n_r = traj_dr.rows();
-    int n_c = traj_dr.cols();
-    
-    N_traj = n_c;
-    traj.resize(n_r+1,n_c+1);
-    traj.block(0,0,n_r,n_c) = m_pose;
-
-    // Counter and Time Initialization
-    count_main = 0;
-    count_traj = 0;
-    count_loop = 0;
+    // Counters and Time Initialization
+    k_main = 0;
+    k_traj = 0;
+    k_loop = 0;
 
     t_start = ros::Time::now();
-
+*/
     ROS_INFO("Counters Initialized.");
 }
 
@@ -44,36 +36,39 @@ GCS::~GCS()
 void GCS::update_setpoint()
 {   
     ros::Duration t_now = ros::Time::now() - t_start;
-    ros::Duration t_wp = ros::Duration(traj(0,count_traj)) + ros::Duration(count_loop*traj(0,N_traj-1));
+    ros::Duration t_wp = ros::Duration(t_traj[k_traj]) + ros::Duration(k_loop*t_traj[n_fr-1]);
 
-    if ((t_now > t_wp) && (count_traj < N_traj))
+    
+    if ((t_now > t_wp) && (k_traj < N_traj))
     {
-        pose_sp.pose.position.x = traj(1, count_traj);
-        pose_sp.pose.position.y = traj(2, count_traj);
-        pose_sp.pose.position.z = traj(3, count_traj);
+        for (int i=0 ; i<n_dr ; i++) {
+            pose_sp[i].pose.position.x = st_traj[i][0][k_traj];
+            pose_sp[i].pose.position.y = st_traj[i][1][k_traj];
+            pose_sp[i].pose.position.z = st_traj[i][2][k_traj];
 
-        double roll = 0.0f;
-        double pitch = 0.0f;
-        double yaw = traj(4, count_traj);
+            double roll = 0.0f;
+            double pitch = 0.0f;
+            double yaw = st_traj[i][3][k_traj];
 
-        double cy = cos(yaw * 0.5);
-        double sy = sin(yaw * 0.5);
-        double cp = cos(pitch * 0.5);
-        double sp = sin(pitch * 0.5);
-        double cr = cos(roll * 0.5);
-        double sr = sin(roll * 0.5);
+            double cy = cos(yaw * 0.5);
+            double sy = sin(yaw * 0.5);
+            double cp = cos(pitch * 0.5);
+            double sp = sin(pitch * 0.5);
+            double cr = cos(roll * 0.5);
+            double sr = sin(roll * 0.5);
 
-        pose_sp.pose.orientation.w = cr * cp * cy + sr * sp * sy;
-        pose_sp.pose.orientation.x = sr * cp * cy - cr * sp * sy;
-        pose_sp.pose.orientation.y = cr * sp * cy + sr * cp * sy;
-        pose_sp.pose.orientation.z = cr * cp * sy - sr * sp * cy;
+            pose_sp[i].pose.orientation.w = cr * cp * cy + sr * sp * sy;
+            pose_sp[i].pose.orientation.x = sr * cp * cy - cr * sp * sy;
+            pose_sp[i].pose.orientation.y = cr * sp * cy + sr * cp * sy;
+            pose_sp[i].pose.orientation.z = cr * cp * sy - sr * sp * cy;
 
-        count_traj++;
+            k_traj++;
+        }
     }
-    else if ((t_now > t_wp) && (count_traj >= N_traj))
+    else if ((t_now > t_wp) && (k_traj >= N_traj))
     {
-        count_traj = 0;
-        count_loop++;
+        k_traj = 0;
+        k_loop++;
     }
     else
     {
@@ -82,14 +77,17 @@ void GCS::update_setpoint()
 
     if (t_now <= ros::Duration(t_final))
     {
-        pose_sp.header.stamp = ros::Time::now();
-        pose_sp.header.seq = count_main;
-        pose_sp.header.frame_id = "map";
-        count_main++;
+        for (int i=0 ; i<n_dr ; i++) {
+            pose_sp[i].header.stamp     = ros::Time::now();
+            pose_sp[i].header.seq       = k_main;
+            pose_sp[i].header.frame_id  = "map";
+        }
 
-        pose_sp_pub.publish(pose_sp);
-        cout << "Traj Time " << t_now << endl;
-        cout << "Heading to: \n " << pose_sp.pose.position << endl;
+        for (int i=0 ; i<n_dr ; i++) {
+            pose_sp_pub[i].publish(pose_sp[i]);
+        }
+
+        k_main++;
     }
     else
     {
@@ -98,9 +96,10 @@ void GCS::update_setpoint()
     
 }
 
-vector<vector<vector<double>>>  GCS::load_trajectory(const std::string& input)
+void GCS::load_trajectory(const string& input)
 {   
-    vector<vector<vector<double>>>drone_traj;
+    //ThreeD st_traj;
+
     ifstream data(input);
     if (data.is_open()) {
         int rows = 0;
@@ -125,22 +124,30 @@ vector<vector<vector<double>>>  GCS::load_trajectory(const std::string& input)
             parsedCsv.push_back(parsedRow);
             rows += 1;
         }
-        
+        vector<double> test (cols);
+
+        for (int j=0 ; j<cols ; j++) {
+            test[j] = parsedCsv[0][j];
+            cout << test[j] << endl;
+        }
+        /*
         int n_dr = (rows-1)/4;
         int n_fr = cols;
-    
-        for (int i=0 ; i<n_dr ; i++) {
-            for (int j=0 ; j<4 ; j++) {
-                for (int k=0 ; k<n_fr ; k++) {
-                }
+        int k_dr, k_st;
+        for (int i=1 ; i<rows ; i++) {
+            for (int j=0 ; j<cols ; j++) {
+                k_dr = floor((i-1)/4);
+                k_st = (i-1)-(k_dr*4);
+
+                st_traj[k_dr][k_st][j] = parsedCsv[i][j];
             }
         }
-
+        */
     } else {
         cout << "Trajectory does not exist." << endl;
     }
     
-    return drone_traj;
+    return;
 }
 
 int main(int argc, char **argv)
@@ -152,7 +159,7 @@ int main(int argc, char **argv)
     ros::Rate rate(100);
     while(ros::ok()){
         //sp.param_update();
-        gcs.update_setpoint();
+        //gcs.update_setpoint();
         
         ros::spinOnce();
         rate.sleep();

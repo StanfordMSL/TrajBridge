@@ -1,12 +1,7 @@
 <launch>
-   <group ns="drone6">
-   	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
-	      <param name="sp_out_hz" value="100.0"/>
-         <param name="checkup_hz" value="10.0"/>
-         <param name="sp_gcs_hz_min" value="2.0"/>
-         <param name="checkup_hz_min" value="5.0"/>
-      </node>
+   <arg name="drone_id" default="drone3"/>
 
+   <group ns="$(arg drone_id)">
       <include file="$(find mavros)/launch/node.launch">
          <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
          <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
