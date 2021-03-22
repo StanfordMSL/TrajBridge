@@ -26,6 +26,12 @@ SetpointPublisher::SetpointPublisher()
     mc_stream_state = MC_STREAM_OFF;
     ROS_INFO("State Machines Initialized.");
 
+    // Constants Initialized
+    quat_forward.w = 1;
+    quat_forward.x = 0;
+    quat_forward.y = 0;
+    quat_forward.z = 0;
+
     // Stream Timer Checks
     setpoint_dt_max = ros::Duration(1.0/sp_gcs_hz_min);
     checkup_dt_max  = ros::Duration(1.0/checkup_hz_min);
@@ -58,10 +64,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         pose_t_sp_out.pose.position.y = 0.0f;
         pose_t_sp_out.pose.position.z = 0.0f;
 
-        pose_t_sp_out.pose.orientation.w = 1.0f;
-        pose_t_sp_out.pose.orientation.x = 0.0f;
-        pose_t_sp_out.pose.orientation.y = 0.0f;
-        pose_t_sp_out.pose.orientation.z = 0.0f;
+        pose_t_sp_out.pose.orientation = quat_forward;
         
         if (mc_stream_state == MC_STREAM_ON)
         {
@@ -73,6 +76,9 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
     break;
     case LINKED:
     {
+        pose_sa.position = pose_t_curr.pose.position;
+        pose_sa.orientation = quat_forward;
+
         pose_t_sp_out.pose = pose_sa;
         pose_t_sp_out.pose.position.z = 0.0f;
 
@@ -179,8 +185,9 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 
     double err_norm = err_pos.norm();
 
-    if (err_norm >= 1) {
-        pose_sa = pose_t_curr.pose;
+    if (err_norm >= 0.2) {
+        pose_sa.position = pose_t_curr.pose.position;
+        pose_sa.orientation = quat_forward;
     }
 
     ros::Time   t_now = ros::Time::now();

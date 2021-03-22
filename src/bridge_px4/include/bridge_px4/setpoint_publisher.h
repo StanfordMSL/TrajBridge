@@ -15,6 +15,7 @@
 
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Quaternion.h>
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandTOL.h>
@@ -84,6 +85,9 @@ private:
    int count_main;
    ros::Duration setpoint_dt_max;
    ros::Duration checkup_dt_max;
+
+   // Constants
+   geometry_msgs::Quaternion quat_forward;
 
    // Telemetry Function(s)
    void pose_sp_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
