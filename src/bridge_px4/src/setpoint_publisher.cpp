@@ -188,12 +188,12 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
         if (sp_stream_state == SP_STREAM_ON) {
             ROS_INFO("Setpoint Stream Broken");
         }
-        ROS_INFO("Setpoint Stream Off");
+        //ROS_INFO("Setpoint Stream Off");
 
         sp_stream_state = SP_STREAM_OFF;
     } else
     {
-        ROS_INFO("Setpoint Stream On");
+        //ROS_INFO("Setpoint Stream On");
 
         sp_stream_state = SP_STREAM_ON;
     }
