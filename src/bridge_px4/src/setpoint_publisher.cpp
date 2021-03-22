@@ -90,7 +90,6 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         if (mc_stream_state == MC_STREAM_OFF) 
         {
             land();
-            
             sp_pub_state = STARTUP;
         }
         // ROS_INFO("LINKED");
@@ -181,12 +180,12 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 
     double err_norm = err_pos.norm();
 
-    if (err_norm >= 1.0) {
+    if (err_norm >= 0.2) {
         pose_sa.position = pose_t_curr.pose.position;
         pose_sa.orientation = quat_forward;
     }
 
-    ros::Time   t_now = ros::Time::now();
+    ros::Time t_now = ros::Time::now();
     if ((t_now - pose_t_sp_gcs.header.stamp) > setpoint_dt_max) {
         if (sp_stream_state == SP_STREAM_ON) {
             ROS_INFO("Setpoint Stream Broken");
