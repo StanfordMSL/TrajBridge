@@ -89,11 +89,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         if (mc_stream_state == MC_STREAM_OFF) 
         {
-            mavros_msgs::CommandTOL srv_land;
-            if (land_client.call(srv_land) && srv_land.response.success)
-            {
-                ROS_INFO("Land Sent %d", srv_land.response.success);
-            }
+            land();
             
             sp_pub_state = STARTUP;
         }
@@ -185,7 +181,7 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 
     double err_norm = err_pos.norm();
 
-    if (err_norm >= 0.2) {
+    if (err_norm >= 1.0) {
         pose_sa.position = pose_t_curr.pose.position;
         pose_sa.orientation = quat_forward;
     }

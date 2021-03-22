@@ -22,7 +22,6 @@
 #include <geometry_msgs/PoseStamped.h>
 
 #include <Eigen/Dense>
-#include <map>
 
 using namespace Eigen;
 using namespace std;
@@ -49,11 +48,11 @@ private:
   ros::Publisher pose_sp_pub[10];
 
   // Trajectory Variables
-  string traj_id;
-  OneD t_traj;
-  ThreeD st_traj;
   int n_dr;
   int n_fr;
+  string  traj_id;
+  OneD    t_traj;
+  ThreeD  st_traj;
 
   // Time Variables
   ros::Time t_start;

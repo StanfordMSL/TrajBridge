@@ -6,7 +6,7 @@ GCS::GCS()
     ros::param::get("~t_final", t_final);
 
     load_trajectory(traj_id);
-    /*
+    
     n_dr = st_traj.size();
     n_fr = st_traj[0][0].size();
     ROS_INFO("Trajectory Loaded");
@@ -24,7 +24,7 @@ GCS::GCS()
     k_loop = 0;
 
     t_start = ros::Time::now();
-*/
+
     ROS_INFO("Counters Initialized.");
 }
 
@@ -34,56 +34,58 @@ GCS::~GCS()
 }
 
 void GCS::update_setpoint()
-{   
+{
     ros::Duration t_now = ros::Time::now() - t_start;
-    ros::Duration t_wp = ros::Duration(t_traj[k_traj]) + ros::Duration(k_loop*t_traj[n_fr-1]);
-
-    
-    if ((t_now > t_wp) && (k_traj < N_traj))
-    {
-        for (int i=0 ; i<n_dr ; i++) {
-            pose_sp[i].pose.position.x = st_traj[i][0][k_traj];
-            pose_sp[i].pose.position.y = st_traj[i][1][k_traj];
-            pose_sp[i].pose.position.z = st_traj[i][2][k_traj];
-
-            double roll = 0.0f;
-            double pitch = 0.0f;
-            double yaw = st_traj[i][3][k_traj];
-
-            double cy = cos(yaw * 0.5);
-            double sy = sin(yaw * 0.5);
-            double cp = cos(pitch * 0.5);
-            double sp = sin(pitch * 0.5);
-            double cr = cos(roll * 0.5);
-            double sr = sin(roll * 0.5);
-
-            pose_sp[i].pose.orientation.w = cr * cp * cy + sr * sp * sy;
-            pose_sp[i].pose.orientation.x = sr * cp * cy - cr * sp * sy;
-            pose_sp[i].pose.orientation.y = cr * sp * cy + sr * cp * sy;
-            pose_sp[i].pose.orientation.z = cr * cp * sy - sr * sp * cy;
-
-            k_traj++;
-        }
-    }
-    else if ((t_now > t_wp) && (k_traj >= N_traj))
-    {
-        k_traj = 0;
-        k_loop++;
-    }
-    else
-    {
-        // Still Tracking Waypoints
-    }
+    ros::Duration t_wp = ros::Duration(t_traj[k_traj]) + ros::Duration(k_loop * t_traj[n_fr - 1]);
 
     if (t_now <= ros::Duration(t_final))
     {
-        for (int i=0 ; i<n_dr ; i++) {
-            pose_sp[i].header.stamp     = ros::Time::now();
-            pose_sp[i].header.seq       = k_main;
-            pose_sp[i].header.frame_id  = "map";
+        if ((t_now > t_wp) && (k_traj < N_traj))
+        {
+            for (int i = 0; i < n_dr; i++)
+            {
+                pose_sp[i].pose.position.x = st_traj[i][0][k_traj];
+                pose_sp[i].pose.position.y = st_traj[i][1][k_traj];
+                pose_sp[i].pose.position.z = st_traj[i][2][k_traj];
+
+                double roll = 0.0f;
+                double pitch = 0.0f;
+                double yaw = st_traj[i][3][k_traj];
+
+                double cy = cos(yaw * 0.5);
+                double sy = sin(yaw * 0.5);
+                double cp = cos(pitch * 0.5);
+                double sp = sin(pitch * 0.5);
+                double cr = cos(roll * 0.5);
+                double sr = sin(roll * 0.5);
+
+                pose_sp[i].pose.orientation.w = cr * cp * cy + sr * sp * sy;
+                pose_sp[i].pose.orientation.x = sr * cp * cy - cr * sp * sy;
+                pose_sp[i].pose.orientation.y = cr * sp * cy + sr * cp * sy;
+                pose_sp[i].pose.orientation.z = cr * cp * sy - sr * sp * cy;
+
+                k_traj++;
+            }
+        }
+        else if ((t_now > t_wp) && (k_traj >= N_traj))
+        {
+            k_traj = 0;
+            k_loop++;
+        }
+        else
+        {
+            // Still Tracking Waypoints
         }
 
-        for (int i=0 ; i<n_dr ; i++) {
+        for (int i = 0; i < n_dr; i++)
+        {
+            pose_sp[i].header.stamp = ros::Time::now();
+            pose_sp[i].header.seq = k_main;
+            pose_sp[i].header.frame_id = "map";
+        }
+
+        for (int i = 0; i < n_dr; i++)
+        {
             pose_sp_pub[i].publish(pose_sp[i]);
         }
 
@@ -93,13 +95,10 @@ void GCS::update_setpoint()
     {
         // Don't publish anymore.
     }
-    
 }
 
 void GCS::load_trajectory(const string& input)
 {   
-    //ThreeD st_traj;
-
     ifstream data(input);
     if (data.is_open()) {
         int rows = 0;
@@ -124,16 +123,17 @@ void GCS::load_trajectory(const string& input)
             parsedCsv.push_back(parsedRow);
             rows += 1;
         }
-        vector<double> test (cols);
-
-        for (int j=0 ; j<cols ; j++) {
-            test[j] = parsedCsv[0][j];
-            cout << test[j] << endl;
-        }
-        /*
+        
         int n_dr = (rows-1)/4;
         int n_fr = cols;
         int k_dr, k_st;
+
+        t_traj = vector<double>(n_fr);
+        for (int i=1 ; i<cols ; i++) {
+            t_traj[i] = parsedCsv[0][i];
+        }
+
+        st_traj = vector<vector<vector<double>>>(n_dr, vector<vector<double>>(4, vector<double>(n_fr)));
         for (int i=1 ; i<rows ; i++) {
             for (int j=0 ; j<cols ; j++) {
                 k_dr = floor((i-1)/4);
@@ -142,7 +142,7 @@ void GCS::load_trajectory(const string& input)
                 st_traj[k_dr][k_st][j] = parsedCsv[i][j];
             }
         }
-        */
+
     } else {
         cout << "Trajectory does not exist." << endl;
     }
@@ -158,8 +158,7 @@ int main(int argc, char **argv)
 
     ros::Rate rate(100);
     while(ros::ok()){
-        //sp.param_update();
-        //gcs.update_setpoint();
+        gcs.update_setpoint();
         
         ros::spinOnce();
         rate.sleep();
