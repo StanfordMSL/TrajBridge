@@ -64,7 +64,6 @@ private:
   int k_main;
   int k_traj;
   int k_loop;
-  int N_traj;
 
   // Functions
   void load_trajectory(const string &input);

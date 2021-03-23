@@ -36,11 +36,11 @@ GCS::~GCS()
 void GCS::update_setpoint()
 {
     ros::Duration t_now = ros::Time::now() - t_start;
-    ros::Duration t_wp = ros::Duration(t_traj[k_traj]) + ros::Duration(k_loop * t_traj[n_fr - 1]);
+    ros::Duration t_wp = ros::Duration(t_traj[k_traj]);
 
     if (t_now <= ros::Duration(t_final))
     {
-        if ((t_now > t_wp) && (k_traj < N_traj))
+        if ((t_now > t_wp) && (k_traj < n_fr))
         {
             for (int i = 0; i < n_dr; i++)
             {
@@ -67,14 +67,9 @@ void GCS::update_setpoint()
                 k_traj++;
             }
         }
-        else if ((t_now > t_wp) && (k_traj >= N_traj))
-        {
-            k_traj = 0;
-            k_loop++;
-        }
         else
         {
-            // Still Tracking Waypoints
+            // Still Tracking Waypoints or Done
         }
 
         for (int i = 0; i < n_dr; i++)
@@ -82,10 +77,7 @@ void GCS::update_setpoint()
             pose_sp[i].header.stamp = ros::Time::now();
             pose_sp[i].header.seq = k_main;
             pose_sp[i].header.frame_id = "map";
-        }
 
-        for (int i = 0; i < n_dr; i++)
-        {
             pose_sp_pub[i].publish(pose_sp[i]);
         }
 
@@ -123,7 +115,7 @@ void GCS::load_trajectory(const string& input)
             parsedCsv.push_back(parsedRow);
             rows += 1;
         }
-        
+
         int n_dr = (rows-1)/4;
         int n_fr = cols;
         int k_dr, k_st;
@@ -156,7 +148,7 @@ int main(int argc, char **argv)
 
     GCS gcs;
 
-    ros::Rate rate(100);
+    ros::Rate rate(20);
     while(ros::ok()){
         gcs.update_setpoint();
         
