@@ -42,6 +42,7 @@ void GCS::update_setpoint()
     {
         if ((t_now > t_wp) && (k_traj < n_fr))
         {
+            //cout << '(' << t_now << ")" << endl;
             for (int i = 0; i < n_dr; i++)
             {
                 pose_sp[i].pose.position.x = st_traj[i][0][k_traj];
@@ -63,9 +64,8 @@ void GCS::update_setpoint()
                 pose_sp[i].pose.orientation.x = sr * cp * cy - cr * sp * sy;
                 pose_sp[i].pose.orientation.y = cr * sp * cy + sr * cp * sy;
                 pose_sp[i].pose.orientation.z = cr * cp * sy - sr * sp * cy;
-
-                k_traj++;
             }
+            k_traj++;
         }
         else
         {
@@ -134,7 +134,13 @@ void GCS::load_trajectory(const string& input)
                 st_traj[k_dr][k_st][j] = parsedCsv[i][j];
             }
         }
-
+        /*
+       for(int i = 0; i<4; i++) {
+            for(int j = 0; j<n_fr; j++) {
+                cout << '(' << parsedCsv[i][j] << ")";
+            }
+        cout << "\n\n";
+        }*/
     } else {
         cout << "Trajectory does not exist." << endl;
     }
@@ -148,7 +154,7 @@ int main(int argc, char **argv)
 
     GCS gcs;
 
-    ros::Rate rate(20);
+    ros::Rate rate(100);
     while(ros::ok()){
         gcs.update_setpoint();
         
