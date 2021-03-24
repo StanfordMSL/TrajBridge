@@ -24,6 +24,8 @@ GCS::GCS()
     k_loop = 0;
 
     t_start = ros::Time::now();
+    t_end   = t_traj[n_fr-1];
+    t_final = ros::Duration(t_final);
 
     ROS_INFO("Counters Initialized.");
 }
@@ -38,11 +40,12 @@ void GCS::update_setpoint()
     ros::Duration t_now = ros::Time::now() - t_start;
     ros::Duration t_wp = ros::Duration(t_traj[k_traj]);
 
-    if (t_now <= ros::Duration(t_final))
+    if (t_now <= t_final)
     {
-        if ((t_now > t_wp) && (k_traj < n_fr))
+        ros::Duration t_loop = t_now-ros::Duration(k_loop*t_end);
+
+        if ((k_traj < n_fr) && (t_loop > t_wp))
         {
-            //cout << '(' << t_now << ")" << endl;
             for (int i = 0; i < n_dr; i++)
             {
                 pose_sp[i].pose.position.x = st_traj[i][0][k_traj];
@@ -67,9 +70,10 @@ void GCS::update_setpoint()
             }
             k_traj++;
         }
-        else
+        else if ((k_traj >= n_fr))
         {
-            // Still Tracking Waypoints or Done
+            k_traj = 0;
+            k_loop++;
         }
 
         for (int i = 0; i < n_dr; i++)
@@ -134,13 +138,6 @@ void GCS::load_trajectory(const string& input)
                 st_traj[k_dr][k_st][j] = parsedCsv[i][j];
             }
         }
-        /*
-       for(int i = 0; i<4; i++) {
-            for(int j = 0; j<n_fr; j++) {
-                cout << '(' << parsedCsv[i][j] << ")";
-            }
-        cout << "\n\n";
-        }*/
     } else {
         cout << "Trajectory does not exist." << endl;
     }

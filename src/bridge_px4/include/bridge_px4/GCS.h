@@ -55,8 +55,9 @@ private:
   ThreeD  st_traj;
 
   // Time Variables
-  ros::Time t_start;
-  float t_final;
+  double        t_end;      // end of  single trajectory
+  ros::Duration t_final;    //  end of total trajectory
+  ros::Time     t_start;    // Start time using world clock
 
   geometry_msgs::PoseStamped pose_sp[10];
 
