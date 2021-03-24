@@ -153,6 +153,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
     case FAILSAFE:
     {
         pose_t_sp_out.pose = pose_sa;
+        pose_t_sp_out.pose.position.z = 0.5f;
  
         if (sp_stream_state == SP_STREAM_ON && mc_stream_state == MC_STREAM_ON)
         {
