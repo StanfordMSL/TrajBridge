@@ -61,7 +61,6 @@ find_package(Eigen3 REQUIRED)
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  GcsCmd.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -139,13 +138,6 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/bridge_px4_node.cpp)
-add_executable(sp_pos_t_node src/sp_pos_t_node.cpp)
-target_link_libraries(sp_pos_t_node ${catkin_LIBRARIES})
-add_dependencies(sp_pos_t_node bridge_px4_gencpp)
-
-add_executable(sp_pos_e_node src/sp_pos_e_node.cpp)
-target_link_libraries(sp_pos_e_node ${catkin_LIBRARIES})
-add_dependencies(sp_pos_e_node bridge_px4_gencpp)
 
 add_executable(setpoint_publisher src/setpoint_publisher.cpp)
 target_link_libraries(setpoint_publisher ${catkin_LIBRARIES})
