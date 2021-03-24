@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
     mavros_msgs
     mavlink
     std_msgs
-    message_generation
+#    message_generation
     rosbag
     )
 
@@ -59,9 +59,9 @@ find_package(Eigen3 REQUIRED)
 # )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-)
+# add_service_files(
+#   FILES
+# )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -71,10 +71,10 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -141,11 +141,11 @@ include_directories(
 
 add_executable(setpoint_publisher src/setpoint_publisher.cpp)
 target_link_libraries(setpoint_publisher ${catkin_LIBRARIES})
-add_dependencies(setpoint_publisher bridge_px4_gencpp)
+# add_dependencies(setpoint_publisher bridge_px4_gencpp)
 
 add_executable(GCS src/GCS.cpp)
 target_link_libraries(GCS ${catkin_LIBRARIES})
-add_dependencies(GCS bridge_px4_gencpp)
+# add_dependencies(GCS bridge_px4_gencpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
