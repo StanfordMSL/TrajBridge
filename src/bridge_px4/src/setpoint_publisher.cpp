@@ -123,7 +123,14 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
     {
         pose_t_sp_out.pose = pose_t_sp_gcs.pose;
 
-        if (sp_stream_state == SP_STREAM_OFF || mc_stream_state == MC_STREAM_OFF) 
+        if (sp_stream_state == SP_STREAM_OFF && mc_stream_state == MC_STREAM_ON)
+        {
+            pose_sa.position = pose_t_curr.pose.position;
+            pose_sa.orientation = quat_forward;
+            sp_pub_state = HOVER;
+        }
+
+        if (mc_stream_state == MC_STREAM_OFF) 
         {
             sp_pub_state = FAILSAFE;
         }
@@ -137,28 +144,18 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         // ROS_INFO("ACTIVE");
     }
     break;
-    case COMPLETE:
-    {
-        pose_t_sp_out.pose = pose_t_curr.pose;
-        pose_t_sp_out.pose.position.z = 0.0f;
- 
-        if (mode_cr.mode != "OFFBOARD")
-        {
-            land();
-            sp_pub_state = LINKED;
-        }
-        // ROS_INFO("COMPLETE");
-    }
-    break;
     case FAILSAFE:
     {
         pose_t_sp_out.pose = pose_sa;
         pose_t_sp_out.pose.position.z = 0.5f;
- 
+
         if (sp_stream_state == SP_STREAM_ON && mc_stream_state == MC_STREAM_ON)
         {
             sp_pub_state = ACTIVE;
-        }
+        } else if (sp_stream_state == SP_STREAM_OFF && mc_stream_state == MC_STREAM_ON)
+        {
+            sp_pub_state = HOVER;
+        }     
 
         if (mode_cr.mode != "OFFBOARD")
         {
