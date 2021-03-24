@@ -41,6 +41,7 @@ private:
       HOVER,
       ACTIVE,
       COMPLETE,
+      FAILSAFE,
    } sp_pub_state;
 
    enum sp_stream_state_machine {
