@@ -9,8 +9,10 @@ GCS::GCS()
     
     n_dr = st_traj.size();
     n_fr = st_traj[0][0].size();
+    t_end   = t_traj[n_fr-1];
+
     ROS_INFO("Trajectory Loaded");
-    
+
     // ROS Initialization
     for (int i=0; i<n_dr; i++) {
         string drone_topic = "drone" + to_string(i+1) + "/gcs/setpoint/pose";
@@ -24,8 +26,6 @@ GCS::GCS()
     k_loop = 0;
 
     t_start = ros::Time::now();
-    t_end   = t_traj[n_fr-1];
-    t_final = ros::Duration(t_final);
 
     ROS_INFO("Counters Initialized.");
 }
@@ -40,7 +40,7 @@ void GCS::update_setpoint()
     ros::Duration t_now = ros::Time::now() - t_start;
     ros::Duration t_wp = ros::Duration(t_traj[k_traj]);
 
-    if (t_now <= t_final)
+    if (t_now <= ros::Duration(t_final))
     {
         ros::Duration t_loop = t_now-ros::Duration(k_loop*t_end);
 
