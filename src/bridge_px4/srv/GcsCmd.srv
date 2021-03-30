@@ -1,5 +1,0 @@
-int64 mode
-bool trigger
----
-int64 mode
-float32[13] pose_init
