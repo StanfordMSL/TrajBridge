@@ -1,6 +1,7 @@
 <launch>
+   <arg name="t_final_in" default="30.0" />
    <node pkg="bridge_px4" type="GCS" name ="GCS" output="screen">
          <param name="traj_id" value="$(find bridge_px4)/trajectories/square_grp.csv"/>
-         <param name="t_final" value="30.0"/>
+         <param name="t_final" value="$(arg t_final_in)" />
    </node>
 </launch>
