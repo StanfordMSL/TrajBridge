@@ -1,0 +1,17 @@
+<launch>
+   <node pkg="bridge_px4" type="homing_pose" name ="homing_pose" output="screen">
+         <param name="drone_id" value="1"/>
+         <param name="tf_x" value="0.2" />
+         <param name="tf_y" value="0.0" />
+         <param name="tf_z" value="-0.1" />
+         <param name="tf_qw" value="1.0" />
+         <param name="tf_qx" value="0.0" />
+         <param name="tf_qy" value="0.0" />
+         <param name="tf_qz" value="0.0" />
+
+         <param name="l2_tracking" value="3.0" />
+         <param name="l2_pitbull" value="1.0" />
+         <param name="dt_pitbull" value="1.0" />
+         <param name="pos_offset" value="0.0" />
+   </node>
+</launch>
