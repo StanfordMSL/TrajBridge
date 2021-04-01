@@ -1,0 +1,8 @@
+[Unit]
+Description=aether script
+
+[Service]
+ExecStart=/usr/local/bin/aether-2.sh
+
+[Install]
+WantedBy=multi-user.target
