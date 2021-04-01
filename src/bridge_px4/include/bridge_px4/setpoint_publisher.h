@@ -40,7 +40,6 @@ private:
       LINKED,
       HOVER,
       ACTIVE,
-      COMPLETE,
       FAILSAFE,
    } sp_pub_state;
 

@@ -147,6 +147,9 @@ add_executable(GCS src/GCS.cpp)
 target_link_libraries(GCS ${catkin_LIBRARIES})
 # add_dependencies(GCS bridge_px4_gencpp)
 
+add_executable(visualizer src/visualizer.cpp)
+target_link_libraries(visualizer ${catkin_LIBRARIES})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

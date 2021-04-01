@@ -147,7 +147,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
     case FAILSAFE:
     {
         pose_t_sp_out.pose = pose_sa;
-        pose_t_sp_out.pose.position.z = 0.5f;
+        pose_t_sp_out.pose.position.z = pose_sa.position.z-0.1;
 
         if (sp_stream_state == SP_STREAM_ON && mc_stream_state == MC_STREAM_ON)
         {
@@ -175,7 +175,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
     pose_t_sp_out.header.stamp = ros::Time::now();
     pose_t_sp_out.header.seq   = count_main;
-    pose_t_sp_out.header.frame_id = "map";
+    pose_t_sp_out.header.frame_id = "world";
     count_main++;
 
     pose_sp_pub.publish(pose_t_sp_out);

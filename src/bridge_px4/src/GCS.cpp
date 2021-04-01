@@ -76,11 +76,12 @@ void GCS::update_setpoint()
             k_loop++;
         }
 
+        ros::Time t_stamp = ros::Time::now();
         for (int i = 0; i < n_dr; i++)
         {
-            pose_sp[i].header.stamp = ros::Time::now();
+            pose_sp[i].header.stamp = t_stamp;
             pose_sp[i].header.seq = k_main;
-            pose_sp[i].header.frame_id = "map";
+            pose_sp[i].header.frame_id = "world";
 
             pose_sp_pub[i].publish(pose_sp[i]);
         }
