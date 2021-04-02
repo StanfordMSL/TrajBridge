@@ -132,6 +132,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         if (mc_stream_state == MC_STREAM_OFF) 
         {
+            pose_sa.position.z = pose_sa.position.z-0.1;
             sp_pub_state = FAILSAFE;
         }
         
@@ -147,7 +148,6 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
     case FAILSAFE:
     {
         pose_t_sp_out.pose = pose_sa;
-        pose_t_sp_out.pose.position.z = pose_sa.position.z-0.1;
 
         if (sp_stream_state == SP_STREAM_ON && mc_stream_state == MC_STREAM_ON)
         {
@@ -189,7 +189,7 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 
     double err_norm = err_pos.norm();
 
-    if (err_norm >= 0.2) {
+    if ( (err_norm >= 0.2) && (mc_stream_state == MC_STREAM_ON) ) {
         pose_sa.position = pose_t_curr.pose.position;
         pose_sa.orientation = quat_forward;
     }
