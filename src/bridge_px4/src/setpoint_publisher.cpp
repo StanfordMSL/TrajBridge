@@ -25,6 +25,7 @@ SetpointPublisher::SetpointPublisher()
     sp_stream_state = SP_STREAM_OFF;
     mc_stream_state = MC_STREAM_OFF;
     ROS_INFO("State Machines Initialized.");
+    ROS_INFO("SP_PUB_STATE: STARTUP");
 
     // Constants Initialized
     quat_forward.w = 1;
@@ -60,6 +61,8 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
     {
     case STARTUP:
     {
+        ROS_DEBUG("STARTUP");
+
         pose_t_sp_out.pose.position.x = 0.0f;
         pose_t_sp_out.pose.position.y = 0.0f;
         pose_t_sp_out.pose.position.z = 0.0f;
@@ -69,13 +72,14 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         if (mc_stream_state == MC_STREAM_ON)
         {
             sp_pub_state = LINKED;
+            ROS_INFO("SP_PUB_STATE: LINKED");
         }
-        // ROS_INFO("STARTUP");
-
     }
     break;
     case LINKED:
     {
+        ROS_DEBUG("LINKED");
+
         pose_sa.position = pose_t_curr.pose.position;
         pose_sa.orientation = quat_forward;
 
@@ -84,69 +88,82 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         if ( (mode_cr.mode == "OFFBOARD") && (sp_stream_state == SP_STREAM_OFF) )
         {
+            pose_sa.position.z = 1.0;
+
             sp_pub_state = HOVER;
+            ROS_INFO("SP_PUB_STATE: HOVER");
         }
 
         if (mc_stream_state == MC_STREAM_OFF) 
         {
             land();
             sp_pub_state = STARTUP;
+            ROS_INFO("SP_PUB_STATE: STARTUP");
         }
-        // ROS_INFO("LINKED");
     }
     break;
     case HOVER:
     {
+        ROS_DEBUG("HOVER");
+
         pose_t_sp_out.pose = pose_sa;
-        pose_t_sp_out.pose.position.z = 1.0f;
 
         if (sp_stream_state == SP_STREAM_ON)
         {
             sp_pub_state = ACTIVE;
+            ROS_INFO("SP_PUB_STATE: ACTIVE");
         }
 
         if (mc_stream_state == MC_STREAM_OFF) 
         {
             land();
             sp_pub_state = STARTUP;
+            ROS_INFO("SP_PUB_STATE: STARTUP");
         }
 
         if (mode_cr.mode != "OFFBOARD")
         {
             land();
             sp_pub_state = LINKED;
+            ROS_INFO("SP_PUB_STATE: LINKED");
         }
-        // ROS_INFO("HOVER");
     }
     break;
     case ACTIVE:
     {
+        ROS_DEBUG("ACTIVE");
+
         pose_t_sp_out.pose = pose_t_sp_gcs.pose;
 
         if (sp_stream_state == SP_STREAM_OFF && mc_stream_state == MC_STREAM_ON)
         {
             pose_sa.position = pose_t_curr.pose.position;
+            pose_sa.position.z = 1.0;
             pose_sa.orientation = quat_forward;
+
             sp_pub_state = HOVER;
+            ROS_INFO("SP_PUB_STATE: HOVER");           
         }
 
         if (mc_stream_state == MC_STREAM_OFF) 
         {
             pose_sa.position.z = pose_sa.position.z-0.1;
             sp_pub_state = FAILSAFE;
+            ROS_INFO("SP_PUB_STATE: FAILSAFE");
         }
         
         if (mode_cr.mode != "OFFBOARD")
         {
             land();
             sp_pub_state = LINKED;
+            ROS_INFO("SP_PUB_STATE: LINKED");
         }
-
-        // ROS_INFO("ACTIVE");
     }
     break;
     case FAILSAFE:
     {
+        ROS_DEBUG("FAILSAFE");
+
         pose_t_sp_out.pose = pose_sa;
 
         if (sp_stream_state == SP_STREAM_ON && mc_stream_state == MC_STREAM_ON)
@@ -154,20 +171,26 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             sp_pub_state = ACTIVE;
         } else if (sp_stream_state == SP_STREAM_OFF && mc_stream_state == MC_STREAM_ON)
         {
+            pose_sa.position = pose_t_curr.pose.position;
+            pose_sa.position.z = 1.0;
+            pose_sa.orientation = quat_forward;
+
             sp_pub_state = HOVER;
+            ROS_INFO("SP_PUB_STATE: HOVER");
         }     
 
         if (mode_cr.mode != "OFFBOARD")
         {
             land();
             sp_pub_state = LINKED;
+            ROS_INFO("SP_PUB_STATE: LINKED");
         }
-
-        // ROS_INFO("COMPLETE");
     }
     break;
     default:
     {
+        ROS_DEBUG("default (should not be here)");
+
         pose_t_sp_out.pose = pose_t_curr.pose;
         pose_t_sp_out.pose.position.z = 0.0f;
     }
@@ -199,12 +222,12 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
         if (sp_stream_state == SP_STREAM_ON) {
             ROS_INFO("Setpoint Stream Broken");
         }
-        //ROS_INFO("Setpoint Stream Off");
+        ROS_DEBUG("Setpoint Stream Off");
 
         sp_stream_state = SP_STREAM_OFF;
     } else
     {
-        //ROS_INFO("Setpoint Stream On");
+        ROS_DEBUG("Setpoint Stream On");
 
         sp_stream_state = SP_STREAM_ON;
     }
@@ -213,12 +236,12 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
         if (mc_stream_state == MC_STREAM_ON) {
             ROS_INFO("MoCap Stream Broken");
         }
-        //ROS_INFO("MoCap Stream Off");
+        ROS_DEBUG("MoCap Stream Off");
 
         mc_stream_state = MC_STREAM_OFF;
     } else
     {
-        //ROS_INFO("MoCap Stream On");
+        ROS_DEBUG("MoCap Stream On");
 
         mc_stream_state = MC_STREAM_ON;
     }
@@ -228,7 +251,9 @@ void SetpointPublisher::land() {
     mavros_msgs::CommandTOL srv_land;
     if (land_client.call(srv_land) && srv_land.response.success)
     {
-        ROS_INFO("Land Sent %d", srv_land.response.success);
+        ROS_INFO("Land Successful");
+    } else {
+        ROS_WARN("Land Failed");
     }
 }
 
