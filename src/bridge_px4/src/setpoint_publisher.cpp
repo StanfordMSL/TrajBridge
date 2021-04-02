@@ -205,6 +205,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 }
 
 void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
+    /*
     Vector3d err_pos;
     err_pos(0) = pose_t_curr.pose.position.x - pose_sa.position.x;
     err_pos(1) = pose_t_curr.pose.position.y - pose_sa.position.y;
@@ -216,6 +217,7 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
         pose_sa.position = pose_t_curr.pose.position;
         pose_sa.orientation = quat_forward;
     }
+    */
 
     ros::Time t_now = ros::Time::now();
     if ((t_now - pose_t_sp_gcs.header.stamp) > setpoint_dt_max) {
