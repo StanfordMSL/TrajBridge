@@ -147,7 +147,9 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         if (mc_stream_state == MC_STREAM_OFF) 
         {
-            pose_sa.position.z = pose_sa.position.z-0.1;
+            pose_sa.position = pose_t_curr.pose.position;
+            pose_sa.position.z = pose_sa.position.z-0.2;
+
             sp_pub_state = FAILSAFE;
             ROS_INFO("SP_PUB_STATE: FAILSAFE");
         }
@@ -205,21 +207,9 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 }
 
 void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
-    /*
-    Vector3d err_pos;
-    err_pos(0) = pose_t_curr.pose.position.x - pose_sa.position.x;
-    err_pos(1) = pose_t_curr.pose.position.y - pose_sa.position.y;
-    err_pos(2) = pose_t_curr.pose.position.z - pose_sa.position.z;
-
-    double err_norm = err_pos.norm();
-
-    if ( (err_norm >= 0.2) && (mc_stream_state == MC_STREAM_ON) ) {
-        pose_sa.position = pose_t_curr.pose.position;
-        pose_sa.orientation = quat_forward;
-    }
-    */
 
     ros::Time t_now = ros::Time::now();
+    
     if ((t_now - pose_t_sp_gcs.header.stamp) > setpoint_dt_max) {
         if (sp_stream_state == SP_STREAM_ON) {
             ROS_INFO("Setpoint Stream Broken");
