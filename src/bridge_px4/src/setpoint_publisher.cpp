@@ -87,7 +87,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             ROS_INFO("SP_PUB_STATE: LINKED");
         } else if ((mc_stream_state == MC_ON) && (ob_mode_state != OB_OFF))
         {
-            ROS_INFO("OFFBOARD switch is not off. Blocking state transform from STARTUP to LINKED.");
+            ROS_DEBUG("OFFBOARD switch is not off. Blocking state transform from STARTUP to LINKED.");
         } else
         {
             // Stay in State
@@ -120,7 +120,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             ROS_INFO("SP_PUB_STATE: HOVER");
         } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_ON) ) 
         {
-            ROS_INFO("BOTH OB and SP are ON. Blocking state transform from LINKED to HOVER.");
+            ROS_DEBUG("BOTH OB and SP are ON. Blocking state transform from LINKED to HOVER.");
         } else 
         {
             // Stay in State
