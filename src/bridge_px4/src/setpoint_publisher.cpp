@@ -77,11 +77,8 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         // Do State Tasks
         ROS_DEBUG("STARTUP");
 
-        pose_t_sp_out.pose.position.x = 0.0f;
-        pose_t_sp_out.pose.position.y = 0.0f;
+        pose_t_sp_out.pose = pose_sa;
         pose_t_sp_out.pose.position.z = 0.0f;
-
-        pose_t_sp_out.pose.orientation = quat_forward;
         
         // State Transition
         if ((mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF))
