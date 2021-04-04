@@ -6,7 +6,7 @@
          <param name="checkup_hz" value="10.0"/>
          <param name="sp_gcs_hz_min" value="5.0"/>
          <param name="checkup_hz_min" value="5.0"/>
-         <param name="dt_fs" value="1.0"/>
+         <param name="dt_fs" value="5.0"/>
       </node>
 
       <include file="$(find mavros)/launch/node.launch">
