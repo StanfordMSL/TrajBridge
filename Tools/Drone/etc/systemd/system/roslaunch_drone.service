@@ -1,9 +1,8 @@
-### Add this to /etc/systemd/system/ directory to be run on boot
 [Unit]
 After=NetworkManager.service time-sync.target
 [Service]
 Type=simple
 User=carl
-ExecStart=/usr/sbin/roslaunch_drone
+ExecStart=/bin/bash /usr/sbin/roslaunch_drone
 [Install]
 WantedBy=multi-user.target

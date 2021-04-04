@@ -1,5 +1,4 @@
 #!/bin/bash
-### Add this to /usr/sbin/ directory to be called with roslaunch_drone.service
 bash ~/startup.sh
 source ~/StanfordMSL/TrajBridge-PX4/devel/setup.bash
 source /etc/ros/env.sh
