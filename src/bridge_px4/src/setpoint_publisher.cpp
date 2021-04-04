@@ -7,6 +7,7 @@ SetpointPublisher::SetpointPublisher()
     ros::param::get("~sp_gcs_hz_min", sp_gcs_hz_min);
     ros::param::get("~checkup_hz_min", checkup_hz_min);
     ros::param::get("~dt_fs", dt_fs);
+    ros::param::get("~dt_rs",dt_rs);
 
     // ROS Initialization
     pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
@@ -34,6 +35,8 @@ SetpointPublisher::SetpointPublisher()
     quat_forward.x = 0;
     quat_forward.y = 0;
     quat_forward.z = 0;
+
+    n_rs = ceil(dt_rs*sp_out_hz);
 
     // Stream Timer Checks
     setpoint_dt_max = ros::Duration(1.0/sp_gcs_hz_min);
@@ -180,6 +183,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             pose_sa.position.z = pose_sa.position.z-0.2;
 
             t_fs = ros::Time::now();
+            k_rs = 0;
 
             sp_pub_state = FAILSAFE;
             ROS_INFO("SP_PUB_STATE: FAILSAFE");
@@ -201,20 +205,28 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             land();
             sp_pub_state = STARTUP;
             ROS_INFO("SP_PUB_STATE: STARTUP");
+        } else if ( (mc_stream_state == MC_OFF) && (ob_mode_state == OB_OFF) ) {
+            land();
+            sp_pub_state = STARTUP;
+            ROS_INFO("SP_PUB_STATE: STARTUP");
         } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF) ) {
             land();
             sp_pub_state = LINKED;
             ROS_INFO("SP_PUB_STATE: LINKED");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
+        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) )
         {
-            pose_sa.position.z = 1.0;
+            k_rs += 1;
+            if  ( (k_rs >= n_rs)  && (sp_stream_state == SP_OFF) ) {
+                pose_sa.position.z = 1.0;
 
-            sp_pub_state = HOVER;
-            ROS_INFO("SP_PUB_STATE: HOVER");
-        }   else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_ON) ) 
-        {
-            sp_pub_state = ACTIVE;
-            ROS_INFO("SP_PUB_STATE: ACTIVE");
+                sp_pub_state = HOVER;
+                ROS_INFO("SP_PUB_STATE: HOVER");
+            } else if ( (k_rs >= n_rs)  && (sp_stream_state == SP_ON) ) {
+                sp_pub_state = ACTIVE;
+                ROS_INFO("SP_PUB_STATE: ACTIVE");
+            } else {
+                // Stay in failsafe mode.
+            }
         }
     }
     break;
@@ -229,9 +241,9 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
     }
 
     pose_t_sp_out.header.stamp = ros::Time::now();
-    pose_t_sp_out.header.seq   = count_main;
+    pose_t_sp_out.header.seq   = k_main;
     pose_t_sp_out.header.frame_id = "world";
-    count_main++;
+    k_main++;
 
     pose_sp_pub.publish(pose_t_sp_out);
 }

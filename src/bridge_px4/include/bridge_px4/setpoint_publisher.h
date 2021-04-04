@@ -69,6 +69,7 @@ private:
    float sp_gcs_hz_min;
    float checkup_hz_min;
    float dt_fs;
+   float dt_rs;
 
    // ROS Publishers and Subscribers
    ros::Publisher     pose_sp_pub;
@@ -92,7 +93,9 @@ private:
    mavros_msgs::State  mode_cr;                 // Current Mavros Mode
 
    // Counters and Time Variables
-   int count_main;
+   int k_main;                  // Main loop counter
+   int k_rs;                    // Restore Counter
+   int n_rs;                    // Total Restore Counter
    ros::Duration  setpoint_dt_max;
    ros::Duration  checkup_dt_max;
    ros::Time      t_fs;
