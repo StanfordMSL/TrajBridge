@@ -23,9 +23,9 @@ SetpointPublisher::SetpointPublisher()
 
     // State Machine Initialization
     sp_pub_state    = STARTUP;
-    mc_stream_state = MC_OFF;
-    ob_mode_state   = OB_OFF;
-    sp_stream_state = SP_OFF;
+    mc_stream_state = MC_INIT;
+    ob_mode_state   = OB_INIT;
+    sp_stream_state = SP_INIT;
     ROS_INFO("State Machines Initialized.");
     ROS_INFO("SP_PUB_STATE: STARTUP");
 
@@ -85,9 +85,9 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         {
             sp_pub_state = LINKED;
             ROS_INFO("SP_PUB_STATE: LINKED");
-        } else if ((mc_stream_state == MC_ON) && (ob_mode_state == OB_ON))
+        } else if ((mc_stream_state == MC_ON) && (ob_mode_state != OB_OFF))
         {
-            ROS_INFO("OFFBOARD switch is ACTIVE. Blocking state transform from STARTUP to LINKED.");
+            ROS_INFO("OFFBOARD switch is not off. Blocking state transform from STARTUP to LINKED.");
         } else
         {
             // Stay in State
@@ -162,7 +162,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         pose_sa.position = pose_t_curr.pose.position;
         pose_sa.orientation = quat_forward;
-        
+
         // State Transition
         if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF) ) {
             land();

@@ -44,16 +44,19 @@ private:
    } sp_pub_state;
 
    enum mc_stream_state_machine {
+      MC_INIT,
       MC_ON,
       MC_OFF,
    } mc_stream_state;
 
    enum ob_mode_state_machine {
+      OB_INIT,
       OB_ON,
       OB_OFF,
    } ob_mode_state;
 
    enum sp_stream_state_machine {
+      SP_INIT,
       SP_ON,
       SP_OFF,
    } sp_stream_state;
