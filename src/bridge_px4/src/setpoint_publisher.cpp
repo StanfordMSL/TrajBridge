@@ -58,7 +58,7 @@ void SetpointPublisher::mav_state_cb(const mavros_msgs::State::ConstPtr& msg){
 
     if (mode_cr.mode == "OFFBOARD") {
         ob_mode_state = OB_ON;
-    } else
+    } else if ( (mode_cr.mode == "POSCTL") || (mode_cr.mode == "STABILIZED") || (mode_cr.mode == "ALTCTL") )
     {
         ob_mode_state = OB_OFF;
     }
