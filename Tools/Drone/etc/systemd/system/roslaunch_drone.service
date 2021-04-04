@@ -1,8 +1,10 @@
 [Unit]
 After=NetworkManager.service time-sync.target
+
 [Service]
 Type=simple
 User=carl
 ExecStart=/bin/bash /usr/sbin/roslaunch_drone
+
 [Install]
 WantedBy=multi-user.target
