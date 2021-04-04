@@ -160,6 +160,9 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         pose_t_sp_out.pose = pose_t_sp_gcs.pose;
 
+        pose_sa.position = pose_t_curr.pose.position;
+        pose_sa.orientation = quat_forward;
+        
         // State Transition
         if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF) ) {
             land();
