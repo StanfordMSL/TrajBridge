@@ -4,8 +4,11 @@
    	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
 	      <param name="sp_out_hz" value="100.0"/>
          <param name="checkup_hz" value="10.0"/>
-         <param name="sp_gcs_hz_min" value="2.0"/>
-         <param name="checkup_hz_min" value="2.0"/>
+         <param name="sp_gcs_hz_min" value="5.0"/>
+         <param name="checkup_hz_min" value="5.0"/>
+         <param name="dt_fs" value="3.0"/>
+         <param name="dt_rs" value="1.0"/>
+
       </node>
 
       <include file="$(find mavros)/launch/node.launch">

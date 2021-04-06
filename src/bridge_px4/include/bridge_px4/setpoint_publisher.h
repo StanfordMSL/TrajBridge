@@ -40,18 +40,27 @@ private:
       LINKED,
       HOVER,
       ACTIVE,
-      COMPLETE,
+      FAILSAFE,
    } sp_pub_state;
 
+   enum mc_stream_state_machine {
+      MC_INIT,
+      MC_ON,
+      MC_OFF,
+   } mc_stream_state;
+
+   enum ob_mode_state_machine {
+      OB_INIT,
+      OB_ON,
+      OB_OFF,
+   } ob_mode_state;
+
    enum sp_stream_state_machine {
-      SP_STREAM_ON,
-      SP_STREAM_OFF,
+      SP_INIT,
+      SP_ON,
+      SP_OFF,
    } sp_stream_state;
 
-   enum mc_stream_state_machine {
-      MC_STREAM_ON,
-      MC_STREAM_OFF,
-   } mc_stream_state;
 
    // Input Params
    string drone_id;
@@ -59,6 +68,8 @@ private:
    float checkup_hz;
    float sp_gcs_hz_min;
    float checkup_hz_min;
+   float dt_fs;
+   float dt_rs;
 
    // ROS Publishers and Subscribers
    ros::Publisher     pose_sp_pub;
@@ -67,8 +78,8 @@ private:
    ros::Subscriber    mav_state_sub;
 
    // ROS Timers
-   ros::Timer setpointLoop;   // setpoint update timer
-   ros::Timer checkupLoop;      // savepoint update timer
+   ros::Timer setpointLoop;      // setpoint update timer
+   ros::Timer checkupLoop;       // savepoint update timer
    
    // ROS Services
    ros::ServiceClient land_client;
@@ -82,9 +93,12 @@ private:
    mavros_msgs::State  mode_cr;                 // Current Mavros Mode
 
    // Counters and Time Variables
-   int count_main;
-   ros::Duration setpoint_dt_max;
-   ros::Duration checkup_dt_max;
+   int k_main;                  // Main loop counter
+   int k_rs;                    // Restore Counter
+   int n_rs;                    // Total Restore Counter
+   ros::Duration  setpoint_dt_max;
+   ros::Duration  checkup_dt_max;
+   ros::Time      t_fs;
 
    // Constants
    geometry_msgs::Quaternion quat_forward;
