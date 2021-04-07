@@ -13,7 +13,7 @@ directory. Tools include two main directories:
 Installing the Drone files
 ==========================
 
-The Drones directory contains several files needed to setup the drone when
+The Drone directory contains several files needed to setup the drone when
 powered on. These files contain system level services and some configurations
 needed for the drone to run correctly. If there files under this directory have
 been updated since you last used the drone or this is the first time setting up
@@ -31,6 +31,10 @@ the drone, you will need to run the following commands.
 - `sudo systemctl enable aether-1.service`
 - `sudo systemctl enable aether-2.service`
 - `sudo systemctl enable roslaunch_drone.service`
+- `sudo vim /etc/hosts`
+
+  - Update the 'drone4' and 'drone4.local' to match the specific hostname of the
+    drone. E.g. drone1 if you're updating these files on drone 1.
 
 If you are updating a drone that already has these services from a previous
 version of the code, you should run a `sudo systemctl restart service` on
@@ -70,7 +74,8 @@ powered on.
 Other scripts
 =============
 
-Here we discuss the other scripts within our Tools directory in the repository.
+Here we discuss the other scripts within our Tools/scripts directory in the
+repository.
 
 shutdown_drones.sh
 ------------------
