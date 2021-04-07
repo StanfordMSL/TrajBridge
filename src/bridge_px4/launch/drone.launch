@@ -1,5 +1,7 @@
 <launch>
    <arg name="hostname" default="$(env HOSTNAME)" />
+   <arg name="time_window_in" default="5" />
+   <arg name="time_threshold_in" default="3" />
    <group ns="$(arg hostname)">
    	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
 	      <param name="sp_out_hz" value="100.0"/>
@@ -23,5 +25,10 @@
          <arg name="fcu_protocol" value="v2.0" />
          <arg name="respawn_mavros" default="false" />
       </include>
+
+      <node pkg="bridge_px4" type="LED_UI.py" name ="led" output="screen">
+         <param name="time_window" value="$(arg time_window_in)" />
+         <param name="time_threshold" value="$(arg time_threshold_in)" />
+      </node>
    </group>
 </launch>
