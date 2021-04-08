@@ -7,46 +7,66 @@ import smbus
 import numpy as np
 from geometry_msgs.msg import Pose 
 
-# callback function for time stamps
-def pose_callback(pose_data):
-    global time_stamp_array
-    time_stamp_array[1:-1] = time_stamp_array[0:-2]
-    time_stamp_array[0] = int(pose_data.header.stamp)
+class LEDSHIM():
+    def __init__(self):
+        # LED related things
+        ledshim.set_clear_on_exit()
+        ledshim.display.i2c = smbus.SMBus(5)
+        ledshim.set_brightness(0.6)
 
-# computes a moving average of the time between messages published
-def compute_dt(time_window, time_stamp_array):
-    dt = sum(time_stamp_array)/time_window
-    return dt
+        # ROS related things
+        rospy.init_node("led")
+        rospy.loginfo_once("Starting LED node")
 
-# make LEDs show colors based on information receival rate
-def show_graph(dt, time_threshold):
-    for x in range(ledshim.NUM_PIXELS):
-        if dt < time_threshold:
-            r, g, b = 0, 255, 0
-        else:
-            r, g, b = 255, 0, 0            
-            #r, g, b = [int(min(v, 1.0) * c) for c in [r, g, b]]
-        ledshim.set_pixel(x, r, g, b)
-    ledshim.show()
+        self.time_window = rospy.get_param('~time_window')
+        self.rate_threshold = rospy.get_param('~rate_threshold')
+        self.time_stamp_array = np.zeros(self.time_window)
 
-def main():
-    # LED related things
-    ledshim.set_clear_on_exit()
-    ledshim.display.i2c = smbus.SMBus(5)
-    ledshim.set_brightness(0.6)
+        ns = rospy.get_namespace()
+        vision_topic = "{}mavros/vision_pose/pose".format(ns)
+        rospy.loginfo_once("Topic to subscribe: {}".format(vision_topic))
 
-    # ROS related things
-    time_window = 5 #rospy.get_param('time_window')
-    time_threshold = 3 #rospy.get_param('time_threshold')
-    time_stamp_array = np.zeros((time_window, 0))
-    rospy.init_node("led")
-    rospy.Subscriber("/mavros/vision_pose/pose", Pose, pose_callback)
+        rospy.Subscriber(vision_topic, Pose, self.pose_callback)
+        rospy.Timer(rospy.Duration(0.01), self.led_update)
 
-    # Loop for LED
-    while True:
-        dt = compute_dt(time_window, time_stamp_array)
-        show_graph(dt, time_threshold)
-        time.sleep(0.01)
+    # callback function for time stamps
+    def pose_callback(self, pose_data):
+        print(pose_data)
+        header = pose_data.header
+        self.time_stamp_array[1:-1] = self.time_stamp_array[0:-2]
+        self.time_stamp_array[0] = rospy.Time(header.stamp.secs, header.stamp.nsecs)
+        rospy.loginfo("Seconds: {}".format(self.time_stamp_array[0]))
+
+    # callback for LED loop
+    def led_update(self, event):
+        rate_in = self.compute_rate()
+        self.show_graph(rate_in)
+
+    # computes a moving average of the frequency between messages published
+    def compute_rate(self):
+        dt_array = np.ones(self.time_window-1)
+        for i in range(self.time_window - 1):
+            dt_array[i] = self.time_stamp_array[i] - self.time_stamp_array[i+1]
+        dt = (sum(dt_array)/float(self.time_window - 1)) 
+        #print(dt)
+        return 1.0/dt
+
+    # make LEDs show colors based on information receival rate
+    def show_graph(self, rate_in):
+        r, g, b = 0, 0, 0
+        for x in range(ledshim.NUM_PIXELS):
+            if rate_in > self.rate_threshold:
+                r, g, b = 0, 255, 0
+            else:
+                r, g, b = 255, 0, 0            
+                #r, g, b = [int(min(v, 1.0) * c) for c in [r, g, b]]
+            ledshim.set_pixel(x, r, g, b)
+        ledshim.show()
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        LEDSHIM()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass
