@@ -28,27 +28,26 @@ class LEDSHIM():
     # callback function for time stamps
     def pose_callback(self, pose_data):
         header = pose_data.header
-        self.time_stamp_array[1:-1] = self.time_stamp_array[0:-2]
+        self.time_stamp_array[1:self.time_window] = self.time_stamp_array[0:self.time_window-1]
         self.time_stamp_array[0] = rospy.Time(header.stamp.secs, header.stamp.nsecs).to_sec()
-        rospy.loginfo("Seconds: {}".format(self.time_stamp_array[0]))
+        #rospy.loginfo("Seconds: {}".format(self.time_stamp_array[0]))
 
     # callback for LED loop
     def led_update(self, event):
         rate_in = self.compute_rate()
         #rospy.loginfo(rate_in)
-        self.show_graph(rate_in)
+        self.show_colors(rate_in)
 
     # computes a moving average of the frequency between messages published
     def compute_rate(self):
         dt_array = np.ones(self.time_window-1)
-        for i in range(self.time_window - 1):
+        for i in range(self.time_window-1):
             dt_array[i] = self.time_stamp_array[i] - self.time_stamp_array[i+1]
         dt = (sum(dt_array)/float(self.time_window - 1)) 
-        #print(dt)
         return 1.0/dt
 
     # make LEDs show colors based on information receival rate
-    def show_graph(self, rate_in):
+    def show_colors(self, rate_in):
         r, g, b = 0, 0, 0
         for x in range(ledshim.NUM_PIXELS):
             if rate_in > self.rate_threshold:
