@@ -1,0 +1,15 @@
+<launch>
+   <arg name="t_final_in" default="7.0" />
+   <node pkg="bridge_px4" type="GCSVel" name ="GCSVel" output="screen">
+         <param name="t_final" value="$(arg t_final_in)" />
+         <param name="hover_x" value="0.0"/>
+         <param name="hover_y" value="0.0"/>
+         <param name="hover_z" value="1.0"/>
+   </node>
+
+   <node pkg="bridge_px4" type="visualizer" name ="visualizer" output="screen">
+         <param name="n_dr" value="6"/>
+         <param name="dt" value="0.1"/>
+         <param name="t_hist" value="30.0"/>
+   </node>
+</launch>

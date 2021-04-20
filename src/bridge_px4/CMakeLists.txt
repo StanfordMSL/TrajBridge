@@ -147,6 +147,10 @@ add_executable(GCS src/GCS.cpp)
 target_link_libraries(GCS ${catkin_LIBRARIES})
 # add_dependencies(GCS bridge_px4_gencpp)
 
+add_executable(GCSVel src/GCSVel.cpp)
+target_link_libraries(GCSVel ${catkin_LIBRARIES})
+# add_dependencies(GCSVel bridge_px4_gencpp)
+
 add_executable(visualizer src/visualizer.cpp)
 target_link_libraries(visualizer ${catkin_LIBRARIES})
 
