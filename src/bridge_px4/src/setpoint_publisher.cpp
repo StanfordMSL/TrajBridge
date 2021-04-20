@@ -12,6 +12,11 @@ SetpointPublisher::SetpointPublisher()
     // ROS Initialization
     pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
     pose_sp_sub = nh.subscribe("gcs/setpoint/pose",1,&SetpointPublisher::pose_sp_cb,this);    
+    pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
+    pose_sp_sub = nh.subscribe("gcs/setpoint/pose",1,&SetpointPublisher::pose_sp_cb,this); 
+    pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
+    pose_sp_sub = nh.subscribe("gcs/setpoint/pose",1,&SetpointPublisher::pose_sp_cb,this); 
+
     pose_curr_sub = nh.subscribe("mavros/vision_pose/pose",1,&SetpointPublisher::pose_curr_cb,this);
     mav_state_sub = nh.subscribe("mavros/state",1,&SetpointPublisher::mav_state_cb,this);
 

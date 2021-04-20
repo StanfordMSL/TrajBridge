@@ -14,7 +14,11 @@
 #include "ros/ros.h"
 
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <mavros_msgs/Thrust.h>
+
 #include <geometry_msgs/Quaternion.h>
 
 #include <mavros_msgs/State.h>
@@ -57,7 +61,9 @@ private:
 
    enum sp_stream_state_machine {
       SP_INIT,
-      SP_ON,
+      SP_ON_POS,
+      SP_ON_VEL,
+      SP_ON_ATT,
       SP_OFF,
    } sp_stream_state;
 
@@ -85,9 +91,20 @@ private:
    ros::ServiceClient land_client;
    
    // Quad State/Parameter Variables
-   geometry_msgs::PoseStamped pose_t_sp_gcs;      // Setpoint Commanded by GCS
-   geometry_msgs::PoseStamped pose_t_sp_out;      // Setpoint Sent to Drone
-   geometry_msgs::PoseStamped pose_t_curr;        // Current Pose
+   geometry_msgs::PoseStamped  pose_t_sp_gcs;   // Setpoint Pose Commanded by GCS
+   geometry_msgs::PoseStamped  pose_t_sp_out;   // Setpoint Pose  Sent to Drone
+
+   geometry_msgs::PoseStamped  vel_sp_gcs;      // Setpoint Velocity Commanded by GCS
+   geometry_msgs::PoseStamped  vel_sp_out;      // Setpoint Velocity Sent to Drone
+
+   geometry_msgs::TwistStamped ang_vel_sp_obhr;  // Setpoint angular velocity commanded by onboard high-rate.
+   geometry_msgs::PoseStamped  att_sp_obhr;      // Setpoint attitude commanded by onboard high-rate.
+   mavros_msgs::Thrust         thrust_sp_obhr;   // Setpoint thrust commanded by onboard high-rate.
+   geometry_msgs::TwistStamped ang_vel_sp_out;  // Setpoint angular velocity Sent to Drone.
+   geometry_msgs::PoseStamped  att_sp_out;      // Setpoint attitude Sent to Drone.
+   mavros_msgs::Thrust         thrust_sp_out;   // Setpoint thrust Sent to Drone.
+
+   geometry_msgs::PoseStamped pose_t_curr;      // Current Pose
    geometry_msgs::Pose pose_st;                 // Starting Pose
    geometry_msgs::Pose pose_sa;                 // Savepoint Pose (for failsafes and active hover)
    mavros_msgs::State  mode_cr;                 // Current Mavros Mode
@@ -114,6 +131,9 @@ private:
    // Functions
    void land();
    void pub_check();
+   void pub_sp_pos();
+   void pub_sp_vel();
+   void pub_sp_att();
 };
 
 #endif
