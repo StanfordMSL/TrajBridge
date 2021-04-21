@@ -32,8 +32,8 @@ protected:
 
 private:
   // ROS variables
-  ros::Publisher     velocity_sp_pub[10];
-  ros::Subscriber    pose_curr_sub[10];
+  ros::Publisher     velocity_sp_pub;
+  ros::Subscriber    pose_curr_sub;
 
   // Gains
   double kp;
@@ -41,7 +41,7 @@ private:
   double kd;
 
   double integral_term;
-  int n_dr;
+  string drone_id;
 
   // Desired Hover Position
   double hover_x;
@@ -49,17 +49,19 @@ private:
   double hover_z;
 
   // Time Variables
-  double      t_final;    //  end of total trajectory
-  ros::Time   t_start;    // Start time using world clock
-  ros::Time   t_prev;     // Previous time
+  double          t_final;    //  end of total trajectory
+  ros::Time       t_start;    // Start time using world clock
+  ros::Duration   t_prev;     // Previous time
 
-  geometry_msgs::Twist     vel_sp[10];
-  geometry_msgs::Vector3   vel_angular;
+  geometry_msgs::Twist       vel_sp;
+  geometry_msgs::Vector3     vel_angular;
+  geometry_msgs::PoseStamped pose_t_curr;
 
   // Counters and Time Variables
   int k_main;
 
   // Functions
+  void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
   void compute_integral(double &integral_term, double prev_val, double curr_val, double dt_secs);
 };
 

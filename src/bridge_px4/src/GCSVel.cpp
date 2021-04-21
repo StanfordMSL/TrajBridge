@@ -3,21 +3,16 @@
 GCSVel::GCSVel()
 {
     ros::param::get("~t_final", t_final);
+    ros::param::get("~drone_id", drone_id);
     ros::param::get("~hover_x", hover_x);
     ros::param::get("~hover_y", hover_y);
     ros::param::get("~hover_z", hover_z);
 
     // ROS Initialization
-    for (int i=0; i<n_dr; i++) {
-        
-        // Subscribe
-        string drone_topic_sub = "drone" + to_string(i+1) + "/mavros/vision_pose/pose";
-        pose_curr_sub[i] = nh.subscribe(drone_topic_sub,1,&SetpointPublisher::pose_curr_cb,this);
-
-        // Publish
-        string drone_topic_pub = "drone" + to_string(i+1) + "/gcs/setpoint/velocity";
-        velocity_sp_pub[i] = nh.advertise<geometry_msgs::Twist>(drone_topic_pub,1);
-    }
+    string drone_topic_sub = drone_id + "/mavros/vision_pose/pose";
+    string drone_topic_pub = drone_id + "/gcs/setpoint/velocity";
+    pose_curr_sub = nh.subscribe(drone_topic_sub,1,&GCSVel::pose_curr_cb,this);
+    velocity_sp_pub = nh.advertise<geometry_msgs::Pose>(drone_topic_pub,1);
 
     ROS_INFO("ROS Publishers Initialized");
 
@@ -27,7 +22,6 @@ GCSVel::GCSVel()
     kd = 1.0;
 
     integral_term = 0.0;
-    n_dr = 7;
 
     vel_angular.x = 0;
     vel_angular.y = 0;
@@ -35,7 +29,7 @@ GCSVel::GCSVel()
 
     // Relevant Times
     t_start = ros::Time::now();
-    t_prev = ros::Time::now();
+    t_prev = t_start - ros::Time::now();
 
     // Initialize Counter
     k_main = 0;
@@ -46,6 +40,10 @@ GCSVel::GCSVel()
 GCSVel::~GCSVel()
 {
   ROS_WARN("Terminating Publisher");
+}
+
+void GCSVel::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
+    pose_t_curr = *msg;
 }
 
 void GCSVel::compute_integral(double &integral_term, double prev_val, double curr_val, double dt_secs)
@@ -65,58 +63,56 @@ void GCSVel::update_setpoint()
     // Time
     ros::Duration t_now = ros::Time::now() - t_start;
     ros::Duration dt = t_now - t_prev;
-    ros::Duration t_prev = ros::Time::now() - t_start;
+    t_prev = ros::Time::now() - t_start;
     double dt_secs = dt.toSec();
 
     // Error vectors
-    vector<double> err_x(n_dr,0.0);
-    vector<double> err_y(n_dr,0.0);
-    vector<double> err_z(n_dr,0.0);
-    vector<double> err_x_prev(n_dr,0.0);
-    vector<double> err_y_prev(n_dr,0.0);
-    vector<double> err_z_prev(n_dr,0.0);
+    double err_x = 0.0;
+    double err_y = 0.0;
+    double err_z = 0.0;
+    double err_x_prev = 0.0;
+    double err_y_prev = 0.0;
+    double err_z_prev = 0.0;
 
     // integral term
-    vector<double> integral_x(n_dr, 0.0);
-    vector<double> integral_y(n_dr, 0.0);
-    vector<double> integral_z(n_dr, 0.0);
+    double integral_x = 0.0;
+    double integral_y = 0.0;
+    double integral_z = 0.0;
 
     // Update Veloctiy Setpoints
     if (t_now <= ros::Duration(t_final))
     {
-        for (int i = 0; i < n_dr; i++)
-        {
-            // Compute errors
-            err_x[i] = hover_x - pose_curr_sub[i].pose.position.x;
-            err_y[i] = hover_y - pose_curr_sub[i].pose.position.y;
-            err_z[i] = hover_z - pose_curr_sub[i].pose.position.z;
 
-            compute_integral(integral_x[i], err_x[i], err_x_prev[i], dt_secs);
-            compute_integral(integral_y[i], err_y[i], err_y_prev[i], dt_secs);
-            compute_integral(integral_z[i], err_z[i], err_z_prev[i], dt_secs);
+        // Compute errors
+        err_x = hover_x - pose_t_curr.pose.position.x;
+        err_y = hover_y - pose_t_curr.pose.position.y;
+        err_z = hover_z - pose_t_curr.pose.position.z;
 
-            vel_sp[i].twist.linear.x = kp*err_x[i]
-                                     + ki*integral_x[i]
-                                     + kd*(err_x_prev[i] - err_x[i])/dt_secs;
+        compute_integral(integral_x, err_x, err_x_prev, dt_secs);
+        compute_integral(integral_y, err_y, err_y_prev, dt_secs);
+        compute_integral(integral_z, err_z, err_z_prev, dt_secs);
 
-            vel_sp[i].twist.linear.y = kp*err_y[i]
-                                     + ki*integral_y[i]
-                                     + kd*(err_y_prev[i] - err_y[i])/dt_secs;
+        vel_sp.linear.x = kp*err_x
+                           + ki*integral_x
+                           + kd*(err_x_prev - err_x)/dt_secs;
 
-            vel_sp[i].twist.linear.z = kp*err_z[i]
-                                     + ki*integral_z[i]
-                                     + kd*(err_z_prev[i] - err_z[i])/dt_secs;
+        vel_sp.linear.y = kp*err_y
+                           + ki*integral_y
+                           + kd*(err_y_prev - err_y)/dt_secs;
 
-            vel_sp[i].twist.angular = vel_angular;
+        vel_sp.linear.z = kp*err_z
+                           + ki*integral_z
+                           + kd*(err_z_prev - err_z)/dt_secs;
 
-            // Assign previous time step errors
-            err_x_prev[i] = err_x[i];
-            err_y_prev[i] = err_y[i];
-            err_z_prev[i] = err_z[i];
+        vel_sp.angular = vel_angular;
 
-            // Publish
-            velocity_sp_pub[i].publish(vel_sp[i]);
-        }
+        // Assign previous time step errors
+        err_x_prev = err_x;
+        err_y_prev = err_y;
+        err_z_prev = err_z;
+
+        // Publish
+        velocity_sp_pub.publish(vel_sp);
 
     }
     k_main++;
