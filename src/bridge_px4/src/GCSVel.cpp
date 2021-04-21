@@ -83,9 +83,9 @@ void GCSVel::update_setpoint()
         err_y = hover_y - pose_t_curr.pose.position.y;
         err_z = hover_z - pose_t_curr.pose.position.z;
 
-        compute_integral(integral_x, err_x, err_x_prev, dt_secs);
-        compute_integral(integral_y, err_y, err_y_prev, dt_secs);
-        compute_integral(integral_z, err_z, err_z_prev, dt_secs);
+        compute_integral(integral_x, err_x_prev, err_x, dt_secs);
+        compute_integral(integral_y, err_y_prev, err_y, dt_secs);
+        compute_integral(integral_z, err_z_prev, err_z, dt_secs);
 
         vel_sp.linear.x = kp*err_x
                            + ki*integral_x
