@@ -40,8 +40,20 @@ private:
   double ki;
   double kd;
 
-  double integral_term;
+  double integral_x;
+  double integral_y;
+  double integral_z;
+
+  double max_integral;
   string drone_id;
+
+  double err_x;
+  double err_y;
+  double err_z;
+
+  double err_x_prev;
+  double err_y_prev;
+  double err_z_prev;
 
   // Desired Hover Position
   double hover_x;

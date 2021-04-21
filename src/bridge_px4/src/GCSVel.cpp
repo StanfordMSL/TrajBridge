@@ -7,21 +7,31 @@ GCSVel::GCSVel()
     ros::param::get("~hover_x", hover_x);
     ros::param::get("~hover_y", hover_y);
     ros::param::get("~hover_z", hover_z);
+    ros::param::get("~kp", kp);
+    ros::param::get("~ki", ki);
+    ros::param::get("~kd", kd);
+    ros::param::get("~max_integral", max_integral);
 
     // ROS Initialization
     string drone_topic_sub = drone_id + "/mavros/vision_pose/pose";
     string drone_topic_pub = drone_id + "/gcs/setpoint/velocity";
     pose_curr_sub = nh.subscribe(drone_topic_sub,1,&GCSVel::pose_curr_cb,this);
-    velocity_sp_pub = nh.advertise<geometry_msgs::Pose>(drone_topic_pub,1);
+    velocity_sp_pub = nh.advertise<geometry_msgs::Twist>(drone_topic_pub,1);
 
     ROS_INFO("ROS Publishers Initialized");
+    
+    // Error terms
+    err_x = 0.0;
+    err_y = 0.0;
+    err_z = 0.0;
+    err_x_prev = 0.0;
+    err_y_prev = 0.0;
+    err_z_prev = 0.0;
 
-    // Initialize Gains
-    kp = 1.0;
-    ki = 1.0;
-    kd = 1.0;
-
-    integral_term = 0.0;
+    // integral term
+    integral_x = 0.0;
+    integral_y = 0.0;
+    integral_z = 0.0;
 
     vel_angular.x = 0;
     vel_angular.y = 0;
@@ -48,8 +58,6 @@ void GCSVel::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
 
 void GCSVel::compute_integral(double &integral_term, double prev_val, double curr_val, double dt_secs)
 {
-    double max_integral = 1.0;
-
     integral_term += (prev_val + curr_val)*dt_secs/2.0;
 
     if (integral_term >= max_integral)     // account for windup
@@ -65,19 +73,6 @@ void GCSVel::update_setpoint()
     ros::Duration dt = t_now - t_prev;
     t_prev = ros::Time::now() - t_start;
     double dt_secs = dt.toSec();
-
-    // Error vectors
-    double err_x = 0.0;
-    double err_y = 0.0;
-    double err_z = 0.0;
-    double err_x_prev = 0.0;
-    double err_y_prev = 0.0;
-    double err_z_prev = 0.0;
-
-    // integral term
-    double integral_x = 0.0;
-    double integral_y = 0.0;
-    double integral_z = 0.0;
 
     // Update Veloctiy Setpoints
     if (t_now <= ros::Duration(t_final))
