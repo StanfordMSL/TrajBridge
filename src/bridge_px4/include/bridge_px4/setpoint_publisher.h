@@ -18,6 +18,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/Thrust.h>
+#include <mavros_msgs/AttitudeTarget.h>
 
 #include <geometry_msgs/Quaternion.h>
 
@@ -61,12 +62,15 @@ private:
 
    enum sp_stream_state_machine {
       SP_INIT,
-      SP_ON_POS,
-      SP_ON_VEL,
-      SP_ON_ATT,
+      SP_ON,
       SP_OFF,
    } sp_stream_state;
 
+   enum sp_type_state_machine {
+      TP_POS,
+      TP_VEL,
+      TP_ATT,
+   } sp_type_state;
 
    // Input Params
    string drone_id;
@@ -77,9 +81,19 @@ private:
    float dt_fs;
    float dt_rs;
 
-   // ROS Publishers and Subscribers
+   // Position Publishers/Subscribers
    ros::Publisher     pose_sp_pub;
    ros::Subscriber    pose_sp_sub;
+
+   // Velocity Publishers/Subscribers
+   ros::Publisher     vel_sp_pub;
+   ros::Subscriber    vel_sp_sub;
+
+   // Attitude Publishers/Subscribers
+   ros::Publisher     att_sp_pub;
+   ros::Subscriber    att_sp_sub;
+
+   // Drone State/Status Subscribers
    ros::Subscriber    pose_curr_sub;
    ros::Subscriber    mav_state_sub;
 
@@ -90,24 +104,21 @@ private:
    // ROS Services
    ros::ServiceClient land_client;
    
-   // Quad State/Parameter Variables
-   geometry_msgs::PoseStamped  pose_t_sp_gcs;   // Setpoint Pose Commanded by GCS
-   geometry_msgs::PoseStamped  pose_t_sp_out;   // Setpoint Pose  Sent to Drone
+   // Quad Setpoints
+   geometry_msgs::PoseStamped  pose_sp_in;      // Setpoint Position In
+   geometry_msgs::PoseStamped  pose_sp_out;     // Setpoint Position Out
 
-   geometry_msgs::PoseStamped  vel_sp_gcs;      // Setpoint Velocity Commanded by GCS
-   geometry_msgs::PoseStamped  vel_sp_out;      // Setpoint Velocity Sent to Drone
+   geometry_msgs::TwistStamped vel_sp_in;       // Setpoint Velocity In
+   geometry_msgs::Twist        vel_sp_out;      // Setpoint Velocity Out
 
-   geometry_msgs::TwistStamped ang_vel_sp_obhr;  // Setpoint angular velocity commanded by onboard high-rate.
-   geometry_msgs::PoseStamped  att_sp_obhr;      // Setpoint attitude commanded by onboard high-rate.
-   mavros_msgs::Thrust         thrust_sp_obhr;   // Setpoint thrust commanded by onboard high-rate.
-   geometry_msgs::TwistStamped ang_vel_sp_out;  // Setpoint angular velocity Sent to Drone.
-   geometry_msgs::PoseStamped  att_sp_out;      // Setpoint attitude Sent to Drone.
-   mavros_msgs::Thrust         thrust_sp_out;   // Setpoint thrust Sent to Drone.
+   mavros_msgs::AttitudeTarget att_sp_in;       // Setpoint Attitude (body rate, orientation, thrust) In 
+   mavros_msgs::AttitudeTarget att_sp_out;      // Setpoint Attitude (body rate, orientation, thrust) Out
 
-   geometry_msgs::PoseStamped pose_t_curr;      // Current Pose
-   geometry_msgs::Pose pose_st;                 // Starting Pose
-   geometry_msgs::Pose pose_sa;                 // Savepoint Pose (for failsafes and active hover)
-   mavros_msgs::State  mode_cr;                 // Current Mavros Mode
+   // Quad Parameters
+   geometry_msgs::PoseStamped  pose_curr;       // Current Pose
+   geometry_msgs::Pose         pose_st;         // Starting Pose
+   geometry_msgs::Pose         pose_sa;         // Savepoint Pose (for failsafes and active hover)
+   mavros_msgs::State          mode_cr;         // Current Mavros Mode
 
    // Counters and Time Variables
    int k_main;                  // Main loop counter
@@ -122,6 +133,9 @@ private:
 
    // Telemetry Function(s)
    void pose_sp_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+   void vel_sp_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
+   void att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr& msg);
+
    void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
    void mav_state_cb(const mavros_msgs::State::ConstPtr& msg);
 
@@ -130,10 +144,10 @@ private:
 
    // Functions
    void land();
-   void pub_check();
    void pub_sp_pos();
    void pub_sp_vel();
    void pub_sp_att();
+   void active_sp();
 };
 
 #endif
