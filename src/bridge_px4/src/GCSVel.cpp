@@ -16,7 +16,7 @@ GCSVel::GCSVel()
     string drone_topic_sub = drone_id + "/mavros/vision_pose/pose";
     string drone_topic_pub = drone_id + "/gcs/setpoint/velocity";
     pose_curr_sub = nh.subscribe(drone_topic_sub,1,&GCSVel::pose_curr_cb,this);
-    velocity_sp_pub = nh.advertise<geometry_msgs::Twist>(drone_topic_pub,1);
+    vel_sp_pub = nh.advertise<geometry_msgs::TwistStamped>(drone_topic_pub,1);
 
     ROS_INFO("ROS Publishers Initialized");
 
@@ -88,30 +88,35 @@ void GCSVel::update_setpoint()
         compute_integral(integral_y, err_y_prev, err_y, dt_secs);
         compute_integral(integral_z, err_z_prev, err_z, dt_secs);
 
-        vel_sp.linear.x = kp*err_x
+        vel_sp.twist.linear.x = kp*err_x
                            + ki*integral_x
                            + kd*(err_x_prev - err_x)/dt_secs;
 
-        vel_sp.linear.y = kp*err_y
+        vel_sp.twist.linear.y = kp*err_y
                            + ki*integral_y
                            + kd*(err_y_prev - err_y)/dt_secs;
 
-        vel_sp.linear.z = kp*err_z
+        vel_sp.twist.linear.z = kp*err_z
                            + ki*integral_z
                            + kd*(err_z_prev - err_z)/dt_secs;
 
-        vel_sp.angular = vel_angular;
+        vel_sp.twist.angular = vel_angular;
 
         // Assign previous time step errors
         err_x_prev = err_x;
         err_y_prev = err_y;
         err_z_prev = err_z;
 
-        // Publish
-        velocity_sp_pub.publish(vel_sp);
+        ros::Time t_stamp = ros::Time::now();
+        vel_sp.header.stamp = t_stamp;
+        vel_sp.header.seq = k_main;
+        vel_sp.header.frame_id = "world";
 
+        // Publish
+        vel_sp_pub.publish(vel_sp);
+        k_main++;
     }
-    k_main++;
+
 }
 
 int main(int argc, char **argv)

@@ -10,7 +10,7 @@
 #include <vector>
 
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
 
 #include <Eigen/Dense>
 
@@ -32,7 +32,7 @@ protected:
 
 private:
   // ROS variables
-  ros::Publisher     velocity_sp_pub;
+  ros::Publisher     vel_sp_pub;
   ros::Subscriber    pose_curr_sub;
 
   // Gains
@@ -65,9 +65,9 @@ private:
   ros::Time       t_start;    // Start time using world clock
   ros::Duration   t_prev;     // Previous time
 
-  geometry_msgs::Twist       vel_sp;
-  geometry_msgs::Vector3     vel_angular;
-  geometry_msgs::PoseStamped pose_t_curr;
+  geometry_msgs::TwistStamped  vel_sp;
+  geometry_msgs::Vector3       vel_angular;
+  geometry_msgs::PoseStamped   pose_t_curr;
 
   // Counters and Time Variables
   int k_main;
