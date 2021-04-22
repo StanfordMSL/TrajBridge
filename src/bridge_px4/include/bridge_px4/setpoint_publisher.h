@@ -67,6 +67,7 @@ private:
    } sp_stream_state;
 
    enum sp_type_state_machine {
+      TP_NONE,
       TP_POS,
       TP_VEL,
       TP_ATT,
@@ -124,6 +125,7 @@ private:
    int k_main;                  // Main loop counter
    int k_rs;                    // Restore Counter
    int n_rs;                    // Total Restore Counter
+   ros::Duration  t_last;
    ros::Duration  setpoint_dt_max;
    ros::Duration  checkup_dt_max;
    ros::Time      t_fs;
@@ -144,10 +146,12 @@ private:
 
    // Functions
    void land();
+
+   void sp_type_assign();
    void pub_sp_pos();
    void pub_sp_vel();
    void pub_sp_att();
-   void active_sp();
+   void pub_sp_active();
 };
 
 #endif

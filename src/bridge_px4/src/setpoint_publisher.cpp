@@ -32,7 +32,7 @@ SetpointPublisher::SetpointPublisher()
     mc_stream_state = MC_INIT;
     ob_mode_state   = OB_INIT;
     sp_stream_state = SP_INIT;
-    sp_type_state   = TP_INIT;
+    sp_type_state   = TP_NONE;
     ROS_INFO("State Machines Initialized.");
     ROS_INFO("SP_PUB_STATE: STARTUP");
 
@@ -178,7 +178,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         // Do State Tasks
         ROS_DEBUG("ACTIVE");
 
-        active_sp();
+        pub_sp_active();
 
         pose_sa.position = pose_curr.pose.position;
         pose_sa.orientation = quat_forward;
@@ -267,19 +267,10 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
 void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 
-    ros::Time t_now = ros::Time::now();
-    vector<double> delta_t(3, 0);
-
-    delta_t[0] = t_now.toSec() - pose_sp_in.header.stamp.toSec();
-    delta_t[1] = t_now.toSec() - vel_sp_in.header.stamp.toSec();
-    delta_t[2] = t_now.toSec() - att_sp_in.header.stamp.toSec();
-
-    int* idx;
-    idx = min_element(delta_t, delta_t+3);
-
-    if (t_active > setpoint_dt_max) {
+    sp_type_assign();
+    if (t_last > setpoint_dt_max) {
         if (sp_stream_state == SP_ON) {
-            ROS_INFO("Setpoint Stream Broken");
+            ROS_INFO("Setpoint Stream Broken/Incorrect");
         }
 
         ROS_DEBUG("Setpoint Stream Off");
@@ -292,6 +283,7 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
         sp_stream_state = SP_ON;
     }
 
+    ros::Time t_now = ros::Time::now();
     if ((t_now - pose_curr.header.stamp) > checkup_dt_max) {
         if (mc_stream_state == MC_ON) {
             ROS_INFO("MoCap Stream Broken");
@@ -317,6 +309,40 @@ void SetpointPublisher::land() {
     }
 }
 
+void SetpointPublisher::sp_type_assign() {
+    ros::Time t_now = ros::Time::now();
+    vector<double> delta_t(3, 0);
+
+    delta_t[0] = t_now.toSec() - pose_sp_in.header.stamp.toSec();
+    delta_t[1] = t_now.toSec() - vel_sp_in.header.stamp.toSec();
+    delta_t[2] = t_now.toSec() - att_sp_in.header.stamp.toSec();
+
+    int count = 0;
+    int idx = 0;
+    for (int i = 0 ; i<3 ; i++) {
+        if ( delta_t[i] < (1/sp_gcs_hz_min) ) {
+            count++;
+            idx = i;
+        }
+    }
+    
+    if (count != 1) {
+        t_last = ros::Duration(999);
+
+        sp_type_state = TP_NONE;
+    } else {
+        t_last = ros::Duration(delta_t[idx]);
+
+        if (idx = 0) {
+            sp_type_state = TP_POS;
+        } else if (idx = 1) {
+            sp_type_state = TP_VEL;
+        } else if (idx = 2) {
+            sp_type_state = TP_ATT;
+        }
+    }
+}
+
 void SetpointPublisher::pub_sp_pos() {
     pose_sp_out.header.stamp = ros::Time::now();
     pose_sp_out.header.seq   = k_main;
@@ -337,7 +363,7 @@ void SetpointPublisher::pub_sp_att() {
     att_sp_pub.publish(att_sp_out);
 }
 
-void SetpointPublisher::active_sp() {
+void SetpointPublisher::pub_sp_active() {
     switch (sp_type_state)
     {
     case TP_POS:
@@ -362,7 +388,7 @@ void SetpointPublisher::active_sp() {
     break;
     default:
     {
-        sp_stream_state == SP_OFF;
+        sp_stream_state = SP_OFF;
         ROS_INFO("STREAM TYPE UNKNOWN");
     }
     }
