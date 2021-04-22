@@ -67,6 +67,7 @@ private:
    } sp_stream_state;
 
    enum sp_type_state_machine {
+      TP_NONE,
       TP_POS,
       TP_VEL,
       TP_ATT,

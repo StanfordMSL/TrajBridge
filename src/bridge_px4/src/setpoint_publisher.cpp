@@ -32,7 +32,7 @@ SetpointPublisher::SetpointPublisher()
     mc_stream_state = MC_INIT;
     ob_mode_state   = OB_INIT;
     sp_stream_state = SP_INIT;
-    sp_type_state   = TP_INIT;
+    sp_type_state   = TP_NONE;
     ROS_INFO("State Machines Initialized.");
     ROS_INFO("SP_PUB_STATE: STARTUP");
 
@@ -274,8 +274,29 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     delta_t[1] = t_now.toSec() - vel_sp_in.header.stamp.toSec();
     delta_t[2] = t_now.toSec() - att_sp_in.header.stamp.toSec();
 
-    int* idx;
-    idx = min_element(delta_t, delta_t+3);
+    int count = 0;
+    int idx = 0;
+    for (int i = 1 ; i<3 ; i++) {
+        if ( delta_t[i] < (1/sp_gcs_hz_min) ) {
+            count++;
+            idx = i;
+        }
+    }
+    
+    ros::Duration t_active = ros::Duration(999);
+    if (count >= 1) {
+        sp_type_state = TP_NONE;
+    } else {
+        ros::Duration t_active = ros::Duration(delta_t[idx]);
+
+        if (idx = 0) {
+            sp_type_state = TP_POS;
+        } else if (idx = 1) {
+            sp_type_state = TP_VEL;
+        } else if (idx = 2) {
+            sp_type_state = TP_ATT;
+        }
+    }
 
     if (t_active > setpoint_dt_max) {
         if (sp_stream_state == SP_ON) {
