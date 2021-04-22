@@ -19,7 +19,7 @@ GCSVel::GCSVel()
     velocity_sp_pub = nh.advertise<geometry_msgs::Twist>(drone_topic_pub,1);
 
     ROS_INFO("ROS Publishers Initialized");
-    
+
     // Error terms
     err_x = 0.0;
     err_y = 0.0;
@@ -53,16 +53,17 @@ GCSVel::~GCSVel()
 }
 
 void GCSVel::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
+    // ROS_INFO("Pose Callback");
     pose_t_curr = *msg;
 }
 
 void GCSVel::compute_integral(double &integral_term, double prev_val, double curr_val, double dt_secs)
 {
+    // ROS_INFO("Comptue Integral");
     integral_term += (prev_val + curr_val)*dt_secs/2.0;
-
-    if (integral_term >= max_integral)     // account for windup
+    if (abs(integral_term) >= max_integral)     // account for windup
     {
-        integral_term = max_integral;
+        integral_term = copysign(max_integral, integral_term);
     }
 }
 
