@@ -9,6 +9,7 @@ GCSVel::GCSVel()
     ros::param::get("~ki", ki);
     ros::param::get("~kd", kd);
     ros::param::get("~max_integral", max_integral);
+    ros::param::get("~z_offset", z_offset);
 
     // ROS Initialization
     string drone_topic_sub = drone_id + "/mavros/vision_pose/pose";
@@ -88,7 +89,7 @@ void GCSVel::update_setpoint()
         // Compute errors
         err_x = pose_t_target.pose.position.x - pose_t_curr.pose.position.x;
         err_y = pose_t_target.pose.position.y - pose_t_curr.pose.position.y;
-        err_z = pose_t_target.pose.position.z - pose_t_curr.pose.position.z;
+        err_z = pose_t_target.pose.position.z + z_offset - pose_t_curr.pose.position.z;
 
         compute_integral(integral_x, err_x_prev, err_x, dt_secs);
         compute_integral(integral_y, err_y_prev, err_y, dt_secs);

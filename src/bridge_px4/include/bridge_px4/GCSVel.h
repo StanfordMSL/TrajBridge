@@ -46,6 +46,7 @@ private:
   double integral_z;
 
   double max_integral;
+  double z_offset;
   string drone_id;
   string target_id;
 
