@@ -2,10 +2,8 @@
    <arg name="t_final_in" default="60.0" />
    <node pkg="bridge_px4" type="GCSVel" name ="GCSVel" output="screen">
          <param name="t_final"      value="$(arg t_final_in)" />
-         <param name="drone_id"     value="drone6" />
-         <param name="hover_x"      value="0.0"/>
-         <param name="hover_y"      value="0.0"/>
-         <param name="hover_z"      value="1.0"/>
+         <param name="drone_id"     value="drone6"/>
+         <param name="target_id"    value="target1"/>
          <param name="kp"           value="1.5"/>
          <param name="ki"           value="0.0"/>
          <param name="kd"           value="0.0"/>

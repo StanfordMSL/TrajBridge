@@ -4,9 +4,7 @@ GCSVel::GCSVel()
 {
     ros::param::get("~t_final", t_final);
     ros::param::get("~drone_id", drone_id);
-    ros::param::get("~hover_x", hover_x);
-    ros::param::get("~hover_y", hover_y);
-    ros::param::get("~hover_z", hover_z);
+    ros::param::get("~target_id", target_id);
     ros::param::get("~kp", kp);
     ros::param::get("~ki", ki);
     ros::param::get("~kd", kd);
@@ -14,8 +12,11 @@ GCSVel::GCSVel()
 
     // ROS Initialization
     string drone_topic_sub = drone_id + "/mavros/vision_pose/pose";
-    string drone_topic_pub = drone_id + "/setpoint/velocity";
+    string target_topic_sub = target_id + "/mavros/vision_pose/pose";
+    string drone_topic_pub = drone_id + "/gcs/setpoint/velocity";
+
     pose_curr_sub = nh.subscribe(drone_topic_sub,1,&GCSVel::pose_curr_cb,this);
+    pose_target_sub = nh.subscribe(target_topic_sub,1,&GCSVel::pose_target_cb,this);
     vel_sp_pub = nh.advertise<geometry_msgs::TwistStamped>(drone_topic_pub,1);
 
     ROS_INFO("ROS Publishers Initialized");
@@ -57,6 +58,11 @@ void GCSVel::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     pose_t_curr = *msg;
 }
 
+void GCSVel::pose_target_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
+    // ROS_INFO("Pose Callback");
+    pose_t_target = *msg;
+}
+
 void GCSVel::compute_integral(double &integral_term, double prev_val, double curr_val, double dt_secs)
 {
     // ROS_INFO("Comptue Integral");
@@ -80,9 +86,9 @@ void GCSVel::update_setpoint()
     {
 
         // Compute errors
-        err_x = hover_x - pose_t_curr.pose.position.x;
-        err_y = hover_y - pose_t_curr.pose.position.y;
-        err_z = hover_z - pose_t_curr.pose.position.z;
+        err_x = pose_t_target.pose.position.x - pose_t_curr.pose.position.x;
+        err_y = pose_t_target.pose.position.y - pose_t_curr.pose.position.y;
+        err_z = pose_t_target.pose.position.z - pose_t_curr.pose.position.z;
 
         compute_integral(integral_x, err_x_prev, err_x, dt_secs);
         compute_integral(integral_y, err_y_prev, err_y, dt_secs);
