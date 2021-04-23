@@ -14,7 +14,7 @@ GCSVel::GCSVel()
 
     // ROS Initialization
     string drone_topic_sub = drone_id + "/mavros/vision_pose/pose";
-    string drone_topic_pub = drone_id + "/gcs/setpoint/velocity";
+    string drone_topic_pub = drone_id + "/setpoint/velocity";
     pose_curr_sub = nh.subscribe(drone_topic_sub,1,&GCSVel::pose_curr_cb,this);
     vel_sp_pub = nh.advertise<geometry_msgs::TwistStamped>(drone_topic_pub,1);
 

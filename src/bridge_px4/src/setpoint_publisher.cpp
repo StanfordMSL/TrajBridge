@@ -12,7 +12,7 @@ SetpointPublisher::SetpointPublisher()
     // ROS Initialization
     pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
     pose_sp_sub = nh.subscribe("setpoint/position",1,&SetpointPublisher::pose_sp_cb,this);    
-    vel_sp_pub  = nh.advertise<geometry_msgs::Twist>("mavros/setpoint_velocity/cmd_vel_unstamped ",1);
+    vel_sp_pub  = nh.advertise<geometry_msgs::Twist>("mavros/setpoint_velocity/cmd_vel_unstamped",1);
     vel_sp_sub  = nh.subscribe("setpoint/velocity",1,&SetpointPublisher::vel_sp_cb,this); 
     att_sp_pub  = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude",1);
     att_sp_sub  = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this); 
