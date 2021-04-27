@@ -14,7 +14,7 @@ GCSVel::GCSVel()
     // ROS Initialization
     string drone_topic_sub = drone_id + "/mavros/vision_pose/pose";
     string target_topic_sub = target_id + "/mavros/vision_pose/pose";
-    string drone_topic_pub = drone_id + "/gcs/setpoint/velocity";
+    string drone_topic_pub = drone_id + "/setpoint/velocity";
 
     pose_curr_sub = nh.subscribe(drone_topic_sub,1,&GCSVel::pose_curr_cb,this);
     pose_target_sub = nh.subscribe(target_topic_sub,1,&GCSVel::pose_target_cb,this);
@@ -66,11 +66,13 @@ void GCSVel::pose_target_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
 
 void GCSVel::compute_integral(double &integral_term, double prev_val, double curr_val, double dt_secs)
 {
-    // ROS_INFO("Comptue Integral");
-    integral_term += (prev_val + curr_val)*dt_secs/2.0;
-    if (abs(integral_term) >= max_integral)     // account for windup
+    ROS_INFO("Comptue Integral");
+    if ((integral_term >= max_integral && curr_val <= 0.0) ||
+        (integral_term <= -max_integral && curr_val >= 0.0) ||
+        (integral_term < max_integral && integral_term > -max_integral))     // account for windup
     {
-        integral_term = copysign(max_integral, integral_term);
+        // ROS_INFO("INCREASE INTEGRAL");
+        integral_term += (prev_val + curr_val)*dt_secs/2.0;
     }
 }
 
