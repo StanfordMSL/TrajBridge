@@ -4,9 +4,12 @@ GCSVelTraj::GCSVelTraj()
 {
     ros::param::get("~t_final", t_final);
     ros::param::get("~drone_id", drone_id);
-    ros::param::get("~kp", kp);
-    ros::param::get("~ki", ki);
-    ros::param::get("~kd", kd);
+    ros::param::get("~kp_lin", kp_lin);
+    ros::param::get("~ki_lin", ki_lin);
+    ros::param::get("~kd_lin", kd_lin);
+    ros::param::get("~kp_ang", kp_ang);
+    ros::param::get("~ki_ang", ki_ang);
+    ros::param::get("~kd_ang", kd_ang);
     ros::param::get("~max_integral", max_integral);
     ros::param::get("~traj_id", traj_id);
 
@@ -116,23 +119,23 @@ void GCSVelTraj::update_setpoint()
             compute_integral(integral_yaw, err_yaw_prev, err_yaw, dt_secs);
 
             // Velocity Setpoints
-            vel_sp.twist.linear.x = kp*err_x
-                               + ki*integral_x
-                               + kd*(err_x_prev - err_x)/dt_secs;
+            vel_sp.twist.linear.x = kp_lin*err_x
+                               + ki_lin*integral_x
+                               + kd_lin*(err_x_prev - err_x)/dt_secs;
 
-            vel_sp.twist.linear.y = kp*err_y
-                               + ki*integral_y
-                               + kd*(err_y_prev - err_y)/dt_secs;
+            vel_sp.twist.linear.y = kp_lin*err_y
+                               + ki_lin*integral_y
+                               + kd_lin*(err_y_prev - err_y)/dt_secs;
 
-            vel_sp.twist.linear.z = kp*err_z
-                               + ki*integral_z
-                               + kd*(err_z_prev - err_z)/dt_secs;
+            vel_sp.twist.linear.z = kp_lin*err_z
+                               + ki_lin*integral_z
+                               + kd_lin*(err_z_prev - err_z)/dt_secs;
 
             vel_sp.twist.angular = vel_angular;
 
-            vel_sp.twist.angular.z = kp*err_yaw
-                                   + ki*integral_yaw
-                                   + kd*(err_yaw_prev - err_yaw)/dt_secs;
+            vel_sp.twist.angular.z = kp_ang*err_yaw
+                                   + ki_ang*integral_yaw
+                                   + kd_ang*(err_yaw_prev - err_yaw)/dt_secs;
 
             // Assign previous time step errors
             err_x_prev = err_x;

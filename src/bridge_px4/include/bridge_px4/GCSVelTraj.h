@@ -51,13 +51,17 @@ private:
   // Trajectory Variables
   int                 n_fr;
   string              traj_id;
-  vector<double>           t_traj;
+  vector<double>             t_traj;
   vector< vector<double> >   st_traj;
 
   // Gains
-  double kp;
-  double ki;
-  double kd;
+  double kp_lin;
+  double ki_lin;
+  double kd_lin;
+
+  double kp_ang;
+  double ki_ang;
+  double kd_ang;
 
   double integral_x;
   double integral_y;
