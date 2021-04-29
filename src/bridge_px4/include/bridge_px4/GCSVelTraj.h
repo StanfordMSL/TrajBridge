@@ -62,6 +62,7 @@ private:
   double integral_x;
   double integral_y;
   double integral_z;
+  double integral_yaw;
 
   double max_integral;
   string drone_id;
@@ -70,10 +71,12 @@ private:
   double err_x;
   double err_y;
   double err_z;
+  double err_yaw;
 
   double err_x_prev;
   double err_y_prev;
   double err_z_prev;
+  double err_yaw_prev;
 
   // Time Variables
   double          t_end;      // end of single trajectory

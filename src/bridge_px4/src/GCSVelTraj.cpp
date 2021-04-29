@@ -30,18 +30,22 @@ GCSVelTraj::GCSVelTraj()
     err_x = 0.0;
     err_y = 0.0;
     err_z = 0.0;
+    err_yaw = 0.0;
+
     err_x_prev = 0.0;
     err_y_prev = 0.0;
     err_z_prev = 0.0;
+    err_yaw_prev = 0.0;
 
     // integral term
     integral_x = 0.0;
     integral_y = 0.0;
     integral_z = 0.0;
+    integral_yaw = 0.0;
 
-    vel_angular.x = 0;
-    vel_angular.y = 0;
-    vel_angular.z = 0;
+    vel_angular.x = 0.0;
+    vel_angular.y = 0.0;
+    vel_angular.z = 0.0;
 
     // Relevant Times
     t_start = ros::Time::now();
@@ -92,15 +96,26 @@ void GCSVelTraj::update_setpoint()
         ros::Duration t_loop = t_now - ros::Duration(k_loop*t_end);
         if ((k_traj < n_fr) && (t_loop > t_wp))
         {
-            // Compute errors
+            // Compute position errors
             err_x = st_traj[0][k_traj] - pose_t_curr.pose.position.x;
             err_y = st_traj[1][k_traj] - pose_t_curr.pose.position.y;
             err_z = st_traj[2][k_traj] - pose_t_curr.pose.position.z;
 
+            // Compute yaw error
+            double qw = pose_t_curr.pose.orientation.w;
+            double qx = pose_t_curr.pose.orientation.x;
+            double qy = pose_t_curr.pose.orientation.y;
+            double qz = pose_t_curr.pose.orientation.z;
+            double yaw_curr = atan2(2*(qw*qz + qx*qy), 1 - 2*(qy*qy + qz*qz));
+            err_yaw = st_traj[3][k_traj] - yaw_curr;
+
+            // Compute integral terms
             compute_integral(integral_x, err_x_prev, err_x, dt_secs);
             compute_integral(integral_y, err_y_prev, err_y, dt_secs);
             compute_integral(integral_z, err_z_prev, err_z, dt_secs);
+            compute_integral(integral_yaw, err_yaw_prev, err_yaw, dt_secs);
 
+            // Velocity Setpoints
             vel_sp.twist.linear.x = kp*err_x
                                + ki*integral_x
                                + kd*(err_x_prev - err_x)/dt_secs;
@@ -115,10 +130,15 @@ void GCSVelTraj::update_setpoint()
 
             vel_sp.twist.angular = vel_angular;
 
+            vel_sp.twist.angular.z = kp*err_yaw
+                                   + ki*integral_yaw
+                                   + kd*(err_yaw_prev - err_yaw)/dt_secs;
+
             // Assign previous time step errors
             err_x_prev = err_x;
             err_y_prev = err_y;
             err_z_prev = err_z;
+            err_yaw_prev = err_yaw;
 
             k_traj++;
         }
@@ -182,7 +202,7 @@ void GCSVelTraj::load_trajectory(const string& input)
         st_traj = vector< vector<double> >(4, vector<double>(n_fr));
         for (int i=1 ; i<rows ; i++) {
             for (int j=0 ; j<cols ; j++) {
-                st_traj[i][j] = parsedCsv[i][j];
+                st_traj[i-1][j] = parsedCsv[i][j];
             }
         }
     } else {
