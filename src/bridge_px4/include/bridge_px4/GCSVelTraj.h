@@ -30,9 +30,6 @@
 using namespace Eigen;
 using namespace std;
 
-// using OneD = vector<double>;
-// using TwoD = vector<vector<double>>;
-
 class GCSVelTraj
 {
 public:
