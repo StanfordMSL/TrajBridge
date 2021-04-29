@@ -151,6 +151,10 @@ add_executable(GCSVel src/GCSVel.cpp)
 target_link_libraries(GCSVel ${catkin_LIBRARIES})
 # add_dependencies(GCSVel bridge_px4_gencpp)
 
+add_executable(GCSVelTraj src/GCSVelTraj.cpp)
+target_link_libraries(GCSVelTraj ${catkin_LIBRARIES})
+# add_dependencies(GCSVelTraj bridge_px4_gencpp)
+
 add_executable(visualizer src/visualizer.cpp)
 target_link_libraries(visualizer ${catkin_LIBRARIES})
 
