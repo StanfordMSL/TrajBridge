@@ -3,7 +3,7 @@
 SetpointPublisher::SetpointPublisher()
 {
     ros::param::get("~sp_out_hz", sp_out_hz);
-    ros::param::get("~checkup_hz", checkup_hz);    
+    ros::param::get("~checkup_hz", checkup_hz);
     ros::param::get("~sp_gcs_hz_min", sp_gcs_hz_min);
     ros::param::get("~checkup_hz_min", checkup_hz_min);
     ros::param::get("~dt_fs", dt_fs);
@@ -11,11 +11,11 @@ SetpointPublisher::SetpointPublisher()
 
     // ROS Initialization
     pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
-    pose_sp_sub = nh.subscribe("setpoint/position",1,&SetpointPublisher::pose_sp_cb,this);    
+    pose_sp_sub = nh.subscribe("setpoint/position",1,&SetpointPublisher::pose_sp_cb,this);
     vel_sp_pub  = nh.advertise<geometry_msgs::Twist>("mavros/setpoint_velocity/cmd_vel_unstamped",1);
-    vel_sp_sub  = nh.subscribe("setpoint/velocity",1,&SetpointPublisher::vel_sp_cb,this); 
+    vel_sp_sub  = nh.subscribe("setpoint/velocity",1,&SetpointPublisher::vel_sp_cb,this);
     att_sp_pub  = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude",1);
-    att_sp_sub  = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this); 
+    att_sp_sub  = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this);
 
     pose_curr_sub = nh.subscribe("mavros/vision_pose/pose",1,&SetpointPublisher::pose_curr_cb,this);
     mav_state_sub = nh.subscribe("mavros/state",1,&SetpointPublisher::mav_state_cb,this);
@@ -79,11 +79,11 @@ void SetpointPublisher::mav_state_cb(const mavros_msgs::State::ConstPtr& msg){
     {
         ob_mode_state = OB_OFF;
     }
-    
+
 }
 
 void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
-{       
+{
     switch (sp_pub_state)
     {
     case STARTUP:
@@ -130,16 +130,16 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             land();
             sp_pub_state = STARTUP;
             ROS_INFO("SP_PUB_STATE: STARTUP");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) ) 
+        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
         {
             pose_sa.position.z = 1.0;
 
             sp_pub_state = HOVER;
             ROS_INFO("SP_PUB_STATE: HOVER");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_ON) ) 
+        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_ON) )
         {
             ROS_DEBUG("BOTH OB and SP are ON. Blocking state transform from LINKED to HOVER.");
-        } else 
+        } else
         {
             // Stay in State
         }
@@ -155,7 +155,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         pub_sp_pos();
 
         // State Transition
-        if (mc_stream_state == MC_OFF) 
+        if (mc_stream_state == MC_OFF)
         {
             land();
             sp_pub_state = STARTUP;
@@ -194,7 +194,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
             sp_pub_state = HOVER;
             ROS_INFO("SP_PUB_STATE: HOVER");
-        } else if (mc_stream_state == MC_OFF) 
+        } else if (mc_stream_state == MC_OFF)
         {
             pose_sa.position = pose_curr.pose.position;
             pose_sa.position.z = pose_sa.position.z-0.2;
@@ -205,7 +205,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             sp_pub_state = FAILSAFE;
             ROS_INFO("SP_PUB_STATE: FAILSAFE");
         } else {
-            // Stay in State            
+            // Stay in State
         }
 
     }
@@ -325,7 +325,7 @@ void SetpointPublisher::sp_type_assign() {
             idx = i;
         }
     }
-    
+
     if (count != 1) {
         t_last = ros::Duration(999);
 
@@ -374,7 +374,7 @@ void SetpointPublisher::pub_sp_active() {
     break;
     case TP_VEL:
     {
-        vel_sp_out.linear = vel_sp_in.twist.linear;
+        vel_sp_out = vel_sp_in.twist;
         pub_sp_vel();
     }
     break;
