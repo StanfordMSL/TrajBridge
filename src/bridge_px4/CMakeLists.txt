@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(bridge_px4)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -128,6 +128,10 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/bridge-px4.cpp
 # )
+## Declare a C++ library
+add_library(libpid
+  src/pid.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -157,6 +161,9 @@ target_link_libraries(GCSVelTraj ${catkin_LIBRARIES})
 
 add_executable(visualizer src/visualizer.cpp)
 target_link_libraries(visualizer ${catkin_LIBRARIES})
+
+add_executable(controller src/velocity_controller.cpp)
+target_link_libraries(controller libpid ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
