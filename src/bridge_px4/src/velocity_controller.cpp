@@ -14,8 +14,8 @@ Controller::Controller(){
 // retrieve ROS parameter
   // topic names
   ros::param::param<std::string>(
-    "~targetPose_topic", targetPose_topic, "command/pose"); 
-  
+    "~targetPose_topic", targetPose_topic, "command/pose");
+
   ros::param::param<std::string>(
     "~targetTwist_topic", targetTwist_topic, "command/twist");
 
@@ -24,7 +24,7 @@ Controller::Controller(){
 
   // timer frequenceies
   ros::param::param<double>(
-    "~setpointFreq", setpointFreq_, 100.0);  
+    "~setpointFreq", setpointFreq_, 100.0);
 
   // pid paramters
   setParameters();
@@ -48,7 +48,7 @@ Controller::Controller(){
       setpointTwist_topic, 1);
 
 
-  // wait for initial 
+  // wait for initial
   while (ros::ok() && _targetPoseSp.header.seq < 10) {
       std::cout << "waiting for initial command." << std::endl;
       ros::spinOnce();
@@ -100,29 +100,45 @@ void Controller::setpointLoopCB(const ros::TimerEvent& event){
   _publishTime = ros::Time::now();
 
   // run pid and update setpoints
-  // x 
+  // x
   _setpointTwistSp.twist.linear.x = _controller.x.effort(
     _currentPoseSp.pose.position.x,
     _targetPoseSp.pose.position.x,
     dt,
     _targetTwistSp.twist.linear.x);
-  // y  
+  // y
   _setpointTwistSp.twist.linear.y = _controller.y.effort(
     _currentPoseSp.pose.position.y,
     _targetPoseSp.pose.position.y,
     dt,
     _targetTwistSp.twist.linear.y);
-    // z 
+    // z
   _setpointTwistSp.twist.linear.z = _controller.z.effort(
     _currentPoseSp.pose.position.z,
     _targetPoseSp.pose.position.z,
     dt,
     _targetTwistSp.twist.linear.z);
+  // yaw
+  _currentYaw = getYawAngle(_currentPoseSp);
+  _targetYaw  = getYawAngle(_targetPoseSp);
+
+  _setpointTwistSp.twist.angular.z = _controller.yaw.effort(
+    _currentYaw,
+    _targetYaw,
+    dt,
+    _targetTwistSp.twist.angular.z);
 
   _setpointTwist_pub.publish(_targetTwistSp);
 
 }
 
+float Controller::getYawAngle(const geometry_msgs::PoseStamped& msg){
+    float qw = msg.pose.orientation.w;
+    float qx = msg.pose.orientation.x;
+    float qy = msg.pose.orientation.y;
+    float qz = msg.pose.orientation.z;
+    return atan2(2*(qw*qz + qx*qy), 1 - 2*(qy*qy + qz*qz));
+}
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "controller");

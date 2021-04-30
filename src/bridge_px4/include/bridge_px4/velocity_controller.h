@@ -61,11 +61,16 @@ private:
     ros::Subscriber _targetTwist_sub;
     void targetTwistCB(const geometry_msgs::TwistStamped& msg);
 
+    // yaw
+    float _currentYaw;
+    float _targetYaw;
+    float getYawAngle(const geometry_msgs::PoseStamped& msg);
+
     // ros pubs
     ros::Publisher _setpointTwist_pub;
 
     double setpointFreq_;
-    ros::Timer setpointTimer_; 
+    ros::Timer setpointTimer_;
     void setpointLoopCB(const ros::TimerEvent& event);
 };
 
