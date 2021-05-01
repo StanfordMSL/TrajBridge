@@ -2,14 +2,6 @@
    <arg name="t_final_in" default="16.0" />
    <node pkg="bridge_px4" type="GCSVelTraj" name ="GCSVelTraj" output="screen">
          <param name="t_final"      value="$(arg t_final_in)" />
-         <param name="drone_id"     value="drone1"/>
-         <param name="kp_lin"           value="1.0"/>
-         <param name="ki_lin"           value="0.0"/>
-         <param name="kd_lin"           value="0.0"/>
-         <param name="kp_ang"           value="0.1"/>
-         <param name="ki_ang"           value="0.0"/>
-         <param name="kd_ang"           value="0.0"/>
-         <param name="max_integral" value="1.0"/>
          <param name="traj_id"      value="$(find bridge_px4)/trajectories/long_line_slow.csv"/>
    </node>
 </launch>
