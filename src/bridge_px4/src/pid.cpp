@@ -8,7 +8,7 @@
   Description  : generic PID class with feed forward support 
 **************************************************************************/
 
-#include<bridge_px4/pid.h>
+#include<carp_ros/pid.h>
 #include<iostream>
 #include<exception>
 
@@ -47,6 +47,9 @@ float PID::effort(float state, float setpoint, float dt, float feedforward){
     _iValue = _k.i * updateIntegral();
     // d
     _dValue = _k.d * (_error - _prevError)/dt;
+    std::cout << " P: "_pValue;
+    std::cout << " I: "_iValue;
+    std::cout << " D: "_dValue << std::endl;
 
     return _pValue + _iValue + _dValue + feedforward;
 }
