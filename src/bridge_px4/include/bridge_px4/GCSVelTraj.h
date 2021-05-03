@@ -5,7 +5,7 @@
                  Multi-Robot Systems Lab (MSL), Stanford University
   Contact      : knagami@stanford.edu
   Create Time  : Apr 28, 2020.
-  Description  : Based on GCS. Publish trajectory waypoints. 
+  Description  : Based on GCS. Publish trajectory waypoints.
 **************************************************************************/
 
 #ifndef __GCSVelTraj_H__
@@ -48,6 +48,7 @@ private:
   // Trajectory Variables
   int                 n_fr;
   string              traj_id;
+  string              drone_id;
   vector<double>             t_traj;
   vector< vector<double> >   st_traj;
 

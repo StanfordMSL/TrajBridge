@@ -4,6 +4,7 @@ GCSVelTraj::GCSVelTraj()
 {
     ros::param::get("~t_final", t_final);
     ros::param::get("~traj_id", traj_id);
+    ros::param::get("~drone_id", drone_id);
 
     load_trajectory(traj_id);
 
@@ -13,8 +14,8 @@ GCSVelTraj::GCSVelTraj()
     ROS_INFO("Trajectory Loaded");
 
     // ROS Initialization
-    string targetPose_topic = "command/pose";
-    string targetTwist_topic = "command/twist";
+    string targetPose_topic = drone_id + "/command/pose";
+    string targetTwist_topic = drone_id + "/command/twist";
     pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>(targetPose_topic,1);
     vel_sp_pub = nh.advertise<geometry_msgs::TwistStamped>(targetTwist_topic,1);
 
@@ -85,13 +86,13 @@ void GCSVelTraj::update_setpoint()
         // Publish Pose
         pose_sp.header.stamp = t_stamp;
         pose_sp.header.seq = k_main;
-        pose_sp.header.frame_id = "world";
+        pose_sp.header.frame_id = "map";
         pose_sp_pub.publish(pose_sp);
 
         // Publish Twist
         vel_sp.header.stamp = t_stamp;
         vel_sp.header.seq = k_main;
-        vel_sp.header.frame_id = "world";
+        vel_sp.header.frame_id = "map";
         vel_sp_pub.publish(vel_sp);
 
         k_main++;
