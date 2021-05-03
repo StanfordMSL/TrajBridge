@@ -128,6 +128,8 @@ void Controller::setpointLoopCB(const ros::TimerEvent& event){
     dt,
     _targetTwistSp.twist.angular.z);
 
+  _setpointTwistSp.header.stamp = _publishTime;
+  _setpointTwistSp.header.frame_id = "map";
   _setpointTwist_pub.publish(_targetTwistSp);
 
 }
