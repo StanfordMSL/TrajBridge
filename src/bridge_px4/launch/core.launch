@@ -7,7 +7,7 @@
       server: $(arg server)
       port: 3883
       update_frequency: 100.0
-      frame_id: world
+      frame_id: map
       use_server_time: false
       broadcast_tf: true
       refresh_tracker_frequency: 1.0
