@@ -130,7 +130,7 @@ void Controller::setpointLoopCB(const ros::TimerEvent& event){
 
   _setpointTwistSp.header.stamp = _publishTime;
   _setpointTwistSp.header.frame_id = "map";
-  _setpointTwist_pub.publish(_targetTwistSp);
+  _setpointTwist_pub.publish(_setpointTwistSp);
 
 }
 
