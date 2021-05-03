@@ -16,7 +16,7 @@
     <arg name="integralLimit" default="1.0"/>
    
     <group ns="$(arg ns)">
-        <node pkg="carp_ros" type="controller" name="controller" output="screen">
+        <node pkg="bridge_px4" type="controller" name="controller" output="screen">
             <param name="targetPose_topic" value="$(arg targetPose_topic)"/>
             <param name="targetTwist_topic" value="$(arg targetTwist_topic)"/>
             <param name="setpointFreq" value="$(arg setpointFreq)"/>
