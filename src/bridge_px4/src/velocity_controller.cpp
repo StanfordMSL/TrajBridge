@@ -138,10 +138,10 @@ void Controller::setpointLoopCB(const ros::TimerEvent& event){
 }
 
 float Controller::getYawAngle(const geometry_msgs::PoseStamped& msg){
-    float qw = msg.pose.orientation.w;
-    float qx = msg.pose.orientation.x;
-    float qy = msg.pose.orientation.y;
-    float qz = msg.pose.orientation.z;
+    const float qw = msg.pose.orientation.w;
+    const float qx = msg.pose.orientation.x;
+    const float qy = msg.pose.orientation.y;
+    const float qz = msg.pose.orientation.z;
     return atan2(2*(qw*qz + qx*qy), 1 - 2*(qy*qy + qz*qz));
 }
 
