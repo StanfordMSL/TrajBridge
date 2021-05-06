@@ -36,7 +36,7 @@ float PID::effort(float state, float setpoint, float dt, float feedforward){
     _prevError = _error;
     _error = setpoint - state;
     _dt = dt;
-    std::cout << "error: " << _error <<std::endl;
+    // std::cout << "error: " << _error <<std::endl;
     if (_dt == 0.0f){
         throw std::runtime_error("dt is zero");
     }
@@ -48,9 +48,9 @@ float PID::effort(float state, float setpoint, float dt, float feedforward){
     _iValue = _k.i * updateIntegral();
     // d
     _dValue = _k.d * (_error - _prevError)/dt;
-    std::cout << " P: " << _pValue;
-    std::cout << " I: " << _iValue;
-    std::cout << " D: " << _dValue << std::endl;
+    // std::cout << " P: " << _pValue;
+    // std::cout << " I: " << _iValue;
+    // std::cout << " D: " << _dValue << std::endl;
 
     return _pValue + _iValue + _dValue + feedforward;
 }

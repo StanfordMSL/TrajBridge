@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+ <node pkg="rosbag" type="record" name="rosbag_record_diag"
+       args="record -o pid/ drone6/mavros/vision_pose/pose /drone6/mavros/local_position/pose /drone6/command/pose drone6/command/twist /drone6/setpoint/velocity"/>   
+</launch>
