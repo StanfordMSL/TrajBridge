@@ -22,6 +22,9 @@ Controller::Controller(){
   ros::param::param<std::string>(
     "~setpointTwist_topic", setpointTwist_topic, "setpoint/velocity");
 
+    ros::param::param<std::string>(
+      "~currentPose_topic", currentPose_topic, "mavros/vision_pose/pose");
+
   // timer frequenceies
   ros::param::param<double>(
     "~setpointFreq", setpointFreq_, 100.0);
@@ -31,7 +34,7 @@ Controller::Controller(){
 
   // ROS subs
   _currentPose_sub = _nh.subscribe(
-    "mavros/local_position/pose", 1,
+    currentPose_topic, 1,
     &Controller::currentPoseCB, this);
 
   _targetPose_sub = _nh.subscribe(
