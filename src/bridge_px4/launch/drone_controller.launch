@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<launch>
-    <include file ="$(find bridge_px4)/launch/drone.launch"/>
-    <include file ="$(find bridge_px4)/launch/controller.launch"/>
-</launch>
