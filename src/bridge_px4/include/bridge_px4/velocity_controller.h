@@ -34,6 +34,7 @@ public:
     // topic names: incoming pose and twist
     std::string targetPose_topic;
     std::string targetTwist_topic;
+    std::string currentPose_topic;
 
 private:
     // ros
