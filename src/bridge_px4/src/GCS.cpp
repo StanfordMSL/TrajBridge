@@ -15,7 +15,7 @@ GCS::GCS()
 
     // ROS Initialization
     for (int i=0; i<n_dr; i++) {
-        string drone_topic = "drone" + to_string(i+1) + "/setpoint/pose";
+        string drone_topic = "drone" + to_string(i+1) + "/setpoint/position";
         pose_sp_pub[i] = nh.advertise<geometry_msgs::PoseStamped>(drone_topic,1);
     }
     ROS_INFO("ROS Publishers Initialized");
