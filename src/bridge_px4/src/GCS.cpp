@@ -6,7 +6,7 @@ GCS::GCS()
     ros::param::get("~t_final", t_final);
 
     load_trajectory(traj_id);
-    
+
     n_dr = st_traj.size();
     n_fr = st_traj[0][0].size();
     t_end   = t_traj[n_fr-1];
@@ -15,7 +15,7 @@ GCS::GCS()
 
     // ROS Initialization
     for (int i=0; i<n_dr; i++) {
-        string drone_topic = "drone" + to_string(i+1) + "/gcs/setpoint/pose";
+        string drone_topic = "drone" + to_string(i+1) + "/setpoint/pose";
         pose_sp_pub[i] = nh.advertise<geometry_msgs::PoseStamped>(drone_topic,1);
     }
     ROS_INFO("ROS Publishers Initialized");
@@ -95,12 +95,12 @@ void GCS::update_setpoint()
 }
 
 void GCS::load_trajectory(const string& input)
-{   
+{
     ifstream data(input);
     if (data.is_open()) {
         int rows = 0;
         int cols = 0;
-        
+
         string line;
         vector<vector<double>> parsedCsv;
 
@@ -112,7 +112,7 @@ void GCS::load_trajectory(const string& input)
             while(getline(lineStream,cell,','))
             {
                 parsedRow.push_back(stod(cell));
-            
+
                 if (rows == 0) {
                     cols += 1;
                 }
@@ -142,7 +142,7 @@ void GCS::load_trajectory(const string& input)
     } else {
         cout << "Trajectory does not exist." << endl;
     }
-    
+
     return;
 }
 
@@ -155,7 +155,7 @@ int main(int argc, char **argv)
     ros::Rate rate(100);
     while(ros::ok()){
         gcs.update_setpoint();
-        
+
         ros::spinOnce();
         rate.sleep();
     }
