@@ -333,11 +333,11 @@ void SetpointPublisher::sp_type_assign() {
     } else {
         t_last = ros::Duration(delta_t[idx]);
 
-        if (idx = 0) {
+        if (idx == 0) {
             sp_type_state = TP_POS;
-        } else if (idx = 1) {
+        } else if (idx == 1) {
             sp_type_state = TP_VEL;
-        } else if (idx = 2) {
+        } else if (idx == 2) {
             sp_type_state = TP_ATT;
         }
     }

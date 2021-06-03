@@ -55,7 +55,7 @@ Controller::Controller(){
   while (ros::ok() && _targetPoseSp.header.seq < 10) {
       std::cout << "waiting for initial command." << std::endl;
       ros::spinOnce();
-      ros::Duration(1.0).sleep();
+      // ros::Duration(1.0).sleep();
   }
   _publishTime = ros::Time::now();
 
