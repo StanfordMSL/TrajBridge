@@ -2,7 +2,9 @@
 
 <launch>
     <!-- quad name -->
-    <arg name="ns"  default="$(env HOSTNAME)"/>
+    <!-- <arg name="ns"  default="$(env HOSTNAME)"/> -->
+    <!-- GAZEBO: -->
+    <arg name="ns"  default="drone2"/>
     <!-- topic names -->
     <arg name="targetPose_topic" default="command/pose"/>
     <arg name="targetTwist_topic" default="command/twist"/>

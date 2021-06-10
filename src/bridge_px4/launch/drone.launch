@@ -1,9 +1,18 @@
 <launch>
-   <arg name="hostname" default="$(env HOSTNAME)" />
+    <!-- HARDWARE: -->
+   <!-- <arg name="hostname" default="$(env HOSTNAME)" /> -->
+   <!-- GAZEBO: -->
+   <arg name="hostname" default="drone2" />
+
    <group ns="$(arg hostname)">
+
+   <!-- GAZEBO: -->
+   <node pkg="bridge_px4" type="mocap_gen" name ="mocap_gen" output="screen">
+     </node>
+
    	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
 	      <param name="sp_out_hz" value="200.0"/>
-         <param name="checkup_hz" value="10.0"/>
+         <param name="checkup_hz" value="200.0"/>
          <param name="sp_gcs_hz_min" value="5.0"/>
          <param name="checkup_hz_min" value="5.0"/>
          <param name="dt_fs" value="3.0"/>
@@ -15,7 +24,12 @@
          <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
          <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
 
-         <arg name="fcu_url" value="/dev/ttyS4:921600" />
+         <!-- HARDWARE: -->
+         <!-- <arg name="fcu_url" value="/dev/ttyS4:921600" /> -->
+
+         <!-- GAZEBO: -->
+         <arg name="fcu_url" value="udp://:14540@hostname:14580" />
+
          <arg name="gcs_url" value="" />
          <arg name="tgt_system" value="1" />
          <arg name="tgt_component" value="1" />

@@ -165,6 +165,9 @@ target_link_libraries(visualizer ${catkin_LIBRARIES})
 add_executable(controller src/velocity_controller.cpp)
 target_link_libraries(controller libpid ${catkin_LIBRARIES})
 
+add_executable(mocap_gen src/mocap_gen.cpp)
+target_link_libraries(mocap_gen ${catkin_LIBRARIES})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

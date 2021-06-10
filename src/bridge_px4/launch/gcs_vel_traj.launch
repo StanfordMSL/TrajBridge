@@ -1,8 +1,8 @@
 <launch>
-   <arg name="t_final_in" default="5.15" />
+   <arg name="t_final_in" default="10.0" />
    <node pkg="bridge_px4" type="GCSVelTraj" name ="GCSVelTraj" output="screen">
          <param name="t_final"      value="$(arg t_final_in)" />
-         <param name="traj_id"      value="$(find bridge_px4)/trajectories/pos_vel.csv"/>
+         <param name="traj_id"      value="$(find bridge_px4)/trajectories/sine_velctrl.csv"/>
          <param name="drone_id"     value="drone2"/>
    </node>
 </launch>
