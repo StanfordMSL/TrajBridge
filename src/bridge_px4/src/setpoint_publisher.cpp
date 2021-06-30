@@ -270,7 +270,7 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     sp_type_assign();
     if (t_last > setpoint_dt_max) {
         if (sp_stream_state == SP_ON) {
-            ROS_INFO("Setpoint Stream Broken/Incorrect");
+            ROS_INFO("Setpoint Stream Stopped");
         }
 
         ROS_DEBUG("Setpoint Stream Off");
@@ -366,6 +366,12 @@ void SetpointPublisher::pub_sp_att() {
 void SetpointPublisher::pub_sp_active() {
     switch (sp_type_state)
     {
+    case TP_NONE:
+    {
+        sp_stream_state = SP_OFF;
+        ROS_INFO("Trajectory Complete/Stopped");
+    }
+    break;
     case TP_POS:
     {
         pose_sp_out.pose = pose_sp_in.pose;

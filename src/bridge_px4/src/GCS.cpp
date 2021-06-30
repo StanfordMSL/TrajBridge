@@ -2,23 +2,25 @@
 
 GCS::GCS()
 {
+    ros::param::get("~auto_rc_trig", auto_rc_trig);
     ros::param::get("~traj_id", traj_id);
     ros::param::get("~t_final", t_final);
 
+    // Trajectory Initialization
     load_trajectory(traj_id);
 
     n_dr = st_traj.size();
     n_fr = st_traj[0][0].size();
     t_end   = t_traj[n_fr-1];
-
-    ROS_INFO("Trajectory Loaded");
+    ROS_INFO("Trajectory Initialized");
 
     // ROS Initialization
-    for (int i=0; i<n_dr; i++) {
-        string drone_topic = "drone" + to_string(i+1) + "/setpoint/position";
-        pose_sp_pub[i] = nh.advertise<geometry_msgs::PoseStamped>(drone_topic,1);
+    if (auto_rc_trig == true)
+    {
+        rc_takeoff_sequence(n_dr);
     }
-    ROS_INFO("ROS Publishers Initialized");
+    pos_sp_init(n_dr);
+    ROS_INFO("ROS Components Initialized.");
 
     // Counters and Time Initialization
     k_main = 0;
@@ -26,7 +28,6 @@ GCS::GCS()
     k_loop = 0;
 
     t_start = ros::Time::now();
-
     ROS_INFO("Counters Initialized.");
 }
 
@@ -90,7 +91,12 @@ void GCS::update_setpoint()
     }
     else
     {
-        // Don't publish anymore.
+        // Trajectory Complete
+        if (auto_rc_trig == true)
+        {
+            auto_rc_trig = false;
+            rc_rtl_sequence(n_dr);
+        }
     }
 }
 
@@ -144,6 +150,90 @@ void GCS::load_trajectory(const string& input)
     }
 
     return;
+}
+
+void GCS::rc_takeoff_sequence(const int &n_dr)
+{
+    mavros_msgs::SetMode set_mode;
+    mavros_msgs::CommandBool arm_cmd;
+    string drones = "";
+    string output_msg = "";
+
+    for (int i=0; i<n_dr; i++) {
+        string set_mode_topic = "drone" + to_string(i+1) + "/mavros/set_mode";
+        string arming_topic = "drone" + to_string(i+1) + "/mavros/cmd/arming";
+
+        arming_client[i] = nh.serviceClient<mavros_msgs::CommandBool>(arming_topic);
+        set_mode_client[i] = nh.serviceClient<mavros_msgs::SetMode>(set_mode_topic);
+    }
+
+    drones = "";
+    set_mode.request.custom_mode = "POSCTL";
+    for (int i=0; i<n_dr; i++) {
+        if (set_mode_client[i].call(set_mode) && set_mode.response.mode_sent)
+        {
+            drones = drones + "||" + to_string(i+1) + "||";
+        }
+    }
+    output_msg = "Drones " + drones + " Switched to POSCTL.";
+    ROS_INFO_STREAM(output_msg);
+    ros::Duration(1.0).sleep();
+
+    drones = "";
+    set_mode.request.custom_mode = "OFFBOARD";
+    for (int i=0; i<n_dr; i++) {
+        if (set_mode_client[i].call(set_mode) && set_mode.response.mode_sent)
+        {
+            drones = drones + "||" + to_string(i+1) + "||";
+        }
+    }
+    output_msg = "Drones " + drones + " Switched to OFFBOARD.";
+    ROS_INFO_STREAM(output_msg);
+    ros::Duration(1.0).sleep();
+    
+    drones = "";
+    arm_cmd.request.value = true;
+    for (int i=0; i<n_dr; i++) {
+        if (arming_client[i].call(arm_cmd) && arm_cmd.response.success)
+        {
+            drones = drones + "||" + to_string(i+1) + "||";
+        }
+    }
+    output_msg = "Drones " + drones + " ARMED. Taking Off.";
+    ROS_INFO_STREAM(output_msg);
+    ros::Duration(5.0).sleep();
+}
+
+void GCS::rc_rtl_sequence(const int &n_dr)
+{
+    mavros_msgs::SetMode set_mode;
+    string drones = "";
+    string output_msg = "";
+
+    for (int i=0; i<n_dr; i++) {
+        string set_mode_topic = "drone" + to_string(i+1) + "/mavros/set_mode";
+        set_mode_client[i] = nh.serviceClient<mavros_msgs::SetMode>(set_mode_topic);
+    }
+
+    drones = "";
+    set_mode.request.custom_mode = "AUTO.RTL";
+    for (int i=0; i<n_dr; i++) {
+        if (set_mode_client[i].call(set_mode) && set_mode.response.mode_sent)
+        {
+            drones = drones + "||" + to_string(i+1) + "||";
+        }
+    }
+    output_msg = "Drones " + drones + " Trajectory Complete. Triggering RTL.";
+    ROS_INFO_STREAM(output_msg);
+}
+
+void GCS::pos_sp_init(const int &n_dr) {
+    for (int i=0; i<n_dr; i++) {
+        string drone_name = "drone" + to_string(i+1);
+        string pos_topic = drone_name + "/setpoint/position";
+
+        pose_sp_pub[i] = nh.advertise<geometry_msgs::PoseStamped>(pos_topic,1);
+    }
 }
 
 int main(int argc, char **argv)
