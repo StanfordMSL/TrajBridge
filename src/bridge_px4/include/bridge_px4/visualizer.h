@@ -12,7 +12,12 @@
 
 #include "ros/ros.h"
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <string>
+#include <vector>
+
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 
@@ -22,6 +27,9 @@
 
 using namespace Eigen;
 using namespace std;
+
+using OneD = vector<double>;
+using ThreeD = vector<vector<vector<double>>>;
 
 class Visualizer
 {
@@ -37,11 +45,14 @@ protected:
   ros::NodeHandle nh;
 
 private:
-  int n_dr;
+  string traj_id;
   double dt;
   double t_hist;
+  int n_dr;
   int n_fr;
-  
+  OneD    t_traj;
+  ThreeD st_traj;
+
   // ROS variables  
   geometry_msgs::PoseStamped pose_des[10];
   geometry_msgs::PoseStamped pose_act[10];
@@ -59,6 +70,9 @@ private:
   void act_cb(const geometry_msgs::PoseStamped::ConstPtr& msg, const int idx);
 
   void update_cb(const ros::TimerEvent& event);
+
+  // Functions
+  void load_trajectory(const string &input);
 };
 
 #endif

@@ -10,10 +10,14 @@
 
 Visualizer::Visualizer()
 {
-  ros::param::get("~n_dr", n_dr);
+  ros::param::get("~traj_id", traj_id);
   ros::param::get("~dt", dt);    
   ros::param::get("~t_hist", t_hist);
 
+  // Trajectory Initialization
+  load_trajectory(traj_id);
+
+  n_dr = st_traj.size();
   n_fr = t_hist/dt;
 
   for (int i=0; i<n_dr; i++) {
@@ -52,9 +56,9 @@ void Visualizer::update_cb(const ros::TimerEvent& event) {
   {
     // Generate Headers
     path_act[i].header.stamp = t_stamp;
-    path_act[i].header.frame_id = "world";
+    path_act[i].header.frame_id = "map";
     path_des[i].header.stamp = t_stamp;
-    path_des[i].header.frame_id = "world";
+    path_des[i].header.frame_id = "map";
 
     // Update Paths
     path_des[i].poses.push_back(pose_des[i]);
@@ -72,6 +76,58 @@ void Visualizer::update_cb(const ros::TimerEvent& event) {
     path_des_pub[i].publish(path_des[i]);
     path_act_pub[i].publish(path_act[i]);
   }
+}
+
+void Visualizer::load_trajectory(const string& input)
+{
+    ifstream data(input);
+    if (data.is_open()) {
+        int rows = 0;
+        int cols = 0;
+
+        string line;
+        vector<vector<double>> parsedCsv;
+
+        while(getline(data,line))
+        {
+            stringstream lineStream(line);
+            string cell;
+            vector<double> parsedRow;
+            while(getline(lineStream,cell,','))
+            {
+                parsedRow.push_back(stod(cell));
+
+                if (rows == 0) {
+                    cols += 1;
+                }
+            }
+            parsedCsv.push_back(parsedRow);
+            rows += 1;
+        }
+
+        int n_dr = (rows-1)/4;
+        int n_fr = cols;
+        int k_dr, k_st;
+
+        t_traj = vector<double>(n_fr);
+        for (int i=1 ; i<cols ; i++) {
+            t_traj[i] = parsedCsv[0][i];
+        }
+
+        st_traj = vector<vector<vector<double>>>(n_dr, vector<vector<double>>(4, vector<double>(n_fr)));
+        for (int i=1 ; i<rows ; i++) {
+            for (int j=0 ; j<cols ; j++) {
+                k_dr = floor((i-1)/4);
+                k_st = (i-1)-(k_dr*4);
+
+                st_traj[k_dr][k_st][j] = parsedCsv[i][j];
+            }
+        }
+    } else {
+        cout << "Trajectory does not exist." << endl;
+    }
+
+    return;
 }
 
 int main(int argc, char **argv)
