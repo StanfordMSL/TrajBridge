@@ -1,8 +1,0 @@
-<launch>
-   <node pkg="rosservice" type="rosservice" name="stab_set" args="call --wait /drone1/mavros/set_mode 0 STABILIZED"/>
-
-   <node pkg="rosservice" type="rosservice" name="offb_set" args="call --wait /drone1/mavros/set_mode 0 OFFBOARD"/>
-
-   <node pkg="rosservice" type="rosservice" name="arm_set" args="call --wait /drone1/mavros/cmd/arming true"/>
-
-</launch>
