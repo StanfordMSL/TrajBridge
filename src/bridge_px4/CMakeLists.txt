@@ -160,14 +160,14 @@ add_executable(GCSVelTraj src/GCSVelTraj.cpp)
 target_link_libraries(GCSVelTraj ${catkin_LIBRARIES})
 # add_dependencies(GCSVelTraj bridge_px4_gencpp)
 
-add_executable(visualizer src/visualizer.cpp)
-target_link_libraries(visualizer ${catkin_LIBRARIES})
-
 add_executable(controller src/velocity_controller.cpp)
 target_link_libraries(controller libpid ${catkin_LIBRARIES})
 
 add_executable(mocap_gen src/mocap_gen.cpp)
 target_link_libraries(mocap_gen ${catkin_LIBRARIES})
+
+add_executable(auto_rc src/auto_rc.cpp)
+target_link_libraries(auto_rc ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -25,6 +25,8 @@
       <arg name="respawn_mavros" default="false" />
 	</include>
 
+   <node pkg="bridge_px4" type="auto_rc" name ="auto_rc" output="screen">
+   </node>
 
    </group>
 
