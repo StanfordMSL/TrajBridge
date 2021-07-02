@@ -335,10 +335,13 @@ void SetpointPublisher::sp_type_assign() {
 
         if (idx == 0) {
             sp_type_state = TP_POS;
+            //ROS_INFO("Target POSITION Mode");
         } else if (idx == 1) {
             sp_type_state = TP_VEL;
+            //ROS_INFO("Target VELOCITY Mode");
         } else if (idx == 2) {
             sp_type_state = TP_ATT;
+            //ROS_INFO("Target ATTITUDE Mode");
         }
     }
 }
@@ -358,7 +361,7 @@ void SetpointPublisher::pub_sp_vel() {
 void SetpointPublisher::pub_sp_att() {
     att_sp_out.header.stamp = ros::Time::now();
     att_sp_out.header.seq   = k_main;
-    att_sp_out.header.frame_id = "world";
+    att_sp_out.header.frame_id = "map";
 
     att_sp_pub.publish(att_sp_out);
 }
@@ -386,6 +389,7 @@ void SetpointPublisher::pub_sp_active() {
     break;
     case TP_ATT:
     {
+        att_sp_out.type_mask = att_sp_in.type_mask;
         att_sp_out.body_rate = att_sp_in.body_rate;
         att_sp_out.orientation = att_sp_in.orientation;
         att_sp_out.thrust = att_sp_in.thrust;
