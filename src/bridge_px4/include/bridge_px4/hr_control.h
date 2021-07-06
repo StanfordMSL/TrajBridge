@@ -1,4 +1,3 @@
-
 /**************************************************************************
   File Name    : hr_control.h
   Author       : JunEn Low
@@ -12,13 +11,14 @@
 #define __HR_CONTROL_H__
 
 #include "ros/ros.h"
-#include "bridge_px4/traj_transfer.h"
+#include "bridge_px4/TrajTransfer.h"
 
 #include "std_msgs/Float32MultiArray.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "mavros_msgs/AttitudeTarget.h"
 #include <Eigen/Dense>
+#include <numeric>
 
 using namespace Eigen;
 using namespace std;
@@ -36,7 +36,7 @@ public:
   HR_Control();
   virtual ~HR_Control();
 
-  bool traj_transfer(bridge_px4::traj_transfer::Request& req,bridge_px4::traj_transfer::Response& res);
+  bool transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::TrajTransfer::Response& res);
   void trajectory_execute();
 
 protected:
@@ -46,7 +46,7 @@ private:
   // ROS variables
   ros::ServiceServer traj_server;
   ros::Subscriber    pose_curr_sub;
-  ros::Publisher     raw_att_pub;
+  ros::Publisher     att_sp_pub;
 
   // Trajectory Variables
   int N;

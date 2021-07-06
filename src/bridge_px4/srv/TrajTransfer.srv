@@ -1,0 +1,8 @@
+# Trajectory Transfer Service
+
+int32 hz
+int32 N
+float32[] u_arr
+float32[] L_arr
+---
+bool checksum

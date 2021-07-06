@@ -62,7 +62,7 @@ find_package(Eigen3 REQUIRED)
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  traj_transfer.srv
+  TrajTransfer.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -169,6 +169,9 @@ target_link_libraries(mocap_gen ${catkin_LIBRARIES})
 
 add_executable(auto_rc src/auto_rc.cpp)
 target_link_libraries(auto_rc ${catkin_LIBRARIES})
+
+add_executable(hr_control src/hr_control.cpp)
+target_link_libraries(hr_control ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

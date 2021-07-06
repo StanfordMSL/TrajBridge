@@ -28,6 +28,9 @@
    <node pkg="bridge_px4" type="auto_rc" name ="auto_rc" output="screen">
    </node>
 
+   <node pkg="bridge_px4" type="hr_control" name ="hr_control" output="screen">
+   </node>
+
    </group>
 
 </launch>
