@@ -12,71 +12,69 @@
 #define __HR_CONTROL_H__
 
 #include "ros/ros.h"
+#include "bridge_px4/traj_transfer.h"
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include <geometry_msgs/PoseStamped.h>
-
-
+#include "std_msgs/Float32MultiArray.h"
+#include "geometry_msgs/PoseStamped.h"
+#include "geometry_msgs/TwistStamped.h"
+#include "mavros_msgs/AttitudeTarget.h"
 #include <Eigen/Dense>
 
 using namespace Eigen;
 using namespace std;
+using namespace std_msgs;
 
 using OneD = vector<double>;
 using TwoD = vector<vector<double>>;
 using ThreeD = vector<vector<vector<double>>>;
 
-class GCS
+
+class HR_Control
 {
 public:
   // Constructor
-  GCS();
-  virtual ~GCS();
+  HR_Control();
+  virtual ~HR_Control();
 
-  // Setpoint Function(s)
-  void update_setpoint();
+  bool traj_transfer(bridge_px4::traj_transfer::Request& req,bridge_px4::traj_transfer::Response& res);
+  void trajectory_execute();
 
 protected:
   ros::NodeHandle nh;
 
 private:
-  // Simulation Bool
-  bool auto_rc_trig;
-
   // ROS variables
-  ros::Publisher pose_sp_pub[10];
-  ros::ServiceClient arming_client[10];
-  ros::ServiceClient set_mode_client[10];
-  
+  ros::ServiceServer traj_server;
+  ros::Subscriber    pose_curr_sub;
+  ros::Publisher     raw_att_pub;
+
   // Trajectory Variables
-  int n_dr;
-  int n_fr;
-  string  traj_id;
-  OneD    t_traj;
-  ThreeD  st_traj;
+  int N;
+  
+  vector<float> l_arr;
+  vector<float> L_arr;
+
+  Matrix<float,4,1>  l_curr;
+  Matrix<float,4,10> L_curr;
+
+  Matrix<float,10,1> x_curr;  // Current State
+  Matrix<float,4,1>  u_br;  // Current State
 
   // Time Variables
-  double      t_end;      // end of  single trajectory
-  double      t_final;    //  end of total trajectory
+  double      t_dt;
+  ros::Time   t_next;      // end of  single trajectory
   ros::Time   t_start;    // Start time using world clock
-
-  geometry_msgs::PoseStamped pose_sp[10];
 
   // Counters and Time Variables
   int k_main;
-  int k_traj;
-  int k_loop;
+  
+  // Quad Setpoints
+  mavros_msgs::AttitudeTarget att_sp_out;      // Setpoint Attitude (body rate, orientation, thrust) Out
 
-  // Functions
-  void load_trajectory(const string &input);
-  void rc_takeoff_sequence(const int &input);
-  void rc_rtl_sequence(const int &input);
-  void pos_sp_init(const int &input);
+  // Function(s)
+  void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+  void vel_curr_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
+
 };
 
 #endif

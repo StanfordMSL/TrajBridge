@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
     mavros_msgs
     mavlink
     std_msgs
-#    message_generation
+    message_generation
     rosbag
     )
 
@@ -60,9 +60,10 @@ find_package(Eigen3 REQUIRED)
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-# )
+add_service_files(
+  FILES
+  traj_transfer.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -72,10 +73,10 @@ find_package(Eigen3 REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -109,7 +110,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES bridge-px4
-#  CATKIN_DEPENDS message_runtime std_msgs
+   CATKIN_DEPENDS message_runtime std_msgs
 #  DEPENDS system_lib
 )
 
