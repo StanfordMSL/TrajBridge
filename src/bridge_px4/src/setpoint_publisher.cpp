@@ -349,7 +349,7 @@ void SetpointPublisher::sp_type_assign() {
 void SetpointPublisher::pub_sp_pos() {
     pose_sp_out.header.stamp = ros::Time::now();
     pose_sp_out.header.seq   = k_main;
-    pose_sp_out.header.frame_id = "world";
+    pose_sp_out.header.frame_id = "map";
 
     pose_sp_pub.publish(pose_sp_out);
 }

@@ -40,6 +40,8 @@ private:
   geometry_msgs::PoseStamped pose_curr_in;
   geometry_msgs::PoseStamped pose_curr_out;
 
+  uint32_t k_main;
+
   // Functions
   void pose_sp_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
 };
