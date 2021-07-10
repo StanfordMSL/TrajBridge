@@ -13,10 +13,10 @@
 #include "ros/ros.h"
 #include "bridge_px4/TrajTransfer.h"
 
-#include "std_msgs/Float32MultiArray.h"
-#include "geometry_msgs/PoseStamped.h"
-#include "geometry_msgs/TwistStamped.h"
-#include "mavros_msgs/AttitudeTarget.h"
+#include <std_msgs/Float32MultiArray.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <mavros_msgs/AttitudeTarget.h>
 #include <Eigen/Dense>
 #include <numeric>
 
@@ -46,17 +46,19 @@ private:
   // ROS variables
   ros::ServiceServer traj_server;
   ros::Subscriber    pose_curr_sub;
+  ros::Subscriber    vel_curr_sub;
   ros::Publisher     att_sp_pub;
 
   // Trajectory Variables
   int N;
   
+  vector<float> x_arr;
   vector<float> l_arr;
   vector<float> L_arr;
 
   Matrix<float,4,1>  l_curr;
   Matrix<float,4,10> L_curr;
-
+  Matrix<float,10,1> x_bar;
   Matrix<float,10,1> x_curr;  // Current State
   Matrix<float,4,1>  u_br;  // Current State
 

@@ -4,7 +4,7 @@ HR_Control::HR_Control()
 {
     // ROS Initialization
     pose_curr_sub = nh.subscribe("mavros/local_position/pose",1,&HR_Control::pose_curr_cb,this);
-    pose_curr_sub = nh.subscribe("mavros/local_position/velocity_local",1,&HR_Control::vel_curr_cb,this);    
+    vel_curr_sub = nh.subscribe("mavros/local_position/velocity_local",1,&HR_Control::vel_curr_cb,this);    
     att_sp_pub  = nh.advertise<mavros_msgs::AttitudeTarget>("setpoint/attitude",1);    
     
     traj_server = nh.advertiseService("setpoint/TrajTransfer", &HR_Control::transfer,this);
@@ -45,9 +45,10 @@ bool HR_Control::transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::Tr
 
     l_arr = req.u_arr;      // note the difference u and l. this is because matlab rosmsg makes l <->L the same. so u is used to keep it happy.  
     L_arr = req.L_arr;
-
+    x_arr = req.x_arr;     
     k_main = 0;
 
+    float sum_x = accumulate(x_arr.begin(), x_arr.end(), sum_x);
     float sum_l = accumulate(l_arr.begin(), l_arr.end(), sum_l);
     float sum_L = accumulate(L_arr.begin(), L_arr.end(), sum_L);
     res.checksum = sum_l + sum_L;
@@ -76,18 +77,21 @@ void HR_Control::trajectory_execute()
             }
         }
 
+        for (int j = 0 ; j < 10 ; j++) {
+            idx = (k_main*10)+j;
+            x_bar(j,0) = x_arr[idx];
+        }
+
         t_next = t_next + ros::Duration(t_dt);
         
-        ROS_INFO("%f \n",t_next.toSec());
-
         k_main += 1;
     }
 
     // Generate Command Output
     if (k_main >=0 && k_main <= N)
     {
-        //u_br = l_curr;
-        u_br = l_curr + L_curr*x_curr;
+        //u_br = l_curr + L_curr*(x_curr - x_bar);
+        u_br = l_curr;
 
         att_sp_out.thrust = u_br(0,0);
         att_sp_out.body_rate.x = u_br(1,0);

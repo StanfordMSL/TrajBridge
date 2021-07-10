@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 
+#include <gazebo_msgs/ModelStates.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
@@ -34,16 +35,16 @@ protected:
 
 private:
   // ROS variables
-  ros::Publisher   pose_curr_pub;
   ros::Subscriber  pose_curr_sub;
+  ros::Publisher   pose_curr_pub;
 
-  geometry_msgs::PoseStamped pose_curr_in;
+  geometry_msgs::Pose pose_curr_in;
   geometry_msgs::PoseStamped pose_curr_out;
 
   uint32_t k_main;
 
   // Functions
-  void pose_sp_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+  void pose_cb(const gazebo_msgs::ModelStates::ConstPtr& msg);
 };
 
 #endif
