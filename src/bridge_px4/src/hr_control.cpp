@@ -70,16 +70,18 @@ void HR_Control::trajectory_execute()
         for (int i = 0 ; i < 4 ; i++) {
             idx = (k_main*4)+i;
             l_curr(i,0) = l_arr[idx];
-
-            for (int j = 0 ; j < 10 ; j++) {
-                idx = (k_main*4)+(j*4)+i;
-                L_curr(i,j) = L_arr[idx];
-            }
         }
 
         for (int j = 0 ; j < 10 ; j++) {
             idx = (k_main*10)+j;
             x_bar(j,0) = x_arr[idx];
+        }
+
+        for (int i = 0 ; i < 10 ; i++) {
+            for (int j = 0 ; j < 4 ; j++) {
+                idx = (k_main*40)+(4*i)+j;
+                L_curr(j,i) = L_arr[idx];
+            }
         }
 
         t_next = t_next + ros::Duration(t_dt);
@@ -90,8 +92,10 @@ void HR_Control::trajectory_execute()
     // Generate Command Output
     if (k_main >=0 && k_main <= N)
     {
-        //u_br = l_curr + L_curr*(x_curr - x_bar);
-        u_br = l_curr;
+        u_br = l_curr + L_curr*(x_curr - x_bar);
+        //u_br = l_curr;
+
+        //std::cout << "Here is the matrix m:\n" << L_curr << std::endl;
 
         att_sp_out.thrust = u_br(0,0);
         att_sp_out.body_rate.x = u_br(1,0);
