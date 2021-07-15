@@ -4,10 +4,10 @@ MocapGen::MocapGen()
 {
     // Subscribe to mavros/local_position/pose
     //pose_curr_sub = nh.subscribe("mavros/local_position/pose",1,&MocapGen::pose_sp_cb,this);
-    pose_curr_sub = nh.subscribe("gazebo/model_states/pose",1,&MocapGen::pose_cb,this);
+    pose_curr_sub = nh.subscribe("gazebo/model_states",1,&MocapGen::pose_cb,this);
 
     // Publish to mavros/vision_pose/pose
-    string drone_topic = "mavros/vision_pose/pose";
+    string drone_topic = "drone1/mavros/vision_pose/pose";
     pose_curr_pub = nh.advertise<geometry_msgs::PoseStamped>(drone_topic,1);
 
     ROS_INFO("ROS Publishers Initialized");

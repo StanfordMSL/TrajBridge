@@ -180,9 +180,10 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         pub_sp_active();
 
-        pose_sa.position = pose_curr.pose.position;
-        pose_sa.orientation = quat_forward;
-
+        //pose_sa.position = pose_curr.pose.position;
+        //pose_sa.orientation = quat_forward;
+        pose_sa = pose_curr.pose;
+        
         // State Transition
         if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF) ) {
             land();
@@ -190,7 +191,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             ROS_INFO("SP_PUB_STATE: LINKED");
         } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
         {
-            pose_sa.position.z = 1.0;
+//            pose_sa.position.z = 1.0;
 
             sp_pub_state = HOVER;
             ROS_INFO("SP_PUB_STATE: HOVER");

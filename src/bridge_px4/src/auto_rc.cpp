@@ -2,9 +2,6 @@
 
 Auto_RC::Auto_RC()
 {
-    // Wait for Gazebo Setup to Load
-    ros::Duration(2.0).sleep();
-
     // Setup ROS Subscribers
     pose_sp_sub = nh.subscribe("setpoint/position",1,&Auto_RC::pose_sp_cb,this);
     vel_sp_sub  = nh.subscribe("setpoint/velocity",1,&Auto_RC::vel_sp_cb,this);
