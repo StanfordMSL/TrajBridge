@@ -53,10 +53,10 @@ private:
   int N;
   
   vector<float> x_arr;
-  vector<float> l_arr;
+  vector<float> u_arr;
   vector<float> L_arr;
 
-  Matrix<float,4,1>  l_curr;
+  Matrix<float,4,1>  u_curr;
   Matrix<float,4,10> L_curr;
   Matrix<float,10,1> x_bar;
   Matrix<float,10,1> x_curr;  // Current State

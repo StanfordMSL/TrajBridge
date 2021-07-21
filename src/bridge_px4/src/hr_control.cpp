@@ -43,13 +43,13 @@ bool HR_Control::transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::Tr
     t_dt = 1.0/req.hz;
     N  = req.N;
 
-    l_arr = req.u_arr;      // note the difference u and l. this is because matlab rosmsg makes l <->L the same. so u is used to keep it happy.  
+    u_arr = req.u_arr;      // note the difference u and l. this is because matlab rosmsg makes l <->L the same. so u is used to keep it happy.  
     L_arr = req.L_arr;
     x_arr = req.x_arr;     
     k_main = 0;
 
     float sum_x = accumulate(x_arr.begin(), x_arr.end(), sum_x);
-    float sum_l = accumulate(l_arr.begin(), l_arr.end(), sum_l);
+    float sum_l = accumulate(u_arr.begin(), u_arr.end(), sum_l);
     float sum_L = accumulate(L_arr.begin(), L_arr.end(), sum_L);
     res.checksum = sum_l + sum_L;
 
@@ -69,7 +69,7 @@ void HR_Control::trajectory_execute()
 
         for (int i = 0 ; i < 4 ; i++) {
             idx = (k_main*4)+i;
-            l_curr(i,0) = l_arr[idx];
+            u_curr(i,0) = u_arr[idx];
         }
 
         for (int j = 0 ; j < 10 ; j++) {
@@ -92,10 +92,11 @@ void HR_Control::trajectory_execute()
     // Generate Command Output
     if (k_main >=0 && k_main <= N)
     {
-        u_br = l_curr + L_curr*(x_curr - x_bar);
+        u_br = u_curr + L_curr*(x_curr - x_bar);
         //u_br = l_curr;
 
-        //std::cout << "Here is the matrix m:\n" << L_curr << std::endl;
+        float err_z = x_curr(2,0) - x_bar(2,0);
+        std::cout << "Z error is: " << err_z << std::endl;
 
         att_sp_out.thrust = u_br(0,0);
         att_sp_out.body_rate.x = u_br(1,0);
