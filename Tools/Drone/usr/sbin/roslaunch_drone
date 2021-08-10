@@ -2,7 +2,6 @@
 source ~/StanfordMSL/TrajBridge-PX4/devel/setup.bash
 source /etc/ros/env.sh
 export ROS_HOME=$(echo ~carl)/.ros
-roslaunch bridge_px4 drone.launch &
-rosrun bridge_px4 hr_control &
+roslaunch bridge_px4 drone_br.launch &
 PID=$!
 wait $PID
