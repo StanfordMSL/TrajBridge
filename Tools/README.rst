@@ -1,3 +1,5 @@
+modified original to allow for auto-bootup of body rate controller.
+
 ======================
 Instructions for Tools
 ======================
@@ -28,13 +30,10 @@ the drone, you will need to run the following commands.
 
   - You can add :code:`-n` to the end of this command to verify the copy.
 
-- :code:`sudo systemctl daemon-reload`
-- :code:`sudo systemctl enable aether-1.service`
-- :code:`sudo systemctl enable aether-2.service`
 - :code:`sudo systemctl enable roslaunch_drone.service`
 - :code:`sudo vim /etc/hosts`
 
-  - Update the 'drone4' and 'drone4.local' to match the specific hostname of the
+  - Update the 'drone7' and 'drone7.local' to match the specific hostname of the
     drone. E.g. drone1 if you're updating these files on drone 1.
 
 If you are updating a drone that already has these services from a previous

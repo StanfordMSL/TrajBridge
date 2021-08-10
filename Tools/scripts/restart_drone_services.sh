@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {1..6}
+for i in {1..8}
 do
     if nc -z drone$i.local 22 -w 1 2>/dev/null; then
         echo -e "Restarting the roslaunch_drone.service for drone$i"
