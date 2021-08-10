@@ -95,8 +95,8 @@ void HR_Control::trajectory_execute()
         u_br = u_curr + L_curr*(x_curr - x_bar);
         //u_br = l_curr;
 
-        float err_z = x_curr(2,0) - x_bar(2,0);
-        std::cout << "Z error is: " << err_z << std::endl;
+        //float err_z = x_curr(2,0) - x_bar(2,0);
+        //std::cout << "Z error is: " << err_z << std::endl;
 
         att_sp_out.thrust = u_br(0,0);
         att_sp_out.body_rate.x = u_br(1,0);

@@ -263,6 +263,8 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
     }
     }
 
+    //std::cout << "Z Height Is: " << pose_sa.position.z << std::endl;
+
     k_main++;
 }
 
@@ -353,6 +355,8 @@ void SetpointPublisher::pub_sp_pos() {
     pose_sp_out.header.frame_id = "map";
 
     pose_sp_pub.publish(pose_sp_out);
+
+    //std::cout << "Publishing Pos: " << k_main << std::endl;
 }
 
 void SetpointPublisher::pub_sp_vel() {
@@ -365,6 +369,8 @@ void SetpointPublisher::pub_sp_att() {
     att_sp_out.header.frame_id = "map";
 
     att_sp_pub.publish(att_sp_out);
+
+    //std::cout << "Publishing BR " << k_main << std::endl;
 }
 
 void SetpointPublisher::pub_sp_active() {
