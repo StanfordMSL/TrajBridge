@@ -47,7 +47,7 @@ bool HR_Control::transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::Tr
     L_arr = req.L_arr;
     x_arr = req.x_arr;     
     k_main = 0;
-
+    
     float sum_x = accumulate(x_arr.begin(), x_arr.end(), sum_x);
     float sum_l = accumulate(u_arr.begin(), u_arr.end(), sum_l);
     float sum_L = accumulate(L_arr.begin(), L_arr.end(), sum_L);
@@ -63,7 +63,7 @@ void HR_Control::trajectory_execute()
     ros::Time t_now = ros::Time::now();
 
     // Update Feedback and Feedforward Variables
-    if ((t_now >= t_next) && (k_main <= N) && (k_main >= 0))
+    if ((t_now >= t_next) && (k_main < N) && (k_main >= 0))
     {
         int idx = 0;
 
@@ -90,7 +90,7 @@ void HR_Control::trajectory_execute()
     }
 
     // Generate Command Output
-    if (k_main >=0 && k_main <= N)
+    if (k_main >=0 && k_main < N)
     {
         u_br = u_curr + L_curr*(x_curr - x_bar);
         //u_br = l_curr;
@@ -111,8 +111,6 @@ void HR_Control::trajectory_execute()
     } else {
         // Do nothing
     }
-
-
 }
 int main(int argc, char **argv)
 {
