@@ -9,10 +9,7 @@ HR_Control::HR_Control()
     
     traj_server = nh.advertiseService("setpoint/TrajTransfer", &HR_Control::transfer,this);
 
-    t_start = ros::Time::now();
-
-    k_main = -1;
-
+    // Initialize Remainder of Parameters
     att_sp_out.header.frame_id = "map";
     att_sp_out.type_mask = att_sp_out.IGNORE_ATTITUDE;
 }
@@ -40,91 +37,99 @@ void HR_Control::vel_curr_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
 
 bool HR_Control::transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::TrajTransfer::Response& res)
 {
+    // Load the Trajectory
     t_dt = 1.0/req.hz;
     N  = req.N;
 
     u_arr = req.u_arr;      // note the difference u and l. this is because matlab rosmsg makes l <->L the same. so u is used to keep it happy.  
     L_arr = req.L_arr;
     x_arr = req.x_arr;     
-    k_main = 0;
     
+    // Return checksum for verification (not completed/verified, still TODO)
     float sum_x = accumulate(x_arr.begin(), x_arr.end(), sum_x);
     float sum_l = accumulate(u_arr.begin(), u_arr.end(), sum_l);
     float sum_L = accumulate(L_arr.begin(), L_arr.end(), sum_L);
     res.checksum = sum_l + sum_L;
 
-    t_next = ros::Time::now();
+    // Start closed loop controller. Rate is fixed to t_dt across all frames.
+    closedLoop = nh.createTimer(ros::Duration(t_dt),&HR_Control::clc_cb, this);
+    k_main = 0;
 
     return true;
 }
 
-void HR_Control::trajectory_execute()
+void HR_Control::policy_update()
 {
-    ros::Time t_now = ros::Time::now();
+    int idx = 0;
 
-    // Update Feedback and Feedforward Variables
-    if ((t_now >= t_next) && (k_main < N) && (k_main >= 0))
+    if (k_main < N-1)
     {
-        int idx = 0;
-
-        for (int i = 0 ; i < 4 ; i++) {
+        // Update Policy Terms
+        for (int i = 0; i < 4; i++)         // Open Loop Term
+        {
             idx = (k_main*4)+i;
-            u_curr(i,0) = u_arr[idx];
+            u_curr(i, 0) = u_arr[idx];
         }
-
-        for (int j = 0 ; j < 10 ; j++) {
-            idx = (k_main*10)+j;
-            x_bar(j,0) = x_arr[idx];
-        }
-
-        for (int i = 0 ; i < 10 ; i++) {
-            for (int j = 0 ; j < 4 ; j++) {
+        
+        for (int i = 0; i < 10; i++)        // Feedback Matrix
+        {
+            for (int j = 0; j < 4; j++)
+            {
                 idx = (k_main*40)+(4*i)+j;
-                L_curr(j,i) = L_arr[idx];
+                L_curr(j, i) = L_arr[idx];
             }
         }
 
-        t_next = t_next + ros::Duration(t_dt);
-        
+        for (int j = 0; j < 10; j++)        // Nominal State
+        {
+            idx = (k_main * 10) + j;
+            x_bar(j, 0) = x_arr[idx];
+        }
+
+        // Generate Policy Output 
+        del_x = x_curr - x_bar;            
+        u_br = u_curr + L_curr*del_x;
+
+        // Increment Counter
         k_main += 1;
-    }
-
-    // Generate Command Output
-    if (k_main >=0 && k_main < N)
+    } else 
     {
-        u_br = u_curr + L_curr*(x_curr - x_bar);
-        //u_br = l_curr;
-
-        //float err_z = x_curr(2,0) - x_bar(2,0);
-        //std::cout << "Z error is: " << err_z << std::endl;
-
-        att_sp_out.thrust = u_br(0,0);
-        att_sp_out.body_rate.x = u_br(1,0);
-        att_sp_out.body_rate.y = u_br(2,0);
-        att_sp_out.body_rate.z = u_br(3,0);
-
-        att_sp_out.header.stamp = ros::Time::now();
-        att_sp_out.header.seq   = k_main;
-        
-        att_sp_pub.publish(att_sp_out);
-        
-    } else {
-        // Do nothing
+        // Policy Complete
+        closedLoop.stop();
     }
 }
+
+void HR_Control::clc_cb(const ros::TimerEvent& event) {
+    policy_update();
+
+    // Check for Divergence (for now simply using position error with 1.0m tolerance)
+    float pos_err = del_x.head(3).norm();
+
+    if (pos_err < 1.0) {
+        // Still within bounds.
+        att_sp_out.thrust = u_br(0, 0);
+        att_sp_out.body_rate.x = u_br(1, 0);
+        att_sp_out.body_rate.y = u_br(2, 0);
+        att_sp_out.body_rate.z = u_br(3, 0);
+
+        att_sp_out.header.stamp = ros::Time::now();
+        att_sp_out.header.seq = k_main;
+
+        att_sp_pub.publish(att_sp_out);
+    } else {
+        // Trigger failsafe.
+        cout << "Failsafe Triggered (0.1m) at Frame " << k_main << endl;
+        closedLoop.stop();
+    }
+
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "hr_node");
 
     HR_Control HR_Control;
 
-    ros::Rate rate(200);
-    while(ros::ok()){
-        HR_Control.trajectory_execute();
-
-        ros::spinOnce();
-        rate.sleep();
-    }
-
+    ros::spin();
     return 0;
 }
