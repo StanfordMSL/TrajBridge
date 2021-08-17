@@ -9,12 +9,13 @@ add_compile_options(-std=c++14)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
     roscpp
+    rospy
     mavros
     mavros_extras
     mavros_msgs
     mavlink
     std_msgs
-#    message_generation
+    message_generation
     rosbag
     )
 
@@ -59,9 +60,10 @@ find_package(Eigen3 REQUIRED)
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-# )
+add_service_files(
+  FILES
+  TrajTransfer.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -71,10 +73,10 @@ find_package(Eigen3 REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -108,7 +110,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES bridge-px4
-#  CATKIN_DEPENDS message_runtime std_msgs
+   CATKIN_DEPENDS message_runtime std_msgs
 #  DEPENDS system_lib
 )
 
@@ -128,6 +130,10 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/bridge-px4.cpp
 # )
+## Declare a C++ library
+add_library(libpid
+  src/pid.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -147,8 +153,25 @@ add_executable(GCS src/GCS.cpp)
 target_link_libraries(GCS ${catkin_LIBRARIES})
 # add_dependencies(GCS bridge_px4_gencpp)
 
-add_executable(visualizer src/visualizer.cpp)
-target_link_libraries(visualizer ${catkin_LIBRARIES})
+add_executable(GCSVel src/GCSVel.cpp)
+target_link_libraries(GCSVel ${catkin_LIBRARIES})
+# add_dependencies(GCSVel bridge_px4_gencpp)
+
+add_executable(GCSVelTraj src/GCSVelTraj.cpp)
+target_link_libraries(GCSVelTraj ${catkin_LIBRARIES})
+# add_dependencies(GCSVelTraj bridge_px4_gencpp)
+
+add_executable(controller src/velocity_controller.cpp)
+target_link_libraries(controller libpid ${catkin_LIBRARIES})
+
+add_executable(mocap_gen src/mocap_gen.cpp)
+target_link_libraries(mocap_gen ${catkin_LIBRARIES})
+
+add_executable(auto_rc src/auto_rc.cpp)
+target_link_libraries(auto_rc ${catkin_LIBRARIES})
+
+add_executable(hr_control src/hr_control.cpp)
+target_link_libraries(hr_control ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

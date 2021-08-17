@@ -11,6 +11,10 @@
       <param name="dt_rs" value="1.0"/>
 	</node>
 
+   <!-- Initialize the High Rate Controller -->
+   <node pkg="bridge_px4" type="hr_control" name ="hr_control" output="screen">
+   </node>
+
    <!-- Initialize the mavros bridge over serial -->
 	<include file="$(find mavros)/launch/node.launch">
 	   <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
