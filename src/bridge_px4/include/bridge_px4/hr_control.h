@@ -42,6 +42,9 @@ protected:
   ros::NodeHandle nh;
 
 private:
+
+  float r_safety;
+  
   // ROS variables
   ros::ServiceServer traj_server;
   ros::Subscriber    pose_curr_sub;

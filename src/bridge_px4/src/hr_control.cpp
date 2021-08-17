@@ -2,6 +2,9 @@
 
 HR_Control::HR_Control()
 {
+    ros::param::get("~r_safety", r_safety);
+
+
     // ROS Initialization
     pose_curr_sub = nh.subscribe("mavros/local_position/pose",1,&HR_Control::pose_curr_cb,this);
     vel_curr_sub = nh.subscribe("mavros/local_position/velocity_local",1,&HR_Control::vel_curr_cb,this);    
@@ -102,10 +105,10 @@ void HR_Control::policy_update()
 void HR_Control::clc_cb(const ros::TimerEvent& event) {
     policy_update();
 
-    // Check for Divergence (for now simply using position error with 1.0m tolerance)
+    // Check for Divergence (ball radius)
     float pos_err = del_x.head(3).norm();
 
-    if (pos_err < 1.0) {
+    if (pos_err < r_safety) {
         // Still within bounds.
         att_sp_out.thrust = u_br(0, 0);
         att_sp_out.body_rate.x = u_br(1, 0);
@@ -118,7 +121,7 @@ void HR_Control::clc_cb(const ros::TimerEvent& event) {
         att_sp_pub.publish(att_sp_out);
     } else {
         // Trigger failsafe.
-        cout << "Failsafe Triggered (0.1m) at Frame " << k_main << endl;
+        cout << "Failsafe Triggered (" << r_safety << "m) at Frame " << k_main << endl;
         closedLoop.stop();
     }
 
