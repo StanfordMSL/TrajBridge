@@ -372,7 +372,7 @@ void SetpointPublisher::pub_sp_att() {
     att_sp_pub.publish(att_sp_out);
 
     //std::cout << "Publishing BR " << k_main << std::endl;
-    std::cout <<  att_sp_out.thrust << std::endl;
+    //std::cout <<  att_sp_out.thrust << std::endl;
 }
 
 void SetpointPublisher::pub_sp_active() {
@@ -402,6 +402,9 @@ void SetpointPublisher::pub_sp_active() {
         att_sp_out.body_rate = att_sp_in.body_rate;
         att_sp_out.orientation = att_sp_in.orientation;
         att_sp_out.thrust = att_sp_in.thrust;
+
+        std::cout <<  att_sp_in.thrust << std::endl;
+
         pub_sp_att();
     }
     break;
