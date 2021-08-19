@@ -36,11 +36,6 @@ void HR_Control::vel_curr_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
     x_curr(3,0) = msg->twist.linear.x;
     x_curr(4,0) = msg->twist.linear.y;
     x_curr(5,0) = msg->twist.linear.z;
-
-    if (abs(x_curr(5,0)) < 0.05)
-    {
-        x_curr(5,0) = 0;
-    }
 }
 
 bool HR_Control::transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::TrajTransfer::Response& res)
@@ -98,9 +93,8 @@ void HR_Control::policy_update()
         del_x = x_curr - x_bar;            
         u_br = u_curr + L_curr*del_x;
 
+        del_x(5,0) = 0.0;
         cout << del_x << endl;
-        cout << " ohoh " << endl;
-        cout << L_curr*del_x << endl;
         cout << " ohoh " << endl;
         cout << u_curr(1) << endl;
         cout << " ohoh " << endl;
