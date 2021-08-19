@@ -36,6 +36,11 @@ void HR_Control::vel_curr_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
     x_curr(3,0) = msg->twist.linear.x;
     x_curr(4,0) = msg->twist.linear.y;
     x_curr(5,0) = msg->twist.linear.z;
+
+    if (abs(x_curr(5,0)) < 0.05)
+    {
+        x_curr(5,0) = 0;
+    }
 }
 
 bool HR_Control::transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::TrajTransfer::Response& res)
