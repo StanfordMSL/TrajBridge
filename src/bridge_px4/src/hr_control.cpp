@@ -95,7 +95,10 @@ void HR_Control::policy_update()
 
         cout << del_x << endl;
         cout << " ohoh " << endl;
-
+        cout << L_curr*del_x << endl;
+        cout << " ohoh " << endl;
+        cout << u_curr(1) << endl;
+        cout << " ohoh " << endl;
         // Increment Counter
         k_main += 1;
     } else 
