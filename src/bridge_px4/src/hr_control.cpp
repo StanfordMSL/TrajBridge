@@ -91,10 +91,9 @@ void HR_Control::policy_update()
 
         // Generate Policy Output 
         del_x = x_curr - x_bar;            
-        //u_br = u_curr + L_curr*del_x;
-        u_br = u_curr;
+        u_br = u_curr + L_curr*del_x;
 
-        //cout << u_br(0) << endl;
+        cout << L_curr << endl;
 
         // Increment Counter
         k_main += 1;
