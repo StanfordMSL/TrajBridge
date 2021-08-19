@@ -208,7 +208,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         } else {
             // Stay in State
         }
-        std::cout <<  att_sp_in.thrust << std::endl;
+        //std::cout <<  att_sp_in.thrust << std::endl;
 
     }
     break;
@@ -372,7 +372,7 @@ void SetpointPublisher::pub_sp_att() {
     att_sp_pub.publish(att_sp_out);
 
     //std::cout << "Publishing BR " << k_main << std::endl;
-    //std::cout <<  att_sp_out.thrust << std::endl;
+    std::cout <<  att_sp_out.thrust << std::endl;
 }
 
 void SetpointPublisher::pub_sp_active() {
