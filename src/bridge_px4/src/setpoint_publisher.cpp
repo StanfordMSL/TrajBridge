@@ -403,7 +403,7 @@ void SetpointPublisher::pub_sp_active() {
         att_sp_out.orientation = att_sp_in.orientation;
         att_sp_out.thrust = att_sp_in.thrust;
 
-        std::cout <<  att_sp_in.thrust << std::endl;
+        //std::cout <<  att_sp_in.thrust << std::endl;
 
         pub_sp_att();
     }
