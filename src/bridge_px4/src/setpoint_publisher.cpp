@@ -371,7 +371,7 @@ void SetpointPublisher::pub_sp_att() {
     att_sp_pub.publish(att_sp_out);
 
     //std::cout << "Publishing BR " << k_main << std::endl;
-    //std::cout <<  att_sp_out.thrust << std::endl;
+    std::cout <<  att_sp_out.thrust << std::endl;
 }
 
 void SetpointPublisher::pub_sp_active() {
