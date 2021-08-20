@@ -5,10 +5,10 @@ MocapVel::MocapVel()
     ros::param::get("~alpha", alpha);
 
     // Subscribe to mavros/vision_pose/pose
-    pose_curr_sub = nh.subscribe("/mavros/vision_pose/pose",1,&MocapVel::pose_cb,this);
+    pose_curr_sub = nh.subscribe("mavros/vision_pose/pose",1,&MocapVel::pose_cb,this);
 
     // Publish to /mavros/odometry/out
-    odom_curr_pub = nh.advertise<nav_msgs::Odometry>("/mavros/odometry/out",1);
+    odom_curr_pub = nh.advertise<nav_msgs::Odometry>("mavros/odometry/out",1);
 
 }
 

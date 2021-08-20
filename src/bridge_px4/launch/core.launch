@@ -45,7 +45,6 @@
   </node>
 
   <group ns="drone7">
-    <!-- Initialize the High Rate Controller -->
     <node pkg="bridge_px4" type="mocap_vel" name ="mocap_vel">
       <param name="alpha" value="0.9"/>
     </node>
