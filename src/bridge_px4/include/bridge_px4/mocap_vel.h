@@ -26,14 +26,20 @@ private:
   ros::Publisher   odom_curr_pub;
 
   geometry_msgs::PoseStamped pose_prev;
+  geometry_msgs::Vector3 vel_raw;
   geometry_msgs::Vector3 vel_curr;
+
   nav_msgs::Odometry odom_curr;
 
   // Filter Gain
-  float alpha;
+  double alpha;
 
+  // Time
+  double dt;
+  
   // Functions
   void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+
 };
 
 #endif

@@ -9,34 +9,38 @@ MocapVel::MocapVel()
 
     // Publish to /mavros/odometry/out
     odom_curr_pub = nh.advertise<nav_msgs::Odometry>("mavros/odometry/out",1);
-
 }
 
 MocapVel::~MocapVel()
 {
-  ROS_WARN("Terminating Publisher");
+  ROS_WARN("Terminating MocapVel");
 }
 
 void MocapVel::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
-    pose_prev.header = odom_curr.header;
-    pose_prev.pose = odom_curr.pose.pose;
-
+    // Load new data
     odom_curr.header = msg->header;
     odom_curr.pose.pose = msg->pose;
 
-    float dt = odom_curr.header.stamp.sec-pose_prev.header.stamp.sec;
+    // Calculate raw velocity value
+    dt = odom_curr.header.stamp.toSec() - pose_prev.header.stamp.toSec();
 
-    float vel_x = (odom_curr.pose.pose.position.x-pose_prev.pose.position.x)/dt;
-    float vel_y = (odom_curr.pose.pose.position.y-pose_prev.pose.position.y)/dt;
-    float vel_z = (odom_curr.pose.pose.position.z-pose_prev.pose.position.z)/dt;
+    vel_raw.x = (odom_curr.pose.pose.position.x-pose_prev.pose.position.x)/dt;
+    vel_raw.y = (odom_curr.pose.pose.position.y-pose_prev.pose.position.y)/dt;
+    vel_raw.z = (odom_curr.pose.pose.position.z-pose_prev.pose.position.z)/dt;
+    
+    // Low-Pass Filter
+    vel_curr.x = vel_curr.x + alpha*(vel_raw.x-vel_curr.x);
+    vel_curr.y = vel_curr.y + alpha*(vel_raw.y-vel_curr.y);
+    vel_curr.z = vel_curr.z + alpha*(vel_raw.z-vel_curr.z);
 
-    vel_curr.x = vel_curr.x + alpha*(vel_x-vel_curr.x);
-    vel_curr.y = vel_curr.y + alpha*(vel_y-vel_curr.y);
-    vel_curr.z = vel_curr.z + alpha*(vel_z-vel_curr.z);
-
+    // Send values to actual message
     odom_curr.twist.twist.linear.x = vel_curr.x;
     odom_curr.twist.twist.linear.y = vel_curr.z;
-    odom_curr.twist.twist.linear.y = vel_curr.z;
+    odom_curr.twist.twist.linear.z = vel_curr.z;
+
+    // Prepare for next callback
+    pose_prev.header = odom_curr.header;
+    pose_prev.pose = odom_curr.pose.pose;
 
     odom_curr_pub.publish(odom_curr);
 }
