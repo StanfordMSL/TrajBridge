@@ -43,4 +43,12 @@
     <!-- GTarg Remap -->
     <remap from="/vrpn_client_node/gtarg/pose" to="gtarg/mavros/vision_pose/pose" />
   </node>
+
+  <group ns="drone7">
+    <!-- Initialize the High Rate Controller -->
+    <node pkg="bridge_px4" type="mocap_vel" name ="mocap_vel">
+      <param name="alpha" value="0.9"/>
+    </node>
+  </group>
+
 </launch>
