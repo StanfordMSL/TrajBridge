@@ -121,7 +121,7 @@ void HR_Control::clc_cb(const ros::TimerEvent& event) {
         att_sp_pub.publish(att_sp_out);
     } else {
         // Trigger failsafe.
-        cout << "Failsafe Triggered (" << r_safety << "m) at Frame " << k_main << endl;
+        cout << r_safety << "m Failsafe Triggered at Frame " << k_main << " (" << k_main*t_dt << "s)" << endl;
         closedLoop.stop();
     }
 
