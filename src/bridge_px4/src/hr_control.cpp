@@ -74,24 +74,24 @@ void HR_Control::policy_update()
             u_curr(i, 0) = u_arr[idx];
         }
         
-        for (int i = 0; i < 10; i++)        // Feedback Matrix
+        for (int i = 0; i < 17; i++)        // Feedback Matrix
         {
             for (int j = 0; j < 4; j++)
             {
-                idx = (k_main*40)+(4*i)+j;
+                idx = (k_main*68)+(4*i)+j;
                 L_curr(j, i) = L_arr[idx];
             }
         }
 
-        for (int j = 0; j < 10; j++)        // Nominal State
+        for (int j = 0; j < 17; j++)        // Nominal State
         {
-            idx = (k_main * 10) + j;
+            idx = (k_main * 17) + j;
             x_bar(j, 0) = x_arr[idx];
         }
 
         // Generate Policy Output 
         del_x = x_curr - x_bar;            
-        u_br = u_curr + L_curr*del_x;
+        u_br  = u_curr + L_curr*del_x;
 
         // Increment Counter
         k_main += 1;
@@ -101,8 +101,14 @@ void HR_Control::policy_update()
         closedLoop.stop();
     }
 }
+void HR_Control::err_upd()
+{
+    del_z << (x_curr.head(3)-x_bar.head(3)), (x_curr.tail(4)-x_bar.tail(4));
+    x_curr.tail(7) += t_dt*del_z;
+}
 
 void HR_Control::clc_cb(const ros::TimerEvent& event) {
+    err_upd();
     policy_update();
 
     // Check for Divergence (ball radius)

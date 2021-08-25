@@ -60,11 +60,12 @@ private:
   vector<float> L_arr;
 
   Matrix<float,4,1>  u_curr;
-  Matrix<float,4,10> L_curr;
-  Matrix<float,10,1> x_bar;
-  Matrix<float,10,1> x_curr;  // Current State
-  Matrix<float,10,1> del_x;   // Current State Error Relative to Nominal
+  Matrix<float,4,17> L_curr;
+  Matrix<float,17,1> x_bar;
+  Matrix<float,17,1> x_curr;  // Current State
+  Matrix<float,17,1> del_x;   // Current State Error Relative to Nominal
   Matrix<float,4,1>  u_br;    // Current Input
+  Matrix<float,7,1>  del_z;   // Integral Delta
 
   // Counter and Time Variables
   double t_dt;
@@ -76,6 +77,7 @@ private:
 
   // Function(s)
   void policy_update();
+  void err_upd();
   void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
   void vel_curr_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
   void clc_cb(const ros::TimerEvent& event);
