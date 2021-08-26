@@ -4,7 +4,7 @@
    <!-- Initialize the Onboard Setpoint Publisher -->
 	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
 	   <param name="sp_out_hz" value="200.0"/>
-      <param name="checkup_hz" value="200.0"/>
+      <param name="checkup_hz" value="400.0"/>
       <param name="sp_gcs_hz_min" value="5.0"/>
       <param name="checkup_hz_min" value="5.0"/>
       <param name="dt_fs" value="3.0"/>
@@ -13,7 +13,12 @@
 
    <!-- Initialize the High Rate Controller -->
    <node pkg="bridge_px4" type="hr_control" name ="hr_control" output="screen">
-      <param name="r_safety" value="1.0"/>
+      <param name="pxy_lim" value="999.0"/>
+      <param name="pz_lim" value="999.0"/>
+      <param name="v_lim" value="999.0"/>
+      <param name="q_lim" value="999.0"/>
+      <param name="ep_lim" value="999.0"/>
+      <param name="eq_lim" value="999.0"/>
    </node>
 
    <!-- Initialize the mavros bridge over serial -->

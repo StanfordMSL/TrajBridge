@@ -16,7 +16,12 @@
 
    <!-- Initialize the High Rate Controller -->
    <node pkg="bridge_px4" type="hr_control" name ="hr_control" output="screen">
-      <param name="r_safety" value="1.0"/>
+      <param name="pxy_lim" value="999.0"/>
+      <param name="pz_lim" value="999.0"/>
+      <param name="v_lim" value="999.0"/>
+      <param name="q_lim" value="999.0"/>
+      <param name="ep_lim" value="999.0"/>
+      <param name="eq_lim" value="999.0"/>
    </node>
 
    <!-- Initialize the mavros bridge over serial -->

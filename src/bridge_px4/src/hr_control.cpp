@@ -1,9 +1,22 @@
 #include <bridge_px4/hr_control.h>
 
-HR_Control::HR_Control()
-{
-    ros::param::get("~r_safety", r_safety);
+const string HR_Control::states[] = {
+    "px","py","pz",
+    "vx","vy","vz",
+    "qw","qx","qy","qz",
+    "epx","epy","epz","eqw",
+    "eqx","eqy","eqz"};
 
+HR_Control::HR_Control()
+:   pxy_lim_(1.0),pz_lim_(0.5),v_lim_(0.5),
+    q_lim_(1.0),ep_lim_(3.0),eq_lim_(1.0)
+{
+    ros::param::get("~pxy_lim", pxy_lim_);
+    ros::param::get("~pz_lim", pz_lim_);
+    ros::param::get("~v_lim", v_lim_);
+    ros::param::get("~q_lim", q_lim_);
+    ros::param::get("~ep_lim", ep_lim_);
+    ros::param::get("~eq_lim", eq_lim_);
 
     // ROS Initialization
     pose_curr_sub = nh.subscribe("mavros/local_position/pose",1,&HR_Control::pose_curr_cb,this);
@@ -15,6 +28,14 @@ HR_Control::HR_Control()
     // Initialize Remainder of Parameters
     att_sp_out.header.frame_id = "map";
     att_sp_out.type_mask = att_sp_out.IGNORE_ATTITUDE;
+
+    // Initialize Limits Vector
+    del_lim(0,0) = del_lim(1,0) = pxy_lim_;
+    del_lim(2,0) = pz_lim_;
+    del_lim(3,0) = del_lim(4,0) = del_lim(5,0) = v_lim_;
+    del_lim(6,0) = del_lim(7,0) = del_lim(8,0) = del_lim(9,0) = q_lim_;
+    del_lim(10,0) = del_lim(11,0) = del_lim(12,0) = ep_lim_;
+    del_lim(13,0) = del_lim(14,0) = del_lim(15,0) = del_lim(16,0) = eq_lim_;
 }
 
 HR_Control::~HR_Control()
@@ -88,11 +109,13 @@ void HR_Control::policy_update()
             idx = (k_main * 17) + j;
             x_bar(j, 0) = x_arr[idx];
         }
-
-        // Generate Policy Output 
-        del_x = x_curr - x_bar;            
-        u_br  = u_curr + L_curr*del_x;
-
+        //cout << u_curr << endl;
+        //cout << "hoho" << endl;
+        //cout << L_curr << endl;
+        //cout << "haha" << endl;
+        //cout << x_bar << endl;
+        //cout << "hehe" << endl;
+        
         // Increment Counter
         k_main += 1;
     } else 
@@ -101,20 +124,44 @@ void HR_Control::policy_update()
         closedLoop.stop();
     }
 }
-void HR_Control::err_upd()
+void HR_Control::delta_update()
 {
-    del_z << (x_curr.head(3)-x_bar.head(3)), (x_curr.tail(4)-x_bar.tail(4));
+    del_z << (x_curr.head(3)-x_bar.head(3)), (x_curr.segment(6,4)-x_bar.segment(6,4));
     x_curr.tail(7) += t_dt*del_z;
+
+    del_x = x_curr - x_bar;     
+
+    cout << x_curr.segment(6,4) << endl;    
+    cout << "hoho" << endl;
+    cout << x_bar.segment(6,4) << endl;    
+    cout << "haha" << endl;
+
 }
 
-void HR_Control::clc_cb(const ros::TimerEvent& event) {
-    err_upd();
-    policy_update();
+bool HR_Control::limit_check()
+{
+    for (int i = 0; i < 17; i++) {
+        if (abs(del_x(i,0)) > del_lim(i,0)) {
+            cout << "Limit Triggered by State: " << states[i] << endl;
 
-    // Check for Divergence (ball radius)
-    float pos_err = del_x.head(3).norm();
+            //cout << del_x(i,0) << endl;
+            //cout << "hoho" << endl;
+            cout << del_x(i,0) << endl;    
+            cout << "haha" << endl;
 
-    if (pos_err < r_safety) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void HR_Control::controller()
+{
+    // Generate Policy Output
+    u_br = u_curr + L_curr * del_x;
+
+    if (limit_check() == true) {
         // Still within bounds.
         att_sp_out.thrust = u_br(0, 0);
         att_sp_out.body_rate.x = u_br(1, 0);
@@ -127,10 +174,14 @@ void HR_Control::clc_cb(const ros::TimerEvent& event) {
         att_sp_pub.publish(att_sp_out);
     } else {
         // Trigger failsafe.
-        cout << r_safety << "m Failsafe Triggered at Frame " << k_main << " (" << k_main*t_dt << "s)" << endl;
         closedLoop.stop();
     }
 
+}
+void HR_Control::clc_cb(const ros::TimerEvent& event) {
+    policy_update();
+    delta_update();
+    controller();
 }
 
 int main(int argc, char **argv)

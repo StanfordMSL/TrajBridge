@@ -42,9 +42,16 @@ protected:
   ros::NodeHandle nh;
 
 private:
+  // Limit Check variables
+  float pxy_lim_;
+  float pz_lim_;
+  float v_lim_;
+  float q_lim_;
+  float ep_lim_;
+  float eq_lim_;
+  Matrix<float,17,1> del_lim;
+  static const string states[];
 
-  float r_safety;
-  
   // ROS variables
   ros::ServiceServer traj_server;
   ros::Subscriber    pose_curr_sub;
@@ -77,7 +84,9 @@ private:
 
   // Function(s)
   void policy_update();
-  void err_upd();
+  void delta_update();
+  void controller();
+  bool limit_check();
   void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
   void vel_curr_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
   void clc_cb(const ros::TimerEvent& event);
