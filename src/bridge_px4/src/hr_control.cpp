@@ -162,7 +162,7 @@ bool HR_Control::limit_check()
     for (int i = 0; i < 10; i++) {
         if (abs(del_x(i,0)) > del_slim(i,0)) {
             cout << "Limit Triggered by State: " << states[i] << endl;
-
+            cout << "Limit was: " << del_slim(i,0) << ", but I had: " << del_x(i,0) << endl;
             return false;
         }
     }
