@@ -3,18 +3,17 @@
 const string HR_Control::states[] = {
     "px","py","pz",
     "vx","vy","vz",
-    "qw","qx","qy","qz",
-    "epx","epy","epz","eqw",
-    "eqx","eqy","eqz"};
+    "qw","qx","qy","qz"};
 
 HR_Control::HR_Control()
-:   pxy_lim_(1.0),pz_lim_(0.5),v_lim_(0.5),
-    q_lim_(1.0),ep_lim_(3.0),eq_lim_(1.0)
+:   pxy_slim_(1.0),pz_slim_(0.5),v_slim_(0.5),q_slim_(0.3),
+    ep_lim_(3.0),eq_lim_(0.6)
 {
-    ros::param::get("~pxy_lim", pxy_lim_);
-    ros::param::get("~pz_lim", pz_lim_);
-    ros::param::get("~v_lim", v_lim_);
-    ros::param::get("~q_lim", q_lim_);
+    ros::param::get("~pxy_slim", pxy_slim_);
+    ros::param::get("~pz_slim", pz_slim_);
+    ros::param::get("~v_slim", v_slim_);
+    ros::param::get("~q_slim", q_slim_);
+
     ros::param::get("~ep_lim", ep_lim_);
     ros::param::get("~eq_lim", eq_lim_);
 
@@ -30,12 +29,25 @@ HR_Control::HR_Control()
     att_sp_out.type_mask = att_sp_out.IGNORE_ATTITUDE;
 
     // Initialize Limits Vector
-    del_lim(0,0) = del_lim(1,0) = pxy_lim_;
-    del_lim(2,0) = pz_lim_;
-    del_lim(3,0) = del_lim(4,0) = del_lim(5,0) = v_lim_;
-    del_lim(6,0) = del_lim(7,0) = del_lim(8,0) = del_lim(9,0) = q_lim_;
-    del_lim(10,0) = del_lim(11,0) = del_lim(12,0) = ep_lim_;
-    del_lim(13,0) = del_lim(14,0) = del_lim(15,0) = del_lim(16,0) = eq_lim_;
+    del_slim(0,0) = del_slim(1,0) = pxy_slim_;
+    del_slim(2,0) = pz_slim_;
+    del_slim(3,0) = del_slim(4,0) = del_slim(5,0) = v_slim_;
+    del_slim(6,0) = del_slim(7,0) = del_slim(8,0) = del_slim(9,0) = q_slim_;
+
+    /*
+    cout << "pos_xy safety limit: " << pxy_slim_ << endl;
+    cout << "pos_z safety limit: " << pz_slim_ << endl;
+    cout << "vel safety limit: " << v_slim_ << endl;
+    cout << "quat safety limit: " << q_slim_ << endl;
+    */
+
+    err_lim(0,0) = err_lim(1,0) = err_lim(2,0) = ep_lim_;
+    err_lim(3,0) = err_lim(4,0) = err_lim(5,0) = err_lim(6,0) = eq_lim_;
+
+    /*
+    cout << "pos integral limit: " << ep_lim_ << endl;
+    cout << "quat integral limit: " << eq_lim_ << endl;
+    */
 }
 
 HR_Control::~HR_Control()
@@ -79,6 +91,9 @@ bool HR_Control::transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::Tr
     closedLoop = nh.createTimer(ros::Duration(t_dt),&HR_Control::clc_cb, this);
     k_main = 0;
 
+    // Reset Integral Error Terms
+    x_curr.tail(7) = Matrix<float,7,1>::Zero();
+
     return true;
 }
 
@@ -109,12 +124,6 @@ void HR_Control::policy_update()
             idx = (k_main * 17) + j;
             x_bar(j, 0) = x_arr[idx];
         }
-        //cout << u_curr << endl;
-        //cout << "hoho" << endl;
-        //cout << L_curr << endl;
-        //cout << "haha" << endl;
-        //cout << x_bar << endl;
-        //cout << "hehe" << endl;
         
         // Increment Counter
         k_main += 1;
@@ -122,32 +131,37 @@ void HR_Control::policy_update()
     {
         // Policy Complete
         closedLoop.stop();
+        cout << "Integral Errors:" << endl;
+        cout << x_curr.tail(7) << endl;
     }
 }
 void HR_Control::delta_update()
 {
+    // Update the integral deltas
     del_z << (x_curr.head(3)-x_bar.head(3)), (x_curr.segment(6,4)-x_bar.segment(6,4));
-    x_curr.tail(7) += t_dt*del_z;
 
+    // Update the integral error
+    for (int i=0 ; i<7 ; i++) {
+        int idx = i+10;
+        float cand = x_curr(idx,0) + t_dt*del_z(i,0);
+
+        if (abs(cand) < err_lim(i,0)) {
+            x_curr(idx,0) = cand;
+        } else {
+            // Limit hit. Don't update.  
+        }
+    }
+
+    // Update the state deltas
     del_x = x_curr - x_bar;     
-
-    cout << x_curr.segment(6,4) << endl;    
-    cout << "hoho" << endl;
-    cout << x_bar.segment(6,4) << endl;    
-    cout << "haha" << endl;
 
 }
 
 bool HR_Control::limit_check()
 {
-    for (int i = 0; i < 17; i++) {
-        if (abs(del_x(i,0)) > del_lim(i,0)) {
+    for (int i = 0; i < 10; i++) {
+        if (abs(del_x(i,0)) > del_slim(i,0)) {
             cout << "Limit Triggered by State: " << states[i] << endl;
-
-            //cout << del_x(i,0) << endl;
-            //cout << "hoho" << endl;
-            cout << del_x(i,0) << endl;    
-            cout << "haha" << endl;
 
             return false;
         }
@@ -175,6 +189,8 @@ void HR_Control::controller()
     } else {
         // Trigger failsafe.
         closedLoop.stop();
+        cout << "Integral Errors:" << endl;
+        cout << x_curr.tail(7) << endl;
     }
 
 }
