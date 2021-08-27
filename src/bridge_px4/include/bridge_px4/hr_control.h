@@ -12,6 +12,7 @@
 
 #include "ros/ros.h"
 #include "bridge_px4/TrajTransfer.h"
+#include "bridge_px4/TrajUpdate.h"
 
 #include <std_msgs/Float32MultiArray.h>
 #include <geometry_msgs/PoseStamped.h>
