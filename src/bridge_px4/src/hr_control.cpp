@@ -97,7 +97,7 @@ bool HR_Control::transfer(bridge_px4::TrajTransfer::Request& req, bridge_px4::Tr
     return true;
 }
 
-void HR_Control::policy_update()
+bool HR_Control::policy_update()
 {
     int idx = 0;
 
@@ -127,14 +127,22 @@ void HR_Control::policy_update()
         
         // Increment Counter
         k_main += 1;
+
+        return true;
     } else 
     {
         // Policy Complete
         closedLoop.stop();
-        cout << "Integral Errors:" << endl;
-        cout << x_curr.tail(7) << endl;
+        
+        //cout << "Integral Errors:" << endl;
+        //cout << x_curr.tail(7) << endl;
+
+        return false;
     }
+
+    return false;
 }
+
 void HR_Control::delta_update()
 {
     // Update the integral deltas
@@ -186,18 +194,21 @@ void HR_Control::controller()
         att_sp_out.header.seq = k_main;
 
         att_sp_pub.publish(att_sp_out);
+        // cout << "hr_control: " << att_sp_out.thrust << endl;
     } else {
         // Trigger failsafe.
         closedLoop.stop();
-        cout << "Integral Errors:" << endl;
-        cout << x_curr.tail(7) << endl;
+        
+        //cout << "Integral Errors:" << endl;
+        //cout << x_curr.tail(7) << endl;
     }
 
 }
 void HR_Control::clc_cb(const ros::TimerEvent& event) {
-    policy_update();
-    delta_update();
-    controller();
+    if (policy_update() == true) {
+        delta_update();
+        controller();
+    };
 }
 
 int main(int argc, char **argv)

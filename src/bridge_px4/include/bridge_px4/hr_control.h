@@ -85,7 +85,7 @@ private:
   mavros_msgs::AttitudeTarget att_sp_out;      // Setpoint Attitude (body rate, orientation, thrust) Out
 
   // Function(s)
-  void policy_update();
+  bool policy_update();
   void delta_update();
   void controller();
   bool limit_check();
