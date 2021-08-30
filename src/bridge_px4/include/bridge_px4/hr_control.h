@@ -56,10 +56,11 @@ private:
   static const string states[];
 
   // ROS variables
-  ros::ServiceServer traj_server;
   ros::Subscriber    pose_curr_sub;
   ros::Subscriber    vel_curr_sub;
   ros::Publisher     att_sp_pub;
+  ros::ServiceServer traj_server;
+  ros::Subscriber    traj_sub;
 
   // ROS Timers
   ros::Timer closedLoop;      // closed-loop control update timer
@@ -93,6 +94,7 @@ private:
   void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
   void vel_curr_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
   void clc_cb(const ros::TimerEvent& event);
+  void traj_upd_cb(const bridge_px4::TrajUpdate::ConstPtr& msg);
 
 };
 
