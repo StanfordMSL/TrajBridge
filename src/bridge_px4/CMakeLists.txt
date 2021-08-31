@@ -53,11 +53,10 @@ find_package(Eigen3 REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+   FILES
+   TrajUpdate.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
@@ -172,6 +171,10 @@ target_link_libraries(auto_rc ${catkin_LIBRARIES})
 
 add_executable(hr_control src/hr_control.cpp)
 target_link_libraries(hr_control ${catkin_LIBRARIES})
+add_dependencies(hr_control ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_executable(mocap_vel src/mocap_vel.cpp)
+target_link_libraries(mocap_vel ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

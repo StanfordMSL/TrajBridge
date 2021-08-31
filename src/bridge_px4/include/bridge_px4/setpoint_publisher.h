@@ -77,7 +77,9 @@ private:
    string drone_id;
    float sp_out_hz;
    float checkup_hz;
-   float sp_gcs_hz_min;
+   float pos_hz_min;
+   float vel_hz_min;
+   float att_hz_min;
    float checkup_hz_min;
    float dt_fs;
    float dt_rs;
@@ -126,9 +128,13 @@ private:
    int k_rs;                    // Restore Counter
    int n_rs;                    // Total Restore Counter
    ros::Duration  t_last;
-   ros::Duration  setpoint_dt_max;
+   ros::Duration  pos_dt_max;
+   ros::Duration  vel_dt_max;
+   ros::Duration  att_dt_max;
+   ros::Duration  dt_max;
    ros::Duration  checkup_dt_max;
    ros::Time      t_fs;
+   Matrix<double,3,1> dt_max_vect;
 
    // Constants
    geometry_msgs::Quaternion quat_forward;

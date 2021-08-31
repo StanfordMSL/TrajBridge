@@ -4,7 +4,9 @@ SetpointPublisher::SetpointPublisher()
 {
     ros::param::get("~sp_out_hz", sp_out_hz);
     ros::param::get("~checkup_hz", checkup_hz);
-    ros::param::get("~sp_gcs_hz_min", sp_gcs_hz_min);
+    ros::param::get("~pos_hz_min", pos_hz_min);
+    ros::param::get("~vel_hz_min", vel_hz_min);
+    ros::param::get("~att_hz_min", att_hz_min);
     ros::param::get("~checkup_hz_min", checkup_hz_min);
     ros::param::get("~dt_fs", dt_fs);
     ros::param::get("~dt_rs",dt_rs);
@@ -45,8 +47,14 @@ SetpointPublisher::SetpointPublisher()
     n_rs = ceil(dt_rs*sp_out_hz);
 
     // Stream Timer Checks
-    setpoint_dt_max = ros::Duration(1.0/sp_gcs_hz_min);
+    pos_dt_max = ros::Duration(1.0/pos_hz_min);
+    vel_dt_max = ros::Duration(1.0/vel_hz_min);
+    att_dt_max = ros::Duration(1.0/att_hz_min);
     checkup_dt_max  = ros::Duration(1.0/checkup_hz_min);
+    dt_max = pos_dt_max;
+    dt_max_vect(0,0) = pos_dt_max.toSec();
+    dt_max_vect(1,0) = vel_dt_max.toSec();
+    dt_max_vect(2,0) = att_dt_max.toSec();
 
     ROS_INFO("Timers Initialized.");
 }
@@ -208,6 +216,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         } else {
             // Stay in State
         }
+        //std::cout <<  att_sp_in.thrust << std::endl;
 
     }
     break;
@@ -271,7 +280,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 
     sp_type_assign();
-    if (t_last > setpoint_dt_max) {
+    if (t_last > dt_max) {
         if (sp_stream_state == SP_ON) {
             ROS_INFO("Setpoint Stream Stopped");
         }
@@ -320,10 +329,11 @@ void SetpointPublisher::sp_type_assign() {
     delta_t[1] = t_now.toSec() - vel_sp_in.header.stamp.toSec();
     delta_t[2] = t_now.toSec() - att_sp_in.header.stamp.toSec();
 
+    // Check who is active
     int count = 0;
     int idx = 0;
     for (int i = 0 ; i<3 ; i++) {
-        if ( delta_t[i] < (1/sp_gcs_hz_min) ) {
+        if ( delta_t[i] < dt_max_vect(i,0) ) {
             count++;
             idx = i;
         }
@@ -333,17 +343,21 @@ void SetpointPublisher::sp_type_assign() {
         t_last = ros::Duration(999);
 
         sp_type_state = TP_NONE;
+        dt_max = pos_dt_max;
     } else {
         t_last = ros::Duration(delta_t[idx]);
 
         if (idx == 0) {
             sp_type_state = TP_POS;
+            dt_max = pos_dt_max;
             //ROS_INFO("Target POSITION Mode");
         } else if (idx == 1) {
             sp_type_state = TP_VEL;
+            dt_max = vel_dt_max;
             //ROS_INFO("Target VELOCITY Mode");
         } else if (idx == 2) {
             sp_type_state = TP_ATT;
+            dt_max = att_dt_max;
             //ROS_INFO("Target ATTITUDE Mode");
         }
     }
@@ -402,6 +416,7 @@ void SetpointPublisher::pub_sp_active() {
         att_sp_out.orientation = att_sp_in.orientation;
         att_sp_out.thrust = att_sp_in.thrust;
         pub_sp_att();
+        //cout <<  att_sp_in.thrust << std::endl;
     }
     break;
     default:
