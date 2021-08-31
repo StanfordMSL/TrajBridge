@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 3.0.2)
 project(bridge_px4)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
     roscpp
+    rospy
     mavros
     mavros_extras
     mavros_msgs
@@ -52,16 +53,15 @@ find_package(Eigen3 REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+   FILES
+   TrajUpdate.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  GcsCmd.srv
+  TrajTransfer.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -109,7 +109,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES bridge-px4
-#  CATKIN_DEPENDS message_runtime std_msgs
+   CATKIN_DEPENDS message_runtime std_msgs
 #  DEPENDS system_lib
 )
 
@@ -129,6 +129,10 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/bridge-px4.cpp
 # )
+## Declare a C++ library
+add_library(libpid
+  src/pid.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -139,21 +143,38 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/bridge_px4_node.cpp)
-add_executable(sp_pos_t_node src/sp_pos_t_node.cpp)
-target_link_libraries(sp_pos_t_node ${catkin_LIBRARIES})
-add_dependencies(sp_pos_t_node bridge_px4_gencpp)
-
-add_executable(sp_pos_e_node src/sp_pos_e_node.cpp)
-target_link_libraries(sp_pos_e_node ${catkin_LIBRARIES})
-add_dependencies(sp_pos_e_node bridge_px4_gencpp)
 
 add_executable(setpoint_publisher src/setpoint_publisher.cpp)
 target_link_libraries(setpoint_publisher ${catkin_LIBRARIES})
-add_dependencies(setpoint_publisher bridge_px4_gencpp)
+# add_dependencies(setpoint_publisher bridge_px4_gencpp)
 
 add_executable(GCS src/GCS.cpp)
 target_link_libraries(GCS ${catkin_LIBRARIES})
-add_dependencies(GCS bridge_px4_gencpp)
+# add_dependencies(GCS bridge_px4_gencpp)
+
+add_executable(GCSVel src/GCSVel.cpp)
+target_link_libraries(GCSVel ${catkin_LIBRARIES})
+# add_dependencies(GCSVel bridge_px4_gencpp)
+
+add_executable(GCSVelTraj src/GCSVelTraj.cpp)
+target_link_libraries(GCSVelTraj ${catkin_LIBRARIES})
+# add_dependencies(GCSVelTraj bridge_px4_gencpp)
+
+add_executable(controller src/velocity_controller.cpp)
+target_link_libraries(controller libpid ${catkin_LIBRARIES})
+
+add_executable(mocap_gen src/mocap_gen.cpp)
+target_link_libraries(mocap_gen ${catkin_LIBRARIES})
+
+add_executable(auto_rc src/auto_rc.cpp)
+target_link_libraries(auto_rc ${catkin_LIBRARIES})
+
+add_executable(hr_control src/hr_control.cpp)
+target_link_libraries(hr_control ${catkin_LIBRARIES})
+add_dependencies(hr_control ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_executable(mocap_vel src/mocap_vel.cpp)
+target_link_libraries(mocap_vel ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

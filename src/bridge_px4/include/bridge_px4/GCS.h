@@ -20,6 +20,9 @@
 #include <vector>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <mavros_msgs/CommandBool.h>
+#include <mavros_msgs/SetMode.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include <Eigen/Dense>
 
@@ -44,9 +47,14 @@ protected:
   ros::NodeHandle nh;
 
 private:
+  // Simulation Bool
+  bool auto_rc_trig;
+
   // ROS variables
   ros::Publisher pose_sp_pub[10];
-
+  ros::ServiceClient arming_client[10];
+  ros::ServiceClient set_mode_client[10];
+  
   // Trajectory Variables
   int n_dr;
   int n_fr;
@@ -55,8 +63,9 @@ private:
   ThreeD  st_traj;
 
   // Time Variables
-  ros::Time t_start;
-  float t_final;
+  double      t_end;      // end of  single trajectory
+  double      t_final;    //  end of total trajectory
+  ros::Time   t_start;    // Start time using world clock
 
   geometry_msgs::PoseStamped pose_sp[10];
 
@@ -67,6 +76,9 @@ private:
 
   // Functions
   void load_trajectory(const string &input);
+  void rc_takeoff_sequence(const int &input);
+  void rc_rtl_sequence(const int &input);
+  void pos_sp_init(const int &input);
 };
 
 #endif

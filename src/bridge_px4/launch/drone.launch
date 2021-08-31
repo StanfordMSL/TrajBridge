@@ -1,24 +1,42 @@
 <launch>
-   <arg name="hostname" default="$(env HOSTNAME)" />
-   <group ns="$(arg hostname)">
-   	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
-	      <param name="sp_out_hz" value="100.0"/>
-         <param name="checkup_hz" value="10.0"/>
-         <param name="sp_gcs_hz_min" value="2.0"/>
-         <param name="checkup_hz_min" value="2.0"/>
-      </node>
+   <group ns="$(env HOSTNAME)">
 
-      <include file="$(find mavros)/launch/node.launch">
-         <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
-         <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+   <!-- Initialize the Onboard Setpoint Publisher -->
+	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
+	   <param name="sp_out_hz" value="200.0"/>
+      <param name="checkup_hz" value="200.0"/>
+      <param name="pos_hz_min" value="5.0"/>
+      <param name="vel_hz_min" value="5.0"/>
+      <param name="att_hz_min" value="100.0"/>
+      <param name="checkup_hz_min" value="5.0"/>
+      <param name="dt_fs" value="3.0"/>
+      <param name="dt_rs" value="1.0"/>
+	</node>
 
-         <arg name="fcu_url" value="/dev/ttyS4:921600" />
-         <arg name="gcs_url" value="" />
-         <arg name="tgt_system" value="1" />
-         <arg name="tgt_component" value="1" />
-         <arg name="log_output" value="screen" />
-         <arg name="fcu_protocol" value="v2.0" />
-         <arg name="respawn_mavros" default="false" />
-      </include>
+   <!-- Initialize the High Rate Controller -->
+   <node pkg="bridge_px4" type="hr_control" name ="hr_control" output="screen">
+      <param name="pxy_slim" value="1.0"/>
+      <param name="pz_slim" value="0.5"/>
+      <param name="v_slim" value="3.0"/>
+      <param name="q_slim" value="1.0"/>
+      <param name="ep_lim" value="1.0"/>
+      <param name="eq_lim" value="0.5"/>
+   </node>
+
+   <!-- Initialize the mavros bridge over serial -->
+	<include file="$(find mavros)/launch/node.launch">
+	   <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+      <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+
+	   <arg name="fcu_url" value="/dev/ttyS4:921600" />
+      <arg name="gcs_url" value="" />
+      <arg name="tgt_system" value="1" />
+      <arg name="tgt_component" value="1" />
+      <arg name="log_output" value="screen" />
+      <arg name="fcu_protocol" value="v2.0" />
+      <arg name="respawn_mavros" default="false" />
+	</include>
+
    </group>
+
 </launch>

@@ -1,13 +1,13 @@
 <launch>
   <!-- VRPN Server -->
-  <arg name="server" default="mocap-vm.local"/>
+  <arg name="server" default="mocap.local"/>
 
   <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
     <rosparam subst_value="true">
       server: $(arg server)
       port: 3883
       update_frequency: 100.0
-      frame_id: world
+      frame_id: map
       use_server_time: false
       broadcast_tf: true
       refresh_tracker_frequency: 1.0
@@ -30,5 +30,17 @@
 
     <!-- Drone6 Remap -->
     <remap from="/vrpn_client_node/drone6/pose" to="drone6/mavros/vision_pose/pose" />
+
+    <!-- Drone7 Remap -->
+    <remap from="/vrpn_client_node/drone7/pose" to="drone7/mavros/vision_pose/pose" />
+
+    <!-- Drone8 Remap -->
+    <remap from="/vrpn_client_node/drone7/pose" to="drone7/mavros/vision_pose/pose" />
+  
+    <!-- GQuad Remap -->
+    <remap from="/vrpn_client_node/gquad/pose" to="gquad/mavros/vision_pose/pose" />
+
+    <!-- GTarg Remap -->
+    <remap from="/vrpn_client_node/gtarg/pose" to="gtarg/mavros/vision_pose/pose" />
   </node>
 </launch>
