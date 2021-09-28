@@ -158,6 +158,11 @@ include_directories(
 add_executable(iroad_teleop_joy src/iroad_teleop_joy.cpp)
 target_link_libraries(iroad_teleop_joy ${catkin_LIBRARIES})
 
+add_executable(udp_server src/udp_server.cpp)
+target_link_libraries(udp_server ${catkin_LIBRARIES})
+
+add_executable(udp_client src/udp_client.cpp)
+target_link_libraries(udp_client ${catkin_LIBRARIES})
 
 #############
 ## Install ##

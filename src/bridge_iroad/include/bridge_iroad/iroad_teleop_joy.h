@@ -14,7 +14,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-  
+
+#define PORT 25000
+
 using namespace std;
 
 class Teleop_IRoad
@@ -41,12 +43,31 @@ private:
   int pk_brake_id;
 
   // Joystick Data
-  float accel;     // ud_l_stick
-  float steer;     // lr_l_stick
-  float ct_input;  // l_trig
-  float PRNDL_vr;  // circle
-  float PRNDL_ct;  // square
-  float pk_brake;  // cross
+  struct iroad_cmd { 
+    float cmd_0;
+    float steer;
+    float cmd_2; 
+    float ct_input;
+    float cmd_4;
+    float cmd_5; 
+    float accel;
+    float cmd_7;
+    float cmd_8;
+    float pk_brake; 
+    float PRNDL_vr;
+    float cmd_11; 
+    float PRNDL_ct;
+    float cmd_13;
+    float cmd_14;
+    float cmd_15;
+    float cmd_16;
+    float cmd_17;
+    float cmd_18;
+    float cmd_19;
+    float cmd_20;
+    float cmd_21;
+    };
+  struct iroad_cmd cmd_struct;
 
   // Offset/Scaling Variables
   float steer_scale;
