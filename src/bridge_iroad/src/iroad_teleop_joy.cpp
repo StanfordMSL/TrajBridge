@@ -59,8 +59,8 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
     // Filling server information
     serv.sin_family = AF_INET;
     serv.sin_port = htons(PORT);
-    //serv.sin_addr.s_addr = inet_addr("192.168.140.1");
-    serv.sin_addr.s_addr = INADDR_ANY;
+    serv.sin_addr.s_addr = inet_addr("192.168.140.3");
+    //serv.sin_addr.s_addr = INADDR_ANY;
 
     // Populate data packet
   

@@ -66,6 +66,7 @@ private:
     float cmd_19;
     float cmd_20;
     float cmd_21;
+    float cmd_22;
     };
   struct iroad_cmd cmd_struct;
 
