@@ -23,6 +23,18 @@ Teleop_IRoad::Teleop_IRoad():
   double hz = 100.0;
   udpLoop = nh.createTimer(ros::Duration(1.0/hz),&Teleop_IRoad::udp_cb, this);
 
+  // Creating socket file descriptor
+  if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+    perror("socket creation failed");
+    exit(EXIT_FAILURE);
+  }
+
+  // Filling server information
+  serv.sin_family = AF_INET;
+  serv.sin_port = htons(PORT);
+  serv.sin_addr.s_addr = inet_addr("192.168.140.3");
+  //serv.sin_addr.s_addr = INADDR_ANY;
+
 }
 
 void Teleop_IRoad::joy_cb(const sensor_msgs::Joy::ConstPtr& joy)
@@ -48,26 +60,10 @@ void Teleop_IRoad::joy_cb(const sensor_msgs::Joy::ConstPtr& joy)
 }
 
 void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
-    // Creating socket file descriptor
-    int sockfd;
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
-        perror("socket creation failed");
-        exit(EXIT_FAILURE);
-    }
-    struct sockaddr_in serv;
-
-    // Filling server information
-    serv.sin_family = AF_INET;
-    serv.sin_port = htons(PORT);
-    serv.sin_addr.s_addr = inet_addr("192.168.140.3");
-    //serv.sin_addr.s_addr = INADDR_ANY;
-
-    // Populate data packet
-  
     // Send Packet    
     sendto(sockfd, &cmd_struct, sizeof(cmd_struct),MSG_CONFIRM, (const struct sockaddr *)&serv,sizeof(serv));
   
-    close(sockfd);
+    //close(sockfd);
 
     //cout << "hoho" << endl;
 }

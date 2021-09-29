@@ -28,6 +28,10 @@ protected:
   ros::NodeHandle nh;
 
 private:
+  // UDP
+  int sockfd;
+  struct sockaddr_in serv;
+
   // ROS Publishers/Subscribers
   ros::Subscriber joy_sub_;
 
