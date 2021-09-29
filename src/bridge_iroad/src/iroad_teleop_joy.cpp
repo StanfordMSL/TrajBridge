@@ -24,17 +24,25 @@ Teleop_IRoad::Teleop_IRoad():
   udpLoop = nh.createTimer(ros::Duration(1.0/hz),&Teleop_IRoad::udp_cb, this);
 
   // Creating socket file descriptor
-  if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+  if ( (socket_desc = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
     perror("socket creation failed");
     exit(EXIT_FAILURE);
   }
 
-  // Filling server information
-  serv.sin_family = AF_INET;
-  serv.sin_port = htons(PORT);
-  serv.sin_addr.s_addr = inet_addr("192.168.140.3");
-  //serv.sin_addr.s_addr = INADDR_ANY;
+  // Filling server/client information
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(PORT);
+  server_addr.sin_addr.s_addr = inet_addr("192.168.140.2");
 
+  client_addr.sin_family = AF_INET;
+  client_addr.sin_port = htons(PORT);
+  client_addr.sin_addr.s_addr = inet_addr("192.168.140.3");
+
+  if ( bind(socket_desc, (const struct sockaddr *)&server_addr,sizeof(server_addr)) < 0 ) {
+    perror("bind failed");
+    exit(EXIT_FAILURE);
+  }
+      
 }
 
 void Teleop_IRoad::joy_cb(const sensor_msgs::Joy::ConstPtr& joy)
@@ -60,8 +68,11 @@ void Teleop_IRoad::joy_cb(const sensor_msgs::Joy::ConstPtr& joy)
 }
 
 void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
+    //memset(server_message, '\0', sizeof(server_message));
+    //memset(client_message, '\0', sizeof(client_message));
+    
     // Send Packet    
-    sendto(sockfd, &cmd_struct, sizeof(cmd_struct),MSG_CONFIRM, (const struct sockaddr *)&serv,sizeof(serv));
+    sendto(socket_desc, &cmd_struct, sizeof(cmd_struct),MSG_CONFIRM, (const struct sockaddr *)&client_addr,sizeof(client_addr));
   
     //close(sockfd);
 

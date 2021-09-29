@@ -29,8 +29,8 @@ protected:
 
 private:
   // UDP
-  int sockfd;
-  struct sockaddr_in serv;
+  int socket_desc;
+  struct sockaddr_in server_addr,client_addr;
 
   // ROS Publishers/Subscribers
   ros::Subscriber joy_sub_;
