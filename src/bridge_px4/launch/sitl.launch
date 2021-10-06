@@ -3,7 +3,7 @@
    <node pkg="bridge_px4" type="mocap_gen" name ="mocap_gen" output="screen">
    </node>
    
-   <group ns="drone2">   
+   <group ns="drone1">   
    <!-- Initialize the Onboard Setpoint Publisher -->
    <node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
 	   <param name="sp_out_hz" value="200.0"/>
