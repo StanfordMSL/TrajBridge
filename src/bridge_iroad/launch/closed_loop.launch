@@ -14,8 +14,5 @@
   <param name="PRNDL_ct_id" value="2" type="int"/>
   <param name="pk_brake_id" value="0" type="int"/>
   <param name="steer_scale" value="350" type="double"/>
-  <param name="origin_lat" value="37.4303024" type="float"/>
-  <param name="origin_lon" value="-122.1839708" type="float"/>
-  <param name="origin_alt" value="0.0" type="float"/>
-  <node pkg="bridge_iroad" type="iroad_teleop_joy" name="iroad_teleop_joy" output="screen"/>
+  <node pkg="bridge_iroad" type="iroad_closedloop" name="iroad_closedloop" output="screen"/>
 </launch>

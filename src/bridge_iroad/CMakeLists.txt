@@ -10,16 +10,18 @@ add_compile_options(-std=c++14)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     rospy
+    mavros
+    mavros_extras
+    mavros_msgs
+    mavlink
     std_msgs
     message_generation
     rosbag
     )
 
-find_package(Eigen3 REQUIRED)
-
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(Eigen3 REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -73,8 +75,8 @@ find_package(Eigen3 REQUIRED)
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+#  DEPENDENCIES
+#  std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -163,6 +165,9 @@ target_link_libraries(udp_server ${catkin_LIBRARIES})
 
 add_executable(udp_client src/udp_client.cpp)
 target_link_libraries(udp_client ${catkin_LIBRARIES})
+
+add_executable(iroad_closedloop src/iroad_closedloop.cpp)
+target_link_libraries(iroad_closedloop ${catkin_LIBRARIES})
 
 #############
 ## Install ##
