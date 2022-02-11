@@ -74,5 +74,7 @@
         "IROAD",
         "PRNDL",
         "vect"
-    ]
+    ],
+    "cmake.configureOnOpen": true,
+    "ros.distro": "noetic"
 }

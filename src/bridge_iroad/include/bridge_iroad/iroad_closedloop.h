@@ -43,24 +43,34 @@ private:
   ros::Subscriber gps_sub_;
 
   // ROS Timers
+  double udp_hz;
   ros::Timer udpLoop;
 
-  // Joystick IDs
-  int accel_id;
-  int steer_id;
-  int ct_input_id;
-  int PRNDL_vr_id;
-  int PRNDL_ct_id;
-  int pk_brake_id;
-  int cl_activation_id; //button to activate closed-loop control
+  // State Variables and Parameters
+  Matrix<double,7,1> pose;    // Vehicle Pose in World Frame
+  Matrix<double,3,1> p_0;     // Origin Position
+  Matrix<double,3,1> p_t;     // Target Position
+  double p_tx;                // Launch File Input for Target Position (x)
+  double p_ty;                // Launch File Input for Target Position (y)
+  double lat_0;               // Latitude of Origin Point
+  double lon_0;               // Longitude of Origin Point
+  double d_thres;
+
+  // Input Variables and Parameters
+  float steer_scale;
+  double accel;
+  double steer;
+
+  // Joystick Data and Parameters
+  int  accel_id;
+  int  steer_id;
+  int  ct_input_id;
+  int  PRNDL_vr_id;
+  int  PRNDL_ct_id;
+  int  pk_brake_id;
+  int  cl_act_id; //button to activate closed-loop control
   bool cl_act_chk;
 
-  // Origin location (latitude and longitude)
-  float origin_lat;
-  float origin_lon;
-  float origin_alt;
-
-  // Joystick Data
   struct iroad_cmd { 
     float cmd_0;
     float steer;
@@ -86,35 +96,18 @@ private:
     float cmd_21;
     float cmd_22;
     };
-  struct iroad_cmd cmd_in;
+  struct iroad_cmd cmd_joy;
   struct iroad_cmd cmd_out;
-
-  // Variables for describing IMU orientation
-  Matrix<double,3,1> vHx;
-  Matrix<double,3,1> vHxp;
-  Matrix<double,3,1> vHy;
-  Matrix<double,3,1> vHyp;
-  Matrix<double,1,4> psi;
-  
-  // Variables for describing GNSS localization
-  Matrix<double,3,1> xCurr;
-  Matrix<double,3,1> xGoal;
-  Matrix<double,3,1> xOrig;
-  double distance;
-  double dist_thres;
-
-  // Offset/Scaling Variables
-  float steer_scale;
-  
-  // Constants
-  double r2d;
-  double R;
 
   // Functions
   void joy_cb(const sensor_msgs::Joy::ConstPtr& joy);
   void udp_cb(const ros::TimerEvent& event);
   void imu_cb(const sensor_msgs::Imu::ConstPtr& imu);
   void gps_cb(const sensor_msgs::NavSatFix::ConstPtr& gps);
+  Matrix<double,3,1> quatrot(const Vector3d& v);
+  Matrix<double,3,1> gcs2cart(const double lat,const double lon);
+  double deg2rad(const double theta_d);
+  double rad2deg(const double theta_r);
 };
 
 

@@ -7,11 +7,17 @@ Teleop_IRoad::Teleop_IRoad():
   PRNDL_vr_id(1),
   PRNDL_ct_id(2),
   pk_brake_id(0),
-  steer_scale(350),
-  origin_lat(37.429929), //map lat: 37.42999
-  origin_lon(-122.183598), //map lon: -122.18363
-  origin_alt(5.594),
-  cl_activation_id(3)
+  cl_act_id(3),
+  steer_scale(15),
+  accel(0.0),
+  steer(0.0),
+  udp_hz(100),
+  lat_0(37.429929),
+  lon_0(-122.183598),
+  p_tx(0.0),
+  p_ty(0.0),
+  d_thres(5.0),
+  cl_act_chk(0)
 {
   nh.param("accel_id", accel_id, accel_id);
   nh.param("steer_id", steer_id, steer_id);
@@ -19,36 +25,25 @@ Teleop_IRoad::Teleop_IRoad():
   nh.param("PRNDL_vr_id", PRNDL_vr_id, PRNDL_vr_id);
   nh.param("PRNDL_ct_id", PRNDL_ct_id, PRNDL_ct_id);
   nh.param("pk_brake_id", pk_brake_id, pk_brake_id);
+  nh.param("cl_act_id", cl_act_id, cl_act_id);
   nh.param("steer_scale", steer_scale, steer_scale);
-  nh.param("origin_lat", origin_lat, origin_lat);
-  nh.param("origin_lon", origin_lon, origin_lon);
-  nh.param("origin_alt", origin_alt, origin_alt);
+  nh.param("lat_0", lat_0, lat_0);
+  nh.param("lon_0", lon_0, lon_0);
+  nh.param("p_tx", p_tx, p_tx);
+  nh.param("p_ty", p_ty, p_ty);
+  nh.param("d_thres", d_thres, d_thres);
 
   joy_sub_ = nh.subscribe<sensor_msgs::Joy>("joy", 10, &Teleop_IRoad::joy_cb, this); 
   imu_sub_ = nh.subscribe<sensor_msgs::Imu>("gx5/imu/data", 10, &Teleop_IRoad::imu_cb, this);
   gps_sub_ = nh.subscribe<sensor_msgs::NavSatFix>("gx5/gps/fix", 10, &Teleop_IRoad::gps_cb,this);
 
-  double hz = 100.0;
+  udpLoop = nh.createTimer(ros::Duration(1.0/udp_hz),&Teleop_IRoad::udp_cb, this);
+
+  p_0 = gcs2cart(lat_0,lon_0);
+  p_t(0,0) = p_tx;
+  p_t(1,0) = p_ty;
+  p_t(3,0) = 0.0;
   
-  r2d = M_PI/180.0;
-  R = 6367449.0;
-
-  xOrig(0,0) = R*cos(r2d*origin_lat)*cos(r2d*origin_lon); //distance in meters from the point of origin, perpendicular to the equator
-  xOrig(1,0) = R*cos(r2d*origin_lat)*sin(r2d*origin_lon); //distance in meters from the point of origin, parallel to the equator
-  xOrig(2,0) = 0.0;
-
-  // xGoal(0,0) = 4.0; //custom, manually set goal
-  // xGoal(1,0) = -20.0;
-  xGoal(0,0) = -20.0; //custom, manually set goal
-  xGoal(1,0) = 0.0;
-  xGoal(2,0) = 0.0;
-  
-  xCurr = xOrig;
-  distance = 0.0; //initialize to a real value
-  dist_thres = 5.0; //sensor position uncertainty radius is 2m, supposedly
-
-  udpLoop = nh.createTimer(ros::Duration(1.0/hz),&Teleop_IRoad::udp_cb, this);
-
   // Creating socket file descriptor
   if ( (socket_desc = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
     perror("socket creation failed");
@@ -73,156 +68,110 @@ Teleop_IRoad::Teleop_IRoad():
 
 void Teleop_IRoad::joy_cb(const sensor_msgs::Joy::ConstPtr& joy)
 {
-  
-  cmd_in.steer = (float) steer_scale*joy->axes[steer_id];
-  cmd_in.accel = (float) -(joy->axes[accel_id]-1.0)/2.0;
-  cmd_in.PRNDL_vr = (float) joy->buttons[PRNDL_vr_id];
-  cmd_in.PRNDL_ct = (float) joy->buttons[PRNDL_ct_id];
-  cmd_in.ct_input = (float) -(joy->axes[ct_input_id]-1.0)/2.0;
-  cmd_in.pk_brake = (float) joy->buttons[pk_brake_id];
+  cmd_joy.steer = (float) steer_scale*joy->axes[steer_id];
+  cmd_joy.accel = (float) -(joy->axes[accel_id]-1.0)/2.0;
+  cmd_joy.PRNDL_vr = (float) joy->buttons[PRNDL_vr_id];
+  cmd_joy.PRNDL_ct = (float) joy->buttons[PRNDL_ct_id];
+  cmd_joy.ct_input = (float) -(joy->axes[ct_input_id]-1.0)/2.0;
+  cmd_joy.pk_brake = (float) joy->buttons[pk_brake_id];
 
-  cl_act_chk = (bool) joy->buttons[cl_activation_id];
+  cl_act_chk = (bool) joy->buttons[cl_act_id];
 }
 
 void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
-    //memset(server_message, '\0', sizeof(server_message));
-    //memset(client_message, '\0', sizeof(client_message));
-    cmd_out = cmd_in;
+  Matrix<double,3,1> r_t;       // Relative position of target in body frame
+  r_t = quatrot((p_t-pose.block(0,0,3,1)));
+  double d_t = r_t.norm();      // l2-norm of relative position
 
-    if (cl_act_chk) {
-      if (psi(0,1) > 30.0) {
-        cmd_out.steer = (float) -steer_scale;
-      } else if (psi(0,1) < -30.0) {
-        cmd_out.steer = (float) steer_scale;
-      } else {
-        cmd_out.steer = (float) -steer_scale*psi(0,1)/30.0;
-    }
+  Matrix<double,3,1> r_f;       // Front vector in body frame
+  r_f << 0,1,0;
+  steer = deg2rad(acos(r_t.dot(r_f)/d_t));
 
-    if (distance <= dist_thres) {
-      cmd_out.accel = 0.0;
-    } else {
-      //cmd_struct.accel = 0.0; //debug
-      cmd_out.PRNDL_ct = 1;
-      cmd_out.accel = 0.5; //debug
-      //cmd_struct.accel = min(distance/100.0,1.0); 
-    }
-    // cout << "Closed loop control active!" << endl;
+  if (r_t(0,0) > 0) {
+    steer = -steer;
   } else {
-    // Do Nothing
+    // Carry On
   }
 
-  // cout << "accel: " << cmd_out.accel << endl;
-  // cout << "steer: " << cmd_out.steer << endl;
-  // cout << "ct_input: " << cmd_out.ct_input << endl;
+  cmd_out = cmd_joy;
+  if (cl_act_chk) {
+    cmd_out.steer = steer_scale*steer;
 
-  // cout << "PRNDL_vr: " << cmd_out.PRNDL_vr << endl;
-  // cout << "PRNDL_ct: " << cmd_out.PRNDL_ct << endl;
-  // cout << "pk_brake: " << cmd_out.pk_brake << endl;
-  // cout << endl;
-    // Send Packet    
-    sendto(socket_desc, &cmd_out, sizeof(cmd_out),MSG_CONFIRM, (const struct sockaddr *)&client_addr,sizeof(client_addr));
-  
-    //close(sockfd);
+    if (cmd_out.steer > 30.0) {
+      cmd_out.steer = 30.0;
+    } else if (cmd_out.steer < -30.0) {
+      cmd_out.steer = -30.0;
+    }
 
-    //cout << "hoho" << endl;
+    if (d_t >= d_thres) {
+      cmd_out.PRNDL_ct = 1;
+      cmd_out.accel = 0.5;
+     //cmd_struct.accel = min(distance/100.0,1.0); 
+    } else {
+      cmd_out.accel = 0.0; //debug 
+    }
+  } else {
+    // Follow joystick input.
+  }
+
+  cout << "Steering:" << steer << endl;
+  cout << "===========================================" << endl;
+
+  // Send Packet
+  sendto(socket_desc, &cmd_out, sizeof(cmd_out), MSG_CONFIRM, (const struct sockaddr *)&client_addr, sizeof(client_addr));
 }
 
 void Teleop_IRoad::imu_cb(const sensor_msgs::Imu::ConstPtr& imu) {
-    //memset(server_message, '\0', sizeof(server_message));
-    //memset(client_message, '\0', sizeof(client_message));
-
-    float qw = imu->orientation.w;
-    float qx = imu->orientation.x;
-    float qy = imu->orientation.y;
-    float qz = imu->orientation.z;
-
-    float qwp = qw;
-    float qxp = -qx;
-    float qyp = -qy;
-    float qzp = -qz;
-    
-    vHx(0,0) = qw*qw + qx*qx - qy*qy - qz*qz;
-    vHx(1,0) = 2.0*(qx*qy + qw*qz);
-    vHx(2,0) = 2.0*(qx*qz - qw*qy);
-
-    vHxp(0,0) = qwp*qwp + qxp*qxp - qyp*qyp - qzp*qzp;
-    vHxp(1,0) = 2.0*(qxp*qyp + qwp*qzp);
-    vHxp(2,0) = 2.0*(qxp*qzp - qwp*qyp);
-
-    vHy(0,0) = 2.0*(qx*qy - qw*qz);
-    vHy(1,0) = qw*qw - qx*qx + qy*qy - qz*qz;
-    vHy(2,0) = 2.0*(qw*qx + qy*qz);
-
-    vHyp(0,0) = 2.0*(qxp*qyp - qwp*qzp);
-    vHyp(1,0) = qwp*qwp - qxp*qxp + qyp*qyp - qzp*qzp;
-    vHyp(2,0) = 2.0*(qwp*qxp + qyp*qzp);
-
-    Matrix<double,3,4> output;
-    output.col(0) = vHx;
-    output.col(1) = vHxp;
-    output.col(2) = vHy;
-    output.col(3) = vHyp;
-
-    VectorXd xRela(3);
-    xRela = xGoal - xCurr;
-    distance = xRela.norm();
-    // cout << xRela << endl;
-
-    psi(0,0) = (180/M_PI)*acos(vHx.dot(xRela)/distance);
-    psi(0,1) = (180/M_PI)*acos(vHxp.dot(xRela)/distance);
-    psi(0,2) = (180/M_PI)*acos(vHy.dot(xRela)/distance);
-    psi(0,3) = (180/M_PI)*acos(vHyp.dot(xRela)/distance);
-    
-    double c = 0.0;
-    if ( (vHyp(0,0) > 0) && (vHyp(1,0) > 0) ) {
-      c = 1.0;
-    } else if ( (vHyp(0,0) < 0) && (vHyp(1,0) > 0) ) {
-      c = 1.0;
-    } else if ( (vHyp(0,0) > 0) && (vHyp(1,0) < 0) ) {
-      c = -1.0;
-    } else if ( (vHyp(0,0) < 0) && (vHyp(1,0) < 0) ) {
-      c = -1.0;
-    }  
-    psi(0,3) = c*psi(0,3);
-    
-    cout << output << endl;
-    cout << "===========================================" << endl;
-    cout << psi << endl;
-    cout << "===========================================" << endl;
-    //cout << "one = " << vHead.norm() << ", heading: " << vHead(1,0) << endl;
-    // cout << "distance to goal: " << distance << "m, current altitude: " << xCurr(2,0) << endl;
+    pose(3,0) = imu->orientation.w;
+    pose(4,0) = imu->orientation.x;
+    pose(5,0) = imu->orientation.y;
+    pose(6,0) = imu->orientation.z;
 }
 
 void Teleop_IRoad::gps_cb(const sensor_msgs::NavSatFix::ConstPtr& gps) {
-  double deg_lat = gps->latitude;
-  double deg_lon = gps->longitude;
-  
-  Matrix<double,3,1> xGlob;
-  xGlob(0,0) = R*cos(r2d*deg_lat)*cos(r2d*deg_lon); //distance in meters from the point of origin, perpendicular to the equator
-  xGlob(1,0) = R*cos(r2d*deg_lat)*sin(r2d*deg_lon); //distance in meters from the point of origin, parallel to the equator
-  xGlob(2,0) = 0.0;
+  Matrix<double,3,1> v;
+  double lat = gps->latitude;
+  double lon = gps->longitude;
 
-  xCurr = xOrig - xGlob;
-  
-  // cout << xCurr << endl;
-  // cout << "===============" << endl;
-  // xGoal = xOrig;
-  // xGoal(1,0) += 1;
-  // Matrix<double,3,1>xRela = xCurr - xGoal;
-  // xRela(0,0) = 0;
-  // xRela(1,0) = 1000;
-  // xRela(2,0) = 0;
-  // //cout << xRela.norm() << endl;
-  // Matrix<double,3,1> a = xRela;
-  // Matrix<double,3,1> b = vH;
-  
-  // double num = a.transpose()*b;
-  // double den = a.norm();
+  v = gcs2cart(lat,lon)-p_0;
+  pose.block<3,1>(0,0) = v;
+}
 
-  // double theta = (180/M_PI)*acos(num/den);
-  // //cout << "theta value: " << theta << endl;
-  // cout << vHead << endl;
-  // cout << "||vHead|| = " << vHead.norm() << endl;
+Matrix<double,3,1> Teleop_IRoad::quatrot(const Vector3d& v) {
+    // const Matrix<double,4,1>& q,const Matrix<double,3,1>& v
+    
+    double qw = pose(3,0);
+    double qx = pose(4,0);
+    double qy = pose(5,0);
+    double qz = pose(6,0);
+
+    Matrix<double,3,3> R;
+    R << (qw*qw + qx*qx - qy*qy - qz*qz), (2*qx*qy-2*qw*qz), (2*qx*qz-2*qw*qy), 
+         (2*qx*qy+2*qw*qz), (qw*qw - qx*qx + qy*qy - qz*qz), (2*qy*qz-2*qw*qx), 
+         (2*qx*qz+2*qw*qy), (2*qy*qz+2*qw*qx), (qw*qw - qx*qx - qy*qy + qz*qz);
+
+    Matrix<double,3,1> vp;
+    vp = R*v;
+
+    return vp;
+}
+
+Matrix<double,3,1> Teleop_IRoad::gcs2cart(const double lat,const double lon) {
+  Matrix<double,3,1> pos;
+  double R = 6367449.0;
+
+  pos(0,0) = R*cos(rad2deg(lat))*cos(rad2deg(lon));
+  pos(1,0) = R*cos(rad2deg(lat))*sin(rad2deg(lon));
+  pos(2,0) = 0.0;
+
+  return pos;
+}
+double Teleop_IRoad::deg2rad(const double theta_d) {
+    return((M_PI/180.0)*theta_d);
+}
+
+double Teleop_IRoad::rad2deg(const double theta_r) {
+    return((180.0/M_PI)*theta_r);
 }
 
 int main(int argc, char** argv)
