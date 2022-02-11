@@ -52,6 +52,8 @@ private:
   int PRNDL_vr_id;
   int PRNDL_ct_id;
   int pk_brake_id;
+  int cl_activation_id; //button to activate closed-loop control
+  bool cl_act_chk;
 
   // Origin location (latitude and longitude)
   float origin_lat;
@@ -84,7 +86,8 @@ private:
     float cmd_21;
     float cmd_22;
     };
-  struct iroad_cmd cmd_struct;
+  struct iroad_cmd cmd_in;
+  struct iroad_cmd cmd_out;
 
   // Variables for describing IMU orientation
   Matrix<double,3,1> vHx;
@@ -97,9 +100,15 @@ private:
   Matrix<double,3,1> xCurr;
   Matrix<double,3,1> xGoal;
   Matrix<double,3,1> xOrig;
+  double distance;
+  double dist_thres;
 
   // Offset/Scaling Variables
   float steer_scale;
+  
+  // Constants
+  double r2d;
+  double R;
 
   // Functions
   void joy_cb(const sensor_msgs::Joy::ConstPtr& joy);

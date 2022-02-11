@@ -8,9 +8,10 @@ Teleop_IRoad::Teleop_IRoad():
   PRNDL_ct_id(2),
   pk_brake_id(0),
   steer_scale(350),
-  origin_lat(37.4303024),
-  origin_lon(-122.1839708),
-  origin_alt(0.0)
+  origin_lat(37.429929), //map lat: 37.42999
+  origin_lon(-122.183598), //map lon: -122.18363
+  origin_alt(5.594),
+  cl_activation_id(3)
 {
   nh.param("accel_id", accel_id, accel_id);
   nh.param("steer_id", steer_id, steer_id);
@@ -28,12 +29,23 @@ Teleop_IRoad::Teleop_IRoad():
   gps_sub_ = nh.subscribe<sensor_msgs::NavSatFix>("gx5/gps/fix", 10, &Teleop_IRoad::gps_cb,this);
 
   double hz = 100.0;
+  
+  r2d = M_PI/180.0;
+  R = 6367449.0;
 
-  xCurr(0,0) = 0.0;
-  xCurr(1,0) = 0.0;
-  xCurr(2,0) = 0.0;
-  xGoal = xCurr;
-  xOrig = xCurr;
+  xOrig(0,0) = R*cos(r2d*origin_lat)*cos(r2d*origin_lon); //distance in meters from the point of origin, perpendicular to the equator
+  xOrig(1,0) = R*cos(r2d*origin_lat)*sin(r2d*origin_lon); //distance in meters from the point of origin, parallel to the equator
+  xOrig(2,0) = 0.0;
+
+  // xGoal(0,0) = 4.0; //custom, manually set goal
+  // xGoal(1,0) = -20.0;
+  xGoal(0,0) = -20.0; //custom, manually set goal
+  xGoal(1,0) = 0.0;
+  xGoal(2,0) = 0.0;
+  
+  xCurr = xOrig;
+  distance = 0.0; //initialize to a real value
+  dist_thres = 5.0; //sensor position uncertainty radius is 2m, supposedly
 
   udpLoop = nh.createTimer(ros::Duration(1.0/hz),&Teleop_IRoad::udp_cb, this);
 
@@ -61,33 +73,54 @@ Teleop_IRoad::Teleop_IRoad():
 
 void Teleop_IRoad::joy_cb(const sensor_msgs::Joy::ConstPtr& joy)
 {
-  geometry_msgs::Twist twist;
+  
+  cmd_in.steer = (float) steer_scale*joy->axes[steer_id];
+  cmd_in.accel = (float) -(joy->axes[accel_id]-1.0)/2.0;
+  cmd_in.PRNDL_vr = (float) joy->buttons[PRNDL_vr_id];
+  cmd_in.PRNDL_ct = (float) joy->buttons[PRNDL_ct_id];
+  cmd_in.ct_input = (float) -(joy->axes[ct_input_id]-1.0)/2.0;
+  cmd_in.pk_brake = (float) joy->buttons[pk_brake_id];
 
-  cmd_struct.accel = (float) -(joy->axes[accel_id]-1.0)/2.0;
-  // cmd_struct.steer = (float) steer_scale*joy->axes[steer_id];
-  cmd_struct.steer = (float) steer_scale*psi(0,1);
-  cmd_struct.ct_input = (float) -(joy->axes[ct_input_id]-1.0)/2.0;
-
-  cmd_struct.PRNDL_vr = (float) joy->buttons[PRNDL_vr_id];
-  cmd_struct.PRNDL_ct = (float) joy->buttons[PRNDL_ct_id];
-  cmd_struct.pk_brake = (float) joy->buttons[pk_brake_id];
-
-  cout << "accel: " << cmd_struct.accel << endl;
-  cout << "steer: " << cmd_struct.steer << endl;
-  cout << "ct_input: " << cmd_struct.ct_input << endl;
-
-  cout << "PRNDL_vr: " << cmd_struct.PRNDL_vr << endl;
-  cout << "PRNDL_ct: " << cmd_struct.PRNDL_ct << endl;
-  cout << "pk_brake: " << cmd_struct.pk_brake << endl;
-  cout << endl;
+  cl_act_chk = (bool) joy->buttons[cl_activation_id];
 }
 
 void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
     //memset(server_message, '\0', sizeof(server_message));
     //memset(client_message, '\0', sizeof(client_message));
-    
+    cmd_out = cmd_in;
+
+    if (cl_act_chk) {
+      if (psi(0,1) > 30.0) {
+        cmd_out.steer = (float) -steer_scale;
+      } else if (psi(0,1) < -30.0) {
+        cmd_out.steer = (float) steer_scale;
+      } else {
+        cmd_out.steer = (float) -steer_scale*psi(0,1)/30.0;
+    }
+
+    if (distance <= dist_thres) {
+      cmd_out.accel = 0.0;
+    } else {
+      //cmd_struct.accel = 0.0; //debug
+      cmd_out.PRNDL_ct = 1;
+      cmd_out.accel = 0.5; //debug
+      //cmd_struct.accel = min(distance/100.0,1.0); 
+    }
+    // cout << "Closed loop control active!" << endl;
+  } else {
+    // Do Nothing
+  }
+
+  // cout << "accel: " << cmd_out.accel << endl;
+  // cout << "steer: " << cmd_out.steer << endl;
+  // cout << "ct_input: " << cmd_out.ct_input << endl;
+
+  // cout << "PRNDL_vr: " << cmd_out.PRNDL_vr << endl;
+  // cout << "PRNDL_ct: " << cmd_out.PRNDL_ct << endl;
+  // cout << "pk_brake: " << cmd_out.pk_brake << endl;
+  // cout << endl;
     // Send Packet    
-    sendto(socket_desc, &cmd_struct, sizeof(cmd_struct),MSG_CONFIRM, (const struct sockaddr *)&client_addr,sizeof(client_addr));
+    sendto(socket_desc, &cmd_out, sizeof(cmd_out),MSG_CONFIRM, (const struct sockaddr *)&client_addr,sizeof(client_addr));
   
     //close(sockfd);
 
@@ -130,44 +163,49 @@ void Teleop_IRoad::imu_cb(const sensor_msgs::Imu::ConstPtr& imu) {
     output.col(2) = vHy;
     output.col(3) = vHyp;
 
-    VectorXd r(3);
-    r(0) = 1000.0;
-    r(1) = 0.0;
-    r(2) = 0.0;
-    double rn = r.norm();
+    VectorXd xRela(3);
+    xRela = xGoal - xCurr;
+    distance = xRela.norm();
+    // cout << xRela << endl;
 
-    psi(0,0) = (180/M_PI)*acos(vHx.dot(r)/rn);
-    psi(0,1) = (180/M_PI)*acos(vHxp.dot(r)/rn);
-    psi(0,2) = (180/M_PI)*acos(vHy.dot(r)/rn);
-    psi(0,3) = (180/M_PI)*acos(vHyp.dot(r)/rn);
+    psi(0,0) = (180/M_PI)*acos(vHx.dot(xRela)/distance);
+    psi(0,1) = (180/M_PI)*acos(vHxp.dot(xRela)/distance);
+    psi(0,2) = (180/M_PI)*acos(vHy.dot(xRela)/distance);
+    psi(0,3) = (180/M_PI)*acos(vHyp.dot(xRela)/distance);
     
     double c = 0.0;
-    if ( (vHxp(0,0) > 0) && (vHxp(1,0) > 0) ) {
+    if ( (vHyp(0,0) > 0) && (vHyp(1,0) > 0) ) {
       c = 1.0;
-    } else if ( (vHxp(0,0) < 0) && (vHxp(1,0) > 0) ) {
+    } else if ( (vHyp(0,0) < 0) && (vHyp(1,0) > 0) ) {
       c = 1.0;
-    } else if ( (vHxp(0,0) > 0) && (vHxp(1,0) < 0) ) {
+    } else if ( (vHyp(0,0) > 0) && (vHyp(1,0) < 0) ) {
       c = -1.0;
-    } else if ( (vHxp(0,0) < 0) && (vHxp(1,0) < 0) ) {
+    } else if ( (vHyp(0,0) < 0) && (vHyp(1,0) < 0) ) {
       c = -1.0;
     }  
-    psi(0,1) = c*psi(0,1);
+    psi(0,3) = c*psi(0,3);
     
     cout << output << endl;
     cout << "===========================================" << endl;
     cout << psi << endl;
     cout << "===========================================" << endl;
     //cout << "one = " << vHead.norm() << ", heading: " << vHead(1,0) << endl;
+    // cout << "distance to goal: " << distance << "m, current altitude: " << xCurr(2,0) << endl;
 }
 
 void Teleop_IRoad::gps_cb(const sensor_msgs::NavSatFix::ConstPtr& gps) {
   double deg_lat = gps->latitude;
   double deg_lon = gps->longitude;
   
-  xCurr(0,0) = (deg_lat - origin_lat)*60.0*1852.0;
-  xCurr(1,0) = (deg_lon - origin_lon)*(M_PI/10800.0)*6367449.0*cos(deg_lat*M_PI/180);
-  xCurr(2,0)  = gps->altitude;
+  Matrix<double,3,1> xGlob;
+  xGlob(0,0) = R*cos(r2d*deg_lat)*cos(r2d*deg_lon); //distance in meters from the point of origin, perpendicular to the equator
+  xGlob(1,0) = R*cos(r2d*deg_lat)*sin(r2d*deg_lon); //distance in meters from the point of origin, parallel to the equator
+  xGlob(2,0) = 0.0;
 
+  xCurr = xOrig - xGlob;
+  
+  // cout << xCurr << endl;
+  // cout << "===============" << endl;
   // xGoal = xOrig;
   // xGoal(1,0) += 1;
   // Matrix<double,3,1>xRela = xCurr - xGoal;
