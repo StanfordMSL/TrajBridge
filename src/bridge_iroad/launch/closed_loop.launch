@@ -15,10 +15,10 @@
   <param name="pk_brake_id" value="0" type="int"/>
   <param name="cl_act_id" value="3" type="int"/>
   <param name="steer_scale" value="350" type="double"/>
-  <param name="lat_0" value="37.429929" type="double"/>
-  <param name="lon_0" value="-122.183598" type="double"/>
-  <param name="p_tx" value="4.0" type="double"/>
-  <param name="p_ty" value="-20.0" type="double"/>
-  <param name="d_thres" value="5.0" type="double"/>
+  <param name="lat0" value="37.4299484" type="double"/>
+  <param name="lon0" value="-122.1836507" type="double"/>
+  <param name="ptx" value="-31.0" type="double"/>
+  <param name="pty" value="5.0" type="double"/>
+  <param name="dthres" value="5.0" type="double"/>
   <node pkg="bridge_iroad" type="iroad_closedloop" name="iroad_closedloop" output="screen"/>
 </launch>

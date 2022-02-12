@@ -46,15 +46,20 @@ private:
   double udp_hz;
   ros::Timer udpLoop;
 
+  // Coordinate Transform Variables
+  Matrix<double,3,3> Re2e;    // Transformation matrix from ecef to enu
+
   // State Variables and Parameters
   Matrix<double,7,1> pose;    // Vehicle Pose in World Frame
-  Matrix<double,3,1> p_0;     // Origin Position
-  Matrix<double,3,1> p_t;     // Target Position
-  double p_tx;                // Launch File Input for Target Position (x)
-  double p_ty;                // Launch File Input for Target Position (y)
-  double lat_0;               // Latitude of Origin Point
-  double lon_0;               // Longitude of Origin Point
-  double d_thres;
+  Matrix<double,3,1> p0;      // Origin Position in ECEF
+  Matrix<double,3,1> pt;      // Target Position in ECEF
+  double ptx;                 // Launch File Input for Target Position in World Frame (x)
+  double pty;                 // Launch File Input for Target Position in World Frame (y)
+  double lat0;                // Latitude of Origin Point
+  double lon0;                // Longitude of Origin Point
+  double phi0;
+  double lam0;
+  double dthres;
 
   // Input Variables and Parameters
   float steer_scale;
@@ -104,10 +109,11 @@ private:
   void udp_cb(const ros::TimerEvent& event);
   void imu_cb(const sensor_msgs::Imu::ConstPtr& imu);
   void gps_cb(const sensor_msgs::NavSatFix::ConstPtr& gps);
-  Matrix<double,3,1> quatrot(const Vector3d& v);
-  Matrix<double,3,1> gcs2cart(const double lat,const double lon);
   double deg2rad(const double theta_d);
   double rad2deg(const double theta_r);
+  Matrix<double,3,1> quatrot(const Vector3d& v);
+  Matrix<double,3,1> gcs2ecef(const double lat,const double lon);
+  Matrix<double,3,3> Re2e_gen(const double lat,const double lon);
 };
 
 

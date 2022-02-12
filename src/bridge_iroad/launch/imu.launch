@@ -33,7 +33,7 @@
       NED->ENU orientation swap or not. If true, the ENU reported should
       match the label printed on the device. If false X & Y are swapped
       and Z is negated. -->
-    <param name="frame_based_enu" value="false" type="bool" />
+    <param name="frame_based_enu" value="true" type="bool" />
 
     <!-- The GX5-25 is AHRS only, so need to turn off the other messages -->
     <!-- AHRS Settings -->
