@@ -120,14 +120,17 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
   if (r_tb(0,0) < 0){
     alpha = -alpha; //accounting for the difference between left and right turns
   }
-  //double delta; //angle between vehicle heading and desired vehicle heading at target (in radians)
+  //double delta; //angle between vehicle heading and desired vehicle heading at target (in radians), not yet implemented
 
-  steer = rad2deg(atan2(whlbase*(ctrl_k2*alpha + ctrl_k1*sin(alpha)*cos(alpha)),v_const))/max_steer; //calculation of steering without regard for desired heading at target
-  //steer = rad2deg(atan2(whlbase*(ctrl_k2*alpha + ctrl_k1*sin(alpha)*cos(alpha)*(alpha + ctrl_k3*delta)/alpha)),v_const))/max_steer; //calculation of steering accounting for desired heading at target
+  double omega = ctrl_k2*alpha + ctrl_k1*sin(alpha)*cos(alpha); //feedback control law dictates this angular velocity value (in terms of the vehicle's heading) to target the goal location, without a specific final heading (with respect to the world frame)
+  //double omega = ctrl_k2*alpha + ctrl_k1*sin(alpha)*cos(alpha)*(alpha + ctrl_k3*delta)/alpha; //instantaneous angular velocity required by feedback control law, if goal position includes a target heading
+
+  steer = rad2deg(atan2(whlbase*omega,v_const)); //conversion of required angular velocity of vehicle to steering angle that will result in that angular velocity
+  steer /= max_steer; //rescale steer value to be a proportion of maximum extent of steering mechanism
 
   cmd_out = cmd_joy;
   if (cl_act_chk) {
-    cmd_out.steer = steer_scale*steer;
+    cmd_out.steer = steer_scale*steer; //rescaling the steering angle to resolution required by MABx firmware
 
     /*if (cmd_out.steer > 350.0) {
       cmd_out.steer = 350.0;
@@ -135,7 +138,7 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
       cmd_out.steer = -350.0;
     }*/
 
-    cmd_out.steer = clamp(cmd_out.steer,-350.0,350.0);
+    cmd_out.steer = clamp(cmd_out.steer,-350.0,350.0); //clip values to be within the range that can be requested of MABx [-350,350]
 
     if (d_t >= dthres) {
       cmd_out.PRNDL_ct = 1;
