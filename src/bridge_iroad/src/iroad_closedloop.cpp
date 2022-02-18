@@ -19,7 +19,7 @@ Teleop_IRoad::Teleop_IRoad():
   dthres(5.0), //radius around goal location within which closed-loop controls deactivate, in meters
   cl_act_chk(0),
   v_const(2.2222222), //assuming vehicle constant speed for calculation of feedback control, in meters per second (TODO: replace this with feedback from vehicle CAN via UDP)
-  ctrl_k1(1.0), //tunable constant for feedback control (velocity and steering), must be greater than zero to ensure convergence
+  //ctrl_k1(1.0), //tunable constant for feedback control (velocity and steering), must be greater than zero to ensure convergence
   ctrl_k2(1.0), //tunable constant for feedback control (steering), must be greater than zero to ensure convergence
   //ctrl_k3(1.0), //tunable constant for feedback control (steering for target heading), must be greater than zero to ensure convergence
   max_steer(30), //magnitude of maximum angle achievable by steering mechanism (in degrees)
@@ -39,8 +39,9 @@ Teleop_IRoad::Teleop_IRoad():
   nh.param("pty", pty, pty);
   nh.param("dthres", dthres, dthres);
   nh.param("v_const",v_const,v_const); //TODO: replace this with vehicle feedback
-  nh.param("ctrl_k1",ctrl_k1,ctrl_k1);
+  //nh.param("ctrl_k1",ctrl_k1,ctrl_k1);
   nh.param("ctrl_k2",ctrl_k2,ctrl_k2);
+  //nh.param("ctrl_k3",ctrl_k3,ctrl_k3);
   nh.param("whlbase",whlbase,whlbase);
   nh.param("max_steer",max_steer,max_steer);
 
@@ -122,7 +123,7 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
   }
   //double delta; //angle between vehicle heading and desired vehicle heading at target (in radians), not yet implemented
 
-  double omega = ctrl_k2*alpha + ctrl_k1*sin(alpha)*cos(alpha); //feedback control law dictates this angular velocity value (in terms of the vehicle's heading) to target the goal location, without a specific final heading (with respect to the world frame)
+  double omega = ctrl_k2*alpha; //feedback control law dictates this angular velocity value (in terms of the vehicle's heading) to target the goal location, without a specific final heading (with respect to the world frame)
   //double omega = ctrl_k2*alpha + ctrl_k1*sin(alpha)*cos(alpha)*(alpha + ctrl_k3*delta)/alpha; //instantaneous angular velocity required by feedback control law, if goal position includes a target heading
 
   steer = rad2deg(atan2(whlbase*omega,v_const)); //conversion of required angular velocity of vehicle to steering angle that will result in that angular velocity
@@ -142,7 +143,7 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
 
     if (d_t >= dthres) {
       cmd_out.PRNDL_ct = 1;
-      cmd_out.accel = 1.0; //constant accelerator setting
+      cmd_out.accel = 0.5; //partial throttle commanded for safety (without CAN feedback available yet)
     } else {
       cmd_out.accel = 0.0; //stop accelerating once goal is reached
     }
