@@ -1,17 +1,17 @@
 #include <bridge_iroad/iroad_closedloop.h>
 
 Teleop_IRoad::Teleop_IRoad():
-  accel_id(5), 
-  steer_id(0),
+  accel_id(5), //ID of controller axis for accelerator
+  steer_id(0), //ID of controller axis for steering control
   ct_input_id(2),
-  PRNDL_vr_id(1),
-  PRNDL_ct_id(2),
-  pk_brake_id(0),
+  PRNDL_vr_id(1), //ID of controller button for "Reverse" setting on transmission
+  PRNDL_ct_id(2), //ID of controller button for "Drive" setting on transmission
+  pk_brake_id(0), //ID of controller button for motor driver controlling parking brake
   cl_act_id(3),
   steer_scale(350), //rescales [-1,1] to resolution expected by MABx firmware
-  accel(0.0),
-  steer(0.0),
-  udp_hz(100),
+  accel(0.0), //variable for accelerator value
+  steer(0.0), //variable for steering value
+  udp_hz(100), //frequency in Hz of sending UDP messages for vehicle control
   lat0(37.4299484), //latitude of point of origin
   lon0(-122.1836507), //longitude of point of origin
   ptx(0.0), //difference in longitude (in meters) from target location to point of origin
