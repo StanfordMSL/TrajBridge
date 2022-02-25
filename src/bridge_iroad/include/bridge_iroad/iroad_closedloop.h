@@ -59,19 +59,12 @@ private:
   double lon0;                // Longitude of Origin Point
   double phi0;
   double lam0;
-  double dthres;              // Radius of Goal
+  double dthres;
 
   // Input Variables and Parameters
   float steer_scale;
   double accel;
   double steer;
-
-  double v_const;             // Placeholder for CAN feedback: controller assumes vehicle is moving at this velocity (m/s)
-  //float ctrl_k1;              // Gain for Feedback Controller (velocity and steering)
-  float ctrl_k2;              // Gain for Feedback Controller (steering)
-  //float ctrl_k3;            // Gain for Feedback Controller (steering to align with target direction)
-  float whlbase;              // Vehicle Wheelbase (longitudinal distance between wheel axes) (m)
-  float max_steer;            // Maximum Steering Mechanism Angle (deg)
 
   // Joystick Data and Parameters
   int  accel_id;
