@@ -1,23 +1,29 @@
 #include <bridge_iroad/iroad_closedloop.h>
 
 Teleop_IRoad::Teleop_IRoad():
-  accel_id(5),
-  steer_id(0),
+  accel_id(5), //ID of controller axis for accelerator
+  steer_id(0), //ID of controller axis for steering control
   ct_input_id(2),
-  PRNDL_vr_id(1),
-  PRNDL_ct_id(2),
-  pk_brake_id(0),
+  PRNDL_vr_id(1), //ID of controller button for "Reverse" setting on transmission
+  PRNDL_ct_id(2), //ID of controller button for "Drive" setting on transmission
+  pk_brake_id(0), //ID of controller button for motor driver controlling parking brake
   cl_act_id(3),
-  steer_scale(11.8),
-  accel(0.0),
-  steer(0.0),
-  udp_hz(100),
-  lat0(37.4299484),
-  lon0(-122.1836507),
-  ptx(0.0),
-  pty(0.0),
-  dthres(5.0),
-  cl_act_chk(0)
+  steer_scale(350), //rescales [-1,1] to resolution expected by MABx firmware
+  accel(0.0), //variable for accelerator value
+  steer(0.0), //variable for steering value
+  udp_hz(100), //frequency in Hz of sending UDP messages for vehicle control
+  lat0(37.4299484), //latitude of point of origin
+  lon0(-122.1836507), //longitude of point of origin
+  ptx(0.0), //difference in longitude (in meters) from target location to point of origin
+  pty(0.0), //difference in latitude (in meters) from target location to point of origin
+  dthres(5.0), //radius around goal location within which closed-loop controls deactivate, in meters
+  cl_act_chk(0),
+  v_const(2.2222222), //assuming vehicle constant speed for calculation of feedback control, in meters per second (TODO: replace this with feedback from vehicle CAN via UDP)
+  //ctrl_k1(1.0), //tunable constant for feedback control (velocity and steering), must be greater than zero to ensure convergence
+  ctrl_k2(1.0), //tunable constant for feedback control (steering), must be greater than zero to ensure convergence
+  //ctrl_k3(1.0), //tunable constant for feedback control (steering for target heading), must be greater than zero to ensure convergence
+  max_steer(30), //magnitude of maximum angle achievable by steering mechanism (in degrees)
+  whlbase(1.695) //vehicle wheelbase, in meters
 {
   nh.param("accel_id", accel_id, accel_id);
   nh.param("steer_id", steer_id, steer_id);
@@ -32,6 +38,12 @@ Teleop_IRoad::Teleop_IRoad():
   nh.param("ptx", ptx, ptx);
   nh.param("pty", pty, pty);
   nh.param("dthres", dthres, dthres);
+  nh.param("v_const",v_const,v_const); //TODO: replace this with vehicle feedback
+  //nh.param("ctrl_k1",ctrl_k1,ctrl_k1);
+  nh.param("ctrl_k2",ctrl_k2,ctrl_k2);
+  //nh.param("ctrl_k3",ctrl_k3,ctrl_k3);
+  nh.param("whlbase",whlbase,whlbase);
+  nh.param("max_steer",max_steer,max_steer);
 
   joy_sub_ = nh.subscribe<sensor_msgs::Joy>("joy", 10, &Teleop_IRoad::joy_cb, this); 
   imu_sub_ = nh.subscribe<sensor_msgs::Imu>("gx5/imu/data", 10, &Teleop_IRoad::imu_cb, this);
@@ -91,9 +103,11 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
 
   Matrix<double,3,1> r_f;       // Front vector in body frame
   r_f << 0.0,1.0,0.0;
-  steer = rad2deg(acos(r_tb.dot(r_f)/d_t));
+  
+  /*steer = rad2deg(acos(r_tb.dot(r_f)/d_t)); //debug: steering setting is equal to angle between vehicle heading and goal direction
 
-  steer = min(steer, 30.0);
+  steer = min(steer, max_steer);
+  steer /= max_steer;
 
   if (r_tb(0,0) < 0) {
     steer = -steer;
@@ -101,22 +115,37 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
     // Carry On
   }
 
+  */
+
+  double alpha = acos(r_tb.dot(r_f)/d_t); //angle between vehicle heading and direction of goal (in radians)
+  if (r_tb(0,0) < 0){
+    alpha = -alpha; //accounting for the difference between left and right turns
+  }
+  //double delta; //angle between vehicle heading and desired vehicle heading at target (in radians), not yet implemented
+
+  double omega = ctrl_k2*alpha; //feedback control law dictates this angular velocity value (in terms of the vehicle's heading) to target the goal location, without a specific final heading (with respect to the world frame)
+  //double omega = ctrl_k2*alpha + ctrl_k1*sin(alpha)*cos(alpha)*(alpha + ctrl_k3*delta)/alpha; //instantaneous angular velocity required by feedback control law, if goal position includes a target heading
+
+  steer = rad2deg(atan2(whlbase*omega,v_const)); //conversion of required angular velocity of vehicle to steering angle that will result in that angular velocity
+  steer /= max_steer; //rescale steer value to be a proportion of maximum extent of steering mechanism
+
   cmd_out = cmd_joy;
   if (cl_act_chk) {
-    cmd_out.steer = steer_scale*steer;
+    cmd_out.steer = steer_scale*steer; //rescaling the steering angle to resolution required by MABx firmware
 
-    if (cmd_out.steer > 350.0) {
+    /*if (cmd_out.steer > 350.0) {
       cmd_out.steer = 350.0;
     } else if (cmd_out.steer < -350.0) {
       cmd_out.steer = -350.0;
-    }
+    }*/
+
+    cmd_out.steer = clamp(cmd_out.steer,-350.0,350.0); //clip values to be within the range that can be requested of MABx [-350,350]
 
     if (d_t >= dthres) {
       cmd_out.PRNDL_ct = 1;
-      cmd_out.accel = 0.5;
-     //cmd_struct.accel = min(distance/100.0,1.0); 
+      cmd_out.accel = 0.5; //partial throttle commanded for safety (without CAN feedback available yet)
     } else {
-      cmd_out.accel = 0.0; //debug 
+      cmd_out.accel = 0.0; //stop accelerating once goal is reached
     }
   } else {
     // Follow joystick input.
