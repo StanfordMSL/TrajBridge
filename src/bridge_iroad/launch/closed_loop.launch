@@ -21,7 +21,7 @@
   <param name="pty" value="5.0" type="double"/>
   <param name="dthres" value="5.0" type="double"/>
   <param name="v_const" value="2.2222222" type="double"/>
-  <param name="ctrl_k1" value="1.0" type="double"/>
+  <!-- <param name="ctrl_k1" value="1.0" type="double"/> -->
   <param name="ctrl_k2" value="1.0" type="double"/>
   <!-- <param name="ctrl_k3" value="1.0" type="double"/> -->
   <param name="whlbase" value="1.695" type="double"/>
