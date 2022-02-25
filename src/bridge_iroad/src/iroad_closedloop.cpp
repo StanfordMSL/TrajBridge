@@ -45,9 +45,10 @@ Teleop_IRoad::Teleop_IRoad():
   nh.param("whlbase",whlbase,whlbase);
   nh.param("max_steer",max_steer,max_steer);
 
-  joy_sub_ = nh.subscribe<sensor_msgs::Joy>("joy", 10, &Teleop_IRoad::joy_cb, this); 
-  imu_sub_ = nh.subscribe<sensor_msgs::Imu>("gx5/imu/data", 10, &Teleop_IRoad::imu_cb, this);
-  gps_sub_ = nh.subscribe<sensor_msgs::NavSatFix>("gx5/gps/fix", 10, &Teleop_IRoad::gps_cb,this);
+  joy_sub_ = nh.subscribe<sensor_msgs::Joy>("joy", 10, &Teleop_IRoad::joy_cb, this); //subscribe to joypad input
+  imu_sub_ = nh.subscribe<sensor_msgs::Imu>("gx5/imu/data", 10, &Teleop_IRoad::imu_cb, this); //subscribe to data from GX5 IMU
+  gps_sub_ = nh.subscribe<sensor_msgs::NavSatFix>("gx5/gps/fix", 10, &Teleop_IRoad::gps_cb,this); //subscribe to data from GX5 GPS
+  cmd_pub_ = nh.advertise<sensor_msgs::Joy>("cmd_input", 10); //prepare to publish movement instructions sent to MABx
   udpLoop = nh.createTimer(ros::Duration(1.0/udp_hz),&Teleop_IRoad::udp_cb, this);
 
   // cout << "Lat: " << lat_0 << " Lon: " << lon_0 << endl;
@@ -158,6 +159,9 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
 
   // Send Packet
   sendto(socket_desc, &cmd_out, sizeof(cmd_out), MSG_CONFIRM, (const struct sockaddr *)&client_addr, sizeof(client_addr));
+
+  // Publish command that was just sent to MABx, for observability by the rest of the autonomy stack
+  cmd_pub_.publish(cmd_out);
 }
 
 void Teleop_IRoad::imu_cb(const sensor_msgs::Imu::ConstPtr& imu) {

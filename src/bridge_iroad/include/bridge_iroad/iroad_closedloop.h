@@ -42,6 +42,9 @@ private:
   ros::Subscriber imu_sub_;
   ros::Subscriber gps_sub_;
 
+  ros::Publisher cmd_pub_;
+  //ros::Publisher can_pub_;
+
   // ROS Timers
   double udp_hz;
   ros::Timer udpLoop;
