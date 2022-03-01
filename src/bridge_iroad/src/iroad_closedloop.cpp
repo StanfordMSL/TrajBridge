@@ -48,7 +48,7 @@ Teleop_IRoad::Teleop_IRoad():
   joy_sub_ = nh.subscribe<sensor_msgs::Joy>("joy", 10, &Teleop_IRoad::joy_cb, this); //subscribe to joypad input
   imu_sub_ = nh.subscribe<sensor_msgs::Imu>("gx5/imu/data", 10, &Teleop_IRoad::imu_cb, this); //subscribe to data from GX5 IMU
   gps_sub_ = nh.subscribe<sensor_msgs::NavSatFix>("gx5/gps/fix", 10, &Teleop_IRoad::gps_cb,this); //subscribe to data from GX5 GPS
-  cmd_pub_ = nh.advertise<sensor_msgs::Joy>("cmd_input", 10); //prepare to publish movement instructions sent to MABx
+  //cmd_pub_ = nh.advertise<sensor_msgs::Joy>("cmd_input", 10); //prepare to publish movement instructions sent to MABx
   udpLoop = nh.createTimer(ros::Duration(1.0/udp_hz),&Teleop_IRoad::udp_cb, this);
 
   // cout << "Lat: " << lat_0 << " Lon: " << lon_0 << endl;
@@ -134,13 +134,13 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
   if (cl_act_chk) {
     cmd_out.steer = steer_scale*steer; //rescaling the steering angle to resolution required by MABx firmware
 
-    /*if (cmd_out.steer > 350.0) {
+    if (cmd_out.steer > 350.0) {
       cmd_out.steer = 350.0;
     } else if (cmd_out.steer < -350.0) {
       cmd_out.steer = -350.0;
-    }*/
+    }
 
-    cmd_out.steer = clamp(cmd_out.steer,-350.0,350.0); //clip values to be within the range that can be requested of MABx [-350,350]
+    //cmd_out.steer = clamp(cmd_out.steer,-350.0,350.0); //clip values to be within the range that can be requested of MABx [-350,350]
 
     if (d_t >= dthres) {
       cmd_out.PRNDL_ct = 1;
@@ -161,7 +161,17 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
   sendto(socket_desc, &cmd_out, sizeof(cmd_out), MSG_CONFIRM, (const struct sockaddr *)&client_addr, sizeof(client_addr));
 
   // Publish command that was just sent to MABx, for observability by the rest of the autonomy stack
-  cmd_pub_.publish(cmd_out);
+  //cmd_pub_.publish(cmd_out);
+
+  // Listen for incoming datagrams containing CAN feedback?
+  ssize_t count=recvfrom(socket_desc,&can_feedback,sizeof(can_feedback),0,(struct sockaddr*)&client_addr,sizeof(client_addr));
+  if (count==-1) {
+    die("%s",strerror(errno));
+  } else if (count==sizeof(buffer)) {
+    warn("datagram too large for buffer: truncated");
+  } else {
+    handle_datagram(buffer,count);
+  }
 }
 
 void Teleop_IRoad::imu_cb(const sensor_msgs::Imu::ConstPtr& imu) {

@@ -42,7 +42,7 @@ private:
   ros::Subscriber imu_sub_;
   ros::Subscriber gps_sub_;
 
-  ros::Publisher cmd_pub_;
+  //ros::Publisher cmd_pub_;
   //ros::Publisher can_pub_;
 
   // ROS Timers
@@ -113,6 +113,27 @@ private:
     };
   struct iroad_cmd cmd_joy;
   struct iroad_cmd cmd_out;
+
+  /*struct iroad_feedback {
+    float can_sftps;  //PRNDL setting
+    float can_steer;  //vehicle steering angle
+    float can_accel;  //accelerator setting
+    float can_brkpd;  //break pedal engagement
+    float can_vspd;   //vehicle speed
+    float can_lean;   //vehicle lean angle
+    float can_hzdl;   //turn or hazard light engagement
+    float can_dcty;   //door open
+    float can_stbt;   //seat belt engagement
+    float can_pkon;   //parking break engagement (on)
+    float can_pkoff;  //parking break engagement (off)
+    float can_gsenx;  //linear acceleration signals (x,y,z)
+    float can_gseny;
+    float can_gsenz;
+    float can_gyrox;  //gyroscopic signals (x,y,z)
+    float can_gyroy;
+    float can_gyroz;
+  };
+struct iroad_feedback can_feedback;*/
 
   // Functions
   void joy_cb(const sensor_msgs::Joy::ConstPtr& joy);
