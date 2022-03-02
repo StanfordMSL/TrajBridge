@@ -42,7 +42,7 @@ private:
   ros::Subscriber imu_sub_;
   ros::Subscriber gps_sub_;
 
-  //ros::Publisher cmd_pub_;
+  ros::Publisher cmd_pub_;
   //ros::Publisher can_pub_;
 
   // ROS Timers
@@ -70,6 +70,7 @@ private:
   double steer;
 
   double v_const;             // Placeholder for CAN feedback: controller assumes vehicle is moving at this velocity (m/s)
+  double st_conv;             // Constant to convert commanded steer setting into steering mechanism angle (in radians)
   //float ctrl_k1;              // Gain for Feedback Controller (velocity and steering)
   float ctrl_k2;              // Gain for Feedback Controller (steering)
   //float ctrl_k3;            // Gain for Feedback Controller (steering to align with target direction)
