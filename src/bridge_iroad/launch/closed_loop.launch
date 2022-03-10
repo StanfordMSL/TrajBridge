@@ -27,4 +27,7 @@
   <param name="whlbase" value="1.695" type="double"/>
   <param name="max_steer" value="30.0" type="double"/>
   <node pkg="bridge_iroad" type="iroad_closedloop" name="iroad_closedloop" output="screen"/>
+
+  <!-- node to receive CAN feedback -->
+  <node pkg="bridge_iroad" type="iroad_teleop_can" name="iroad_teleop_can" output="screen"/>
 </launch>

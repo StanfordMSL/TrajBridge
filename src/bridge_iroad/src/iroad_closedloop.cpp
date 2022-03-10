@@ -152,10 +152,10 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
     // Follow joystick input.
   }
   // cout << "Pose (World): \n" << pose << endl;
-  cout << "Relative Position (World):\n" << r_tW << endl;
+  /*cout << "Relative Position (World):\n" << r_tW << endl;
   cout << "Relative Position (Body):\n" << r_tb << endl;
   cout << "Steering:" << steer << endl;
-  cout << "===========================================" << endl;
+  cout << "===========================================" << endl;*/
 
   // Send Packet
   sendto(socket_desc, &cmd_out, sizeof(cmd_out), MSG_CONFIRM, (const struct sockaddr *)&client_addr, sizeof(client_addr));

@@ -169,6 +169,9 @@ target_link_libraries(udp_client ${catkin_LIBRARIES})
 add_executable(iroad_closedloop src/iroad_closedloop.cpp)
 target_link_libraries(iroad_closedloop ${catkin_LIBRARIES})
 
+add_executable(iroad_teleop_can src/iroad_teleop_can.cpp)
+target_link_libraries(iroad_teleop_can ${catkin_LIBRARIES})
+
 #############
 ## Install ##
 #############
