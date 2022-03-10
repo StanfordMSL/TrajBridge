@@ -69,5 +69,12 @@
     },
     "python.analysis.extraPaths": [
         "/opt/ros/melodic/lib/python2.7/dist-packages"
-    ]
+    ],
+    "cSpell.words": [
+        "IROAD",
+        "PRNDL",
+        "vect"
+    ],
+    "cmake.configureOnOpen": true,
+    "ros.distro": "noetic"
 }
