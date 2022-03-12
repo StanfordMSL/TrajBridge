@@ -18,12 +18,13 @@ Teleop_IRoad::Teleop_IRoad():
   pty(0.0), //difference in latitude (in meters) from target location to point of origin
   dthres(5.0), //radius around goal location within which closed-loop controls deactivate, in meters
   cl_act_chk(0),
-  v_const(2.2222222), //assuming vehicle constant speed for calculation of feedback control, in meters per second (TODO: replace this with feedback from vehicle CAN via UDP)
-  st_conv(M_PI/21000.0), //Factor to convert commanded steering setting to radians
+  v_max(2.2222222), //maximum permissible vehicle speed, in meters per second
+  st_conv(M_PI/2880.0), //Factor to convert commanded steering setting to radians
   //ctrl_k1(1.0), //tunable constant for feedback control (velocity and steering), must be greater than zero to ensure convergence
   ctrl_k2(1.0), //tunable constant for feedback control (steering), must be greater than zero to ensure convergence
   //ctrl_k3(1.0), //tunable constant for feedback control (steering for target heading), must be greater than zero to ensure convergence
   max_steer(30), //magnitude of maximum angle achievable by steering mechanism (in degrees)
+  accel_frac(240.0/(0.26*380.0)), //rescales [0,1] accelerator signal into acceleration rate (in meters per second squared)
   whlbase(1.695) //vehicle wheelbase, in meters
 {
   nh.param("accel_id", accel_id, accel_id);
@@ -34,12 +35,13 @@ Teleop_IRoad::Teleop_IRoad():
   nh.param("pk_brake_id", pk_brake_id, pk_brake_id);
   nh.param("cl_act_id", cl_act_id, cl_act_id);
   nh.param("steer_scale", steer_scale, steer_scale);
+  nh.param("accel_frac", accel_frac, accel_frac);
   nh.param("lat0", lat0, lat0);
   nh.param("lon0", lon0, lon0);
   nh.param("ptx", ptx, ptx);
   nh.param("pty", pty, pty);
   nh.param("dthres", dthres, dthres);
-  nh.param("v_const",v_const,v_const); //TODO: replace this with vehicle feedback
+  nh.param("v_max",v_max,v_max);
   //nh.param("ctrl_k1",ctrl_k1,ctrl_k1);
   nh.param("ctrl_k2",ctrl_k2,ctrl_k2);
   //nh.param("ctrl_k3",ctrl_k3,ctrl_k3);
@@ -51,6 +53,10 @@ Teleop_IRoad::Teleop_IRoad():
   gps_sub_ = nh.subscribe<sensor_msgs::NavSatFix>("gx5/gps/fix", 10, &Teleop_IRoad::gps_cb,this); //subscribe to data from GX5 GPS
   cmd_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_input", 10); //prepare to publish movement instructions sent to MABx
   udpLoop = nh.createTimer(ros::Duration(1.0/udp_hz),&Teleop_IRoad::udp_cb, this);
+
+  can_sub_ = nh.subscribe<geometry_msgs::Twist>("can_movement",10, &Teleop_IRoad::can_cb, this); //subscribe to movement indicated by feedback from vehicle CAN
+  sft_sub_ = nh.subscribe<u_int32_t>("can_shiftpos", 10, &Teleop_IRoad::shift_cb, this);
+  brk_sub_ = nh.subscribe<bool>("can_brakeped", 10, &Teleop_IRoad::brake_cb, this);
 
   // cout << "Lat: " << lat_0 << " Lon: " << lon_0 << endl;
   // cout << " ==================== " << endl;
@@ -93,6 +99,21 @@ void Teleop_IRoad::joy_cb(const sensor_msgs::Joy::ConstPtr& joy)
   cmd_joy.pk_brake = (float) joy->buttons[pk_brake_id];
 
   cl_act_chk = (bool) joy->buttons[cl_act_id];
+}
+
+void Teleop_IRoad::can_cb(const geometry_msgs::Twist::ConstPtr& twist)
+{
+  can_speed = twist.linear.y;
+}
+
+void Teleop_IRoad::shift_cb(const u_int32_t& prndl)
+{
+  can_shift = prndl;
+}
+
+void Teleop_IRoad::brake_cb(const bool& brake)
+{
+  can_brake = brake;
 }
 
 void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
@@ -144,7 +165,7 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
 
     if (d_t >= dthres) {
       cmd_out.PRNDL_ct = 1;
-      cmd_out.accel = 0.5; //partial throttle commanded for safety (without CAN feedback available yet)
+      cmd_out.accel = 1.0; //Approximately 52% throttle commanded
     } else {
       cmd_out.accel = 0.0; //stop accelerating once goal is reached
     }
@@ -162,9 +183,16 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
 
   // Calculate and publish twist commanded by control system, for observability by the rest of the autonomy stack
   geometry_msgs::Twist cmd_vel;
-
-  cmd_vel.linear.y = v_const; //y-axis of body frame aims in the forward direction of the vehicle
-  cmd_vel.angular.z = -v_const*tan(cmd_out.steer*st_conv)/whlbase; //z-axis of body frame aims downwards into the ground
+  
+  if (!can_brake){
+    if(can_shift == 1){
+      cmd_vel.linear.y = min(v_max, can_speed + (accel_frac*cmd_out.accel/udp_hz)); //y-axis of body frame aims in the forward direction of the vehicle
+    } else if (can_shift == 2){
+      cmd_vel.linear.y = max(-v_max, can_speed - (accel_frac*cmd_out.accel/udp_hz)); //assuming max vehicle speed applies in forward and reverse
+    }
+    cmd_vel.angular.z = -can_speed*tan(cmd_out.steer*st_conv)/whlbase; //z-axis of body frame aims downwards into the ground, vehicle tilting mechanism is discounted
+  } //else cmd_vel.linear.y = 0; //brake pedal engaged or PRNDL is neutral
+  
   cmd_pub_.publish(cmd_vel);
 }
 

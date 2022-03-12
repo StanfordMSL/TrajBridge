@@ -38,12 +38,21 @@ private:
   struct sockaddr_in server_addr,client_addr; //IPv4
 
   // ROS Publishers/Subscribers
-  ros::Subscriber joy_sub_;
-  ros::Subscriber imu_sub_;
-  ros::Subscriber gps_sub_;
+  ros::Subscriber joy_sub_; //Subscriber to receive instructions from controller (joypad)
+  ros::Subscriber imu_sub_; //Subscriber to receive external IMU data
+  ros::Subscriber gps_sub_; //Subscriber to receive GPS module data
 
-  ros::Publisher cmd_pub_;
-  //ros::Publisher can_pub_;
+  ros::Subscriber can_sub_; //Subscriber to receive current vehicle maneuver, deduced from CAN feedback (linear: m/s, angular: rad/s)
+  ros::Subscriber sft_sub_; //PRNDL status
+  //ros::Subscriber str_sub_; //Steering setting
+  ros::Subscriber acl_sub_; //Accelerator setting
+  ros::Subscriber brk_sub_; //Brake pedal
+  ros::Subscriber hzd_sub_; //Intermittent lights' status
+  ros::Subscriber dct_sub_; //Door status
+  ros::Subscriber sbt_sub_; //Seat belt status
+  //ros::Subscriber gsn_sub_; //Internal vehicle accelerometer and gyroscope
+
+  ros::Publisher cmd_pub_; //Publisher of maneuver instructed by vehicle
 
   // ROS Timers
   double udp_hz;
@@ -68,14 +77,20 @@ private:
   float steer_scale;
   double accel;
   double steer;
+  float accel_frac;
 
-  double v_const;             // Placeholder for CAN feedback: controller assumes vehicle is moving at this velocity (m/s)
+  double v_max;               // Maximum vehicle speed (m/s)
   double st_conv;             // Constant to convert commanded steer setting into steering mechanism angle (in radians)
   //float ctrl_k1;              // Gain for Feedback Controller (velocity and steering)
   float ctrl_k2;              // Gain for Feedback Controller (steering)
   //float ctrl_k3;            // Gain for Feedback Controller (steering to align with target direction)
   float whlbase;              // Vehicle Wheelbase (longitudinal distance between wheel axes) (m)
   float max_steer;            // Maximum Steering Mechanism Angle (deg)
+  double mass;                // Vehicle mass (kg)
+
+  int32_t can_speed;
+  u_int32_t can_shift;
+  bool can_brake;
 
   // Joystick Data and Parameters
   int  accel_id;

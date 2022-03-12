@@ -1,13 +1,22 @@
 #include <bridge_iroad/iroad_teleop_can.h>
 
 Teleop_Can::Teleop_Can():
-  st_conv(M_PI/21000.0), //Factor to convert commanded steering setting to radians
-  //debug_ctr(0), //counter to regulate the speed of the 
+  //st_conv(M_PI/2100.0), //Factor to convert commanded steering setting to radians ([-350,350] corresponding to [-30deg,30deg])
+  st_conv(M_PI/2880.0), //Factor to convert commanded steering setting to radians ([-480,480] corresponding to [-30deg,30deg])
+  sp_conv(1.0), //Factor to convert vehicle speed signal to meters per second
+  //ln_conv(1.0), //Factor to convert vehicle lean signal to radians
   whlbase(1.695) //vehicle wheelbase, in meters
 {
   n.param("whlbase",whlbase,whlbase);
 
-  can_pub_ = n.advertise<geometry_msgs::Twist>("can_feedback", 1000); 
+  can_pub_ = n.advertise<geometry_msgs::Twist>("can_movement", 10);
+  sft_pub_ = n.advertise<u_int32_t>("can_shiftpos", 10);
+  str_pub_ = n.advertise<int32_t>("can_steering", 10);
+  acl_pub_ = n.advertise<u_int32_t>("can_accelped", 10);
+  brk_pub_ = n.advertise<bool>("can_brakeped", 10);
+  hzd_pub_ = n.advertise<u_int32_t>("can_turnhazd", 10);
+  dct_pub_ = n.advertise<bool>("can_dooropen", 10);
+  sbt_pub_ = n.advertise<bool>("can_seatbelt", 10);
 
   double hz = 1.0;
   printLoop = n.createTimer(ros::Duration(1.0/hz),&Teleop_Can::print_cb, this);
@@ -52,8 +61,8 @@ void Teleop_Can::print_cb(const ros::TimerEvent& event) {
     cout << "Turn/Hazard Light Engagement: " << can_feedback.can_hzdl << endl;
     cout << "Door Open Indication: " << can_feedback.can_dcty << endl;
     cout << "Seat Belt Engagement: " << can_feedback.can_stbt << endl;
-    cout << "Parking Brake ON: " << can_feedback.can_pkon << endl;
-    cout << "Parking Brake OFF: " << can_feedback.can_pkoff << endl;
+    //cout << "Parking Brake ON: " << can_feedback.can_pkon << endl;
+    //cout << "Parking Brake OFF: " << can_feedback.can_pkoff << endl;
     cout << "===========================================" << endl;
 }
 
@@ -67,22 +76,29 @@ int main(int argc, char** argv)
     /* Process UDP info */
     socklen_t len = sizeof(teleop_can.client_addr);
     ssize_t count=recvfrom(teleop_can.socket_desc, (char *)teleop_can.buffer,sizeof(teleop_can.can_feedback),0,(struct sockaddr*)&teleop_can.client_addr,&len); //call blocks until a UDP datagram is received
-    /*if (count==-1){
-        die("%s",strerror(errno));
-    } else if (count==sizeof(teleop_can.can_feedback)){
-        warn("datagram too large for buffer: truncated");
-    } else {
-        handle_datagram(teleop_can.can_feedback,count);
-    }*/
-
-    memcpy(&teleop_can.can_feedback,teleop_can.buffer,sizeof(teleop_can.can_feedback));
+    memcpy(&teleop_can.can_feedback,teleop_can.buffer,sizeof(teleop_can.can_feedback)); //Transcribe data from buffer into area of memory assigned for CAN feedback structure
 
     /* Calculate twist from info received via UDP datagram */
+    //NOTE: This twist describes the current maneuver taken by the vehicle but discounts the effects of vehicle lean, only accounting for vehicle speed and turn rate
     teleop_can.can_twist.linear.y = teleop_can.can_feedback.can_vspd; //y-axis of body frame aims in the forward direction of the vehicle
-    teleop_can.can_twist.angular.z = -teleop_can.can_feedback.can_vspd*tan(teleop_can.can_feedback.can_steer*teleop_can.st_conv)/teleop_can.whlbase; //z-axis of body frame aims downwards into the ground
+    teleop_can.can_twist.angular.z = -teleop_can.can_feedback.can_vspd*teleop_can.sp_conv*tan(teleop_can.can_feedback.can_steer*teleop_can.st_conv)/teleop_can.whlbase; //z-axis of body frame aims downwards into the ground, tilt effects are discounted for now
 
     /* Publish calculated twist */
     teleop_can.can_pub_.publish(teleop_can.can_twist);
+
+    /* Convert seat belt, door and brake engagement values to boolean for publishing */
+    teleop_can.can_doors = (bool) teleop_can.can_feedback.can_dcty;
+    teleop_can.can_seatb = (bool) teleop_can.can_feedback.can_stbt;
+    teleop_can.can_brake = (bool) teleop_can.can_feedback.can_brkpd;
+    
+    /*Publish vehicle status data*/
+    teleop_can.sft_pub_.publish(teleop_can.can_feedback.can_sftps);
+    teleop_can.acl_pub_.publish(teleop_can.can_feedback.can_accel);
+    teleop_can.brk_pub_.publish(teleop_can.can_brake);
+    teleop_can.hzd_pub_.publish(teleop_can.can_feedback.can_hzdl);
+    teleop_can.dct_pub_.publish(teleop_can.can_doors);
+    teleop_can.sbt_pub_.publish(teleop_can.can_seatb);
+    teleop_can.str_pub_.publish(teleop_can.can_feedback.can_steer)
 
     ros::spinOnce(); //NOTE: comment out if there are no callbacks associated with CAN feedback reception
   }
