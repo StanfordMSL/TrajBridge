@@ -18,13 +18,14 @@ Teleop_IRoad::Teleop_IRoad():
   pty(0.0), //difference in latitude (in meters) from target location to point of origin
   dthres(5.0), //radius around goal location within which closed-loop controls deactivate, in meters
   cl_act_chk(0),
-  v_max(2.2222222), //maximum permissible vehicle speed, in meters per second
-  st_conv(M_PI/2880.0), //Factor to convert commanded steering setting to radians
+  v_max(8.0/3.6), //maximum permissible vehicle speed, in meters per second
+  v_R_max(-3.0/3.6), //maximum permissible vehicle speed in reverse, in meters per second
+  st_conv(M_PI/1728.0), //Factor to convert commanded steering setting to radians
   //ctrl_k1(1.0), //tunable constant for feedback control (velocity and steering), must be greater than zero to ensure convergence
   ctrl_k2(1.0), //tunable constant for feedback control (steering), must be greater than zero to ensure convergence
   //ctrl_k3(1.0), //tunable constant for feedback control (steering for target heading), must be greater than zero to ensure convergence
-  max_steer(30), //magnitude of maximum angle achievable by steering mechanism (in degrees)
-  accel_frac(240.0/(0.26*380.0)), //rescales [0,1] accelerator signal into acceleration rate (in meters per second squared)
+  max_steer(875.0/24.0), //magnitude of maximum steering mechanism angle that can be commanded (in degrees)
+  accel_frac(240.0*50.0/(0.26*392.0*96.0)), //rescales [0,1] accelerator signal into acceleration rate (in meters per second squared)
   whlbase(1.695) //vehicle wheelbase, in meters
 {
   nh.param("accel_id", accel_id, accel_id);
@@ -42,11 +43,15 @@ Teleop_IRoad::Teleop_IRoad():
   nh.param("pty", pty, pty);
   nh.param("dthres", dthres, dthres);
   nh.param("v_max",v_max,v_max);
+  nh.param("v_R_max",v_R_max,v_R_max);
   //nh.param("ctrl_k1",ctrl_k1,ctrl_k1);
   nh.param("ctrl_k2",ctrl_k2,ctrl_k2);
   //nh.param("ctrl_k3",ctrl_k3,ctrl_k3);
   nh.param("whlbase",whlbase,whlbase);
   nh.param("max_steer",max_steer,max_steer);
+
+  nh.param("st_conv",st_conv,st_conv);
+  nh.param("udp_hz",udp_hz,udp_hz);
 
   joy_sub_ = nh.subscribe<sensor_msgs::Joy>("joy", 10, &Teleop_IRoad::joy_cb, this); //subscribe to joypad input
   imu_sub_ = nh.subscribe<sensor_msgs::Imu>("gx5/imu/data", 10, &Teleop_IRoad::imu_cb, this); //subscribe to data from GX5 IMU
@@ -55,8 +60,8 @@ Teleop_IRoad::Teleop_IRoad():
   udpLoop = nh.createTimer(ros::Duration(1.0/udp_hz),&Teleop_IRoad::udp_cb, this);
 
   can_sub_ = nh.subscribe<geometry_msgs::Twist>("can_movement",10, &Teleop_IRoad::can_cb, this); //subscribe to movement indicated by feedback from vehicle CAN
-  sft_sub_ = nh.subscribe<u_int32_t>("can_shiftpos", 10, &Teleop_IRoad::shift_cb, this);
-  brk_sub_ = nh.subscribe<bool>("can_brakeped", 10, &Teleop_IRoad::brake_cb, this);
+  sft_sub_ = nh.subscribe<u_int32_t>("can_shiftpos", 10, &Teleop_IRoad::shift_cb, this); //subscribe to PRNDL setting
+  brk_sub_ = nh.subscribe<bool>("can_brakeped", 10, &Teleop_IRoad::brake_cb, this); //subscribe to brake pedal engagement
 
   // cout << "Lat: " << lat_0 << " Lon: " << lon_0 << endl;
   // cout << " ==================== " << endl;
@@ -149,11 +154,11 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
   double omega = ctrl_k2*alpha; //feedback control law dictates this angular velocity value (in terms of the vehicle's heading) to target the goal location, without a specific final heading (with respect to the world frame)
   //double omega = ctrl_k2*alpha + ctrl_k1*sin(alpha)*cos(alpha)*(alpha + ctrl_k3*delta)/alpha; //instantaneous angular velocity required by feedback control law, if goal position includes a target heading
 
-  steer = rad2deg(atan2(whlbase*omega,v_const)); //conversion of required angular velocity of vehicle to steering angle that will result in that angular velocity
+  steer = rad2deg(atan2(whlbase*omega,v_max)); //conversion of required angular velocity of vehicle to steering angle that will result in that angular velocity
   steer /= max_steer; //rescale steer value to be a proportion of maximum extent of steering mechanism
 
   cmd_out = cmd_joy;
-  if (cl_act_chk) {
+  if (cl_act_chk) { //if closed loop control is commanded from controller
     cmd_out.steer = steer_scale*steer; //rescaling the steering angle to resolution required by MABx firmware
 
     // Clip values to be within the range that can be requested of MABx [-350,350]
@@ -163,8 +168,8 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
       cmd_out.steer = -350.0;
     }
 
-    if (d_t >= dthres) {
-      cmd_out.PRNDL_ct = 1;
+    if (d_t >= dthres) { //if outside the threshold radius of the goal location
+      cmd_out.PRNDL_ct = 1; //set PRNDL to D
       cmd_out.accel = 1.0; //Approximately 52% throttle commanded
     } else {
       cmd_out.accel = 0.0; //stop accelerating once goal is reached
@@ -184,11 +189,11 @@ void Teleop_IRoad::udp_cb(const ros::TimerEvent& event) {
   // Calculate and publish twist commanded by control system, for observability by the rest of the autonomy stack
   geometry_msgs::Twist cmd_vel;
   
-  if (!can_brake){
-    if(can_shift == 1){
+  if (!can_brake){ //if brake pedal is not engaged
+    if(can_shift == 1){ //if PRNDL is set to D
       cmd_vel.linear.y = min(v_max, can_speed + (accel_frac*cmd_out.accel/udp_hz)); //y-axis of body frame aims in the forward direction of the vehicle
-    } else if (can_shift == 2){
-      cmd_vel.linear.y = max(-v_max, can_speed - (accel_frac*cmd_out.accel/udp_hz)); //assuming max vehicle speed applies in forward and reverse
+    } else if (can_shift == 2){ //if PRNDL is set to R
+      cmd_vel.linear.y = max(v_R_max, can_speed - (accel_frac*cmd_out.accel/udp_hz)); //Euler approximation used for estimation of vehicle speed in m/s
     }
     cmd_vel.angular.z = -can_speed*tan(cmd_out.steer*st_conv)/whlbase; //z-axis of body frame aims downwards into the ground, vehicle tilting mechanism is discounted
   } //else cmd_vel.linear.y = 0; //brake pedal engaged or PRNDL is neutral

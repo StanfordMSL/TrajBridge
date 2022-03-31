@@ -40,6 +40,7 @@ public:
   ros::Publisher hzd_pub_; //Intermittent lights publisher
   ros::Publisher dct_pub_; //Door status publisher
   ros::Publisher sbt_pub_; //Seat belt publisher
+  ros::Publisher len_pub_; //Lean angle publisher
   //ros::Publisher gsn_pub_; //Publisher of signals received from internal vehicle accelerometer and gyroscope
 
   // CAN feedback datagram structure
@@ -49,8 +50,8 @@ public:
     int32_t can_steer;  //vehicle steering angle ([-480,480], with negative numbers representing right turns and 0 representing no turn)
     u_int32_t can_accel;  //accelerator setting ([0,96], with the maximum value corresponding to Wide Open Throttle)
     u_int32_t can_brkpd;  //break pedal engagement (0: mechanical brake deactivated, 1: brake pedal engaged)
-    int32_t can_vspd;   //vehicle speed
-    int32_t can_lean;   //vehicle lean angle
+    int32_t can_vspd;   //vehicle speed (km/h)
+    int32_t can_lean;   //vehicle lean angle (degrees)
     u_int32_t can_hzdl;   //turn or hazard light engagement (0: intermittent lights off, 1: right turn indicated, 2: left turn indicated, 3: hazard lights indicated)
     u_int32_t can_dcty;   //door open (0: both doors are closed, 1: left door is open OR right door is open)
     u_int32_t can_stbt;   //seat belt engagement (0: seat belt not engaged, 1: seat belt secured)
