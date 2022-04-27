@@ -1,7 +1,7 @@
 <launch>
       <arg name="drone_id" default="3" />
-      <arg name="t_final_in" default="7.0" />
-      <arg name="trajectory" default="square_grp_tight_update" />
+      <arg name="t_final_in" default="15.0" />
+      <arg name="trajectory" default="square_grp_tight" />
       <arg name="rc_trig" default="0" />
 
       <node pkg="bridge_px4" type="GCS" name ="GCS" output="screen">
