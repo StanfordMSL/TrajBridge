@@ -16,8 +16,9 @@ angle = 2*pi/Ndr;
 Nfr = size(P,2);
 dt = round(T/(Nfr-1),2);
 
+% Trajectory Generation
 if (hz == 0)
-    traj = zeros(3*Ndr+1,Nfr);
+    traj = zeros(4*Ndr+1,Nfr);
 
     for k = 1:Nfr
         t = (k-1)*dt;
@@ -26,20 +27,21 @@ if (hz == 0)
     end
 end
 
-liveplot(P,traj,Ndr)
+% liveplot(P,traj,Ndr)
 
 % Write to csv
 name = ['traj_',num2str(Ndr),'dr',num2str(T),'s.csv'];
 writematrix(traj,name) 
 
 function X = swarm_setpoint(P,R,N,angle)
-    X = zeros(3*N,1);
+    X = zeros(4*N,1);
     
     for k = 1:N
-        idx = 1+(k-1)*3;
+        idx = 1+(k-1)*4;
         theta = (k-1)*angle;
         
         X(idx:idx+2,:) = P + R.*[cos(theta) ; sin(theta) ; 0.0];
+        X(idx+3,:) = 0.0;
     end
 end
 
