@@ -28,6 +28,10 @@ end
 
 % liveplot(P,traj,Ndr)
 
+% Write to csv
+name = ['traj_',num2str(Ndr),'dr',num2str(T),'s.csv'];
+writematrix(traj,name) 
+
 function X = swarm_setpoint(P,R,N,angle)
     X = zeros(3*N,1);
     
@@ -76,8 +80,5 @@ while (curr_time <= traj(1,end))
     
     curr_time = curr_time + toc;
 end
-
-
-
 
 end
