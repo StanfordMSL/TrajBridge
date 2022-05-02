@@ -1,15 +1,15 @@
 clear
 
 % Parameters
-Ndr = 4;     % Number of Drones.
-T  = 10;    % Total Time for Trajectory.
+Ndr = 5;     % Number of Drones.
+T  = 15;    % Total Time for Trajectory.
 hz = 0;     % Frame Step. Set to 0 if you want to follow raw waypoints.
 R  = 1.5;   % Radius of formation (assumed circular)
 
 % Trajectory
-P = [ 1.0   1.0  -1.0  -1.0   1.0;
-     -1.0   1.0   1.0  -1.0  -1.0; 
-      1.0   1.0   1.0   1.0   1.0];
+P = [ 1.0   1.0   1.0    0.0  -1.0  -1.0  -1.0   0.0   1.0;
+     -1.0   0.0   1.0    1.0   1.0   0.0  -1.0  -1.0  -1.0; 
+      1.0   1.0   1.0    1.0   1.0   1.0   1.0   1.0   1.0];
 
 % Pre-processing
 angle = 2*pi/Ndr;
@@ -26,7 +26,7 @@ if (hz == 0)
     end
 end
 
-% liveplot(P,traj,Ndr)
+liveplot(P,traj,Ndr)
 
 % Write to csv
 name = ['traj_',num2str(Ndr),'dr',num2str(T),'s.csv'];
@@ -58,27 +58,44 @@ hold on
 
 
 % Plot the initial points
+labels = {'1','2','3','4','5'};
+
 for k = 1:Ndr
     idx = 2+(k-1)*3;
     h(k) = plot3(traj(idx,1),traj(idx+1,1),traj(idx+2,1),'*-');
+    text(traj(idx,1),traj(idx+1,1),traj(idx+2,1),labels{k})
+
 end
 pause(1);
 
 curr_time = 0.0;
 dt = traj(1,2);
+
+
 while (curr_time <= traj(1,end))
     tic
-    j = ceil(curr_time/dt);
+    j = ceil(curr_time/dt + 1e-3);
     
     for k = 1:Ndr
         idx = 2+(k-1)*3;
+        
         h(k).XData = traj(idx,1:j);
         h(k).YData = traj(idx+1,1:j);
         h(k).ZData = traj(idx+2,1:j);
+        
+
     end
     drawnow
-    
+        
     curr_time = curr_time + toc;
 end
 
+for k = 1:Ndr
+    idx = 2+(k-1)*3;
+    h(k).XData = traj(idx,:);
+    h(k).YData = traj(idx+1,:);
+    h(k).ZData = traj(idx+2,:);
+end
+drawnow
+    
 end
