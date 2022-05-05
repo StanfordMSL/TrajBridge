@@ -191,7 +191,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         //pose_sa.position = pose_curr.pose.position;
         //pose_sa.orientation = quat_forward;
         pose_sa = pose_curr.pose;
-        
+
         // State Transition
         if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF) ) {
             land();
@@ -298,7 +298,8 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     ros::Time t_now = ros::Time::now();
     if ((t_now - pose_curr.header.stamp) > checkup_dt_max) {
         if (mc_stream_state == MC_ON) {
-            ROS_INFO("MoCap Stream Broken");
+            ROS_INFO("MoCap Stream Broken, mocap time: [%f]", pose_curr.header.stamp.toSec());
+            ROS_INFO("MoCap Stream Broken, time now: [%f]", t_now.toSec());
         }
         ROS_DEBUG("MoCap Stream Off");
 
