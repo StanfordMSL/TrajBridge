@@ -40,7 +40,12 @@ function X = swarm_setpoint(P,R,N,angle)
         idx = 1+(k-1)*4;
         theta = (k-1)*angle;
         
-        X(idx:idx+2,:) = P + R.*[cos(theta) ; sin(theta) ; 0.0];
+        if k > 2
+            z = 0.5;
+        else
+            z = 0.0;
+        end
+        X(idx:idx+2,:) = P + R.*[cos(theta) ; sin(theta) ; z];
         X(idx+3,:) = 0.0;
     end
 end
