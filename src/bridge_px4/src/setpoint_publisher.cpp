@@ -19,7 +19,7 @@ SetpointPublisher::SetpointPublisher()
     att_sp_pub  = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude",1);
     att_sp_sub  = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this);
 
-    pose_curr_sub = nh.subscribe("mavros/vision_pose/pose",1,&SetpointPublisher::pose_curr_cb,this);
+    pose_curr_sub = nh.subscribe("mavros/vision_pose/pose",10,&SetpointPublisher::pose_curr_cb,this);
     mav_state_sub = nh.subscribe("mavros/state",1,&SetpointPublisher::mav_state_cb,this);
 
     land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
@@ -77,7 +77,6 @@ void SetpointPublisher::att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr& m
 
 void SetpointPublisher::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     pose_curr = *msg;
-    ROS_INFO("pose_curr_cb time: [%f]", pose_curr.header.stamp.toSec());
 }
 
 void SetpointPublisher::mav_state_cb(const mavros_msgs::State::ConstPtr& msg){
