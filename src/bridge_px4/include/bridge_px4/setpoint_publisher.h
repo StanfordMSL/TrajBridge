@@ -83,6 +83,7 @@ private:
    float checkup_hz_min;
    float dt_fs;
    float dt_rs;
+   float z_fs;
 
    // Position Publishers/Subscribers
    ros::Publisher     pose_sp_pub;

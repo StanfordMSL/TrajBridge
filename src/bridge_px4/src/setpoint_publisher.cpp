@@ -10,6 +10,7 @@ SetpointPublisher::SetpointPublisher()
     ros::param::get("~checkup_hz_min", checkup_hz_min);
     ros::param::get("~dt_fs", dt_fs);
     ros::param::get("~dt_rs",dt_rs);
+    ros::param::get("~z_fs",z_fs);
 
     // ROS Initialization
     pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
@@ -140,7 +141,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             ROS_INFO("SP_PUB_STATE: STARTUP");
         } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
         {
-            pose_sa.position.z = 1.0;
+            pose_sa.position.z = z_fs;
 
             sp_pub_state = HOVER;
             ROS_INFO("SP_PUB_STATE: HOVER");
@@ -247,7 +248,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         {
             k_rs += 1;
             if  ( (k_rs >= n_rs)  && (sp_stream_state == SP_OFF) ) {
-                pose_sa.position.z = 1.0;
+                pose_sa.position.z = z_fs;
 
                 sp_pub_state = HOVER;
                 ROS_INFO("SP_PUB_STATE: HOVER");
