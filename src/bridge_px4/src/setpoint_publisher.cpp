@@ -77,6 +77,7 @@ void SetpointPublisher::att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr& m
 
 void SetpointPublisher::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     pose_curr = *msg;
+    ROS_INFO("pose_curr_cb time: [%f]", pose_curr.header.stamp.toSec());
 }
 
 void SetpointPublisher::mav_state_cb(const mavros_msgs::State::ConstPtr& msg){
