@@ -127,7 +127,6 @@ private:
    int k_main;                  // Main loop counter
    int k_rs;                    // Restore Counter
    int n_rs;                    // Total Restore Counter
-   int mocap_count;             // debugging mocap error
    ros::Duration  t_last;
    ros::Duration  pos_dt_max;
    ros::Duration  vel_dt_max;
