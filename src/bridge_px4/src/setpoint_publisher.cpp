@@ -45,6 +45,7 @@ SetpointPublisher::SetpointPublisher()
     quat_forward.z = 0;
 
     n_rs = ceil(dt_rs*sp_out_hz);
+    mocap_count = 0;
 
     // Stream Timer Checks
     pos_dt_max = ros::Duration(1.0/pos_hz_min);
@@ -298,8 +299,9 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     ros::Time t_now = ros::Time::now();
     if ((t_now - pose_curr.header.stamp) > checkup_dt_max) {
         if (mc_stream_state == MC_ON) {
-            ROS_INFO("MoCap Stream Broken, mocap time: [%f]", pose_curr.header.stamp.toSec());
-            ROS_INFO("MoCap Stream Broken, time now: [%f]", t_now.toSec());
+            ROS_INFO("MoCap Stream Broken, mocap time: [%f],[%i]", pose_curr.header.stamp.toSec(), mocap_count);
+            ROS_INFO("MoCap Stream Broken, time now: [%f],[%i]", t_now.toSec(), mocap_count);
+            mocap_count++;
         }
         ROS_DEBUG("MoCap Stream Off");
 

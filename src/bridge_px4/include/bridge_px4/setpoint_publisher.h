@@ -103,10 +103,10 @@ private:
    // ROS Timers
    ros::Timer setpointLoop;      // setpoint update timer
    ros::Timer checkupLoop;       // savepoint update timer
-   
+
    // ROS Services
    ros::ServiceClient land_client;
-   
+
    // Quad Setpoints
    geometry_msgs::PoseStamped  pose_sp_in;      // Setpoint Position In
    geometry_msgs::PoseStamped  pose_sp_out;     // Setpoint Position Out
@@ -114,7 +114,7 @@ private:
    geometry_msgs::TwistStamped vel_sp_in;       // Setpoint Velocity In
    geometry_msgs::Twist        vel_sp_out;      // Setpoint Velocity Out
 
-   mavros_msgs::AttitudeTarget att_sp_in;       // Setpoint Attitude (body rate, orientation, thrust) In 
+   mavros_msgs::AttitudeTarget att_sp_in;       // Setpoint Attitude (body rate, orientation, thrust) In
    mavros_msgs::AttitudeTarget att_sp_out;      // Setpoint Attitude (body rate, orientation, thrust) Out
 
    // Quad Parameters
@@ -127,6 +127,7 @@ private:
    int k_main;                  // Main loop counter
    int k_rs;                    // Restore Counter
    int n_rs;                    // Total Restore Counter
+   int mocap_count;             // debugging mocap error
    ros::Duration  t_last;
    ros::Duration  pos_dt_max;
    ros::Duration  vel_dt_max;
