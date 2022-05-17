@@ -41,7 +41,7 @@ function X = swarm_setpoint(P,R,N,angle)
         theta = (k-1)*angle;
         
         if k > 2
-            z = 0.5;
+            z = 0.0;
         else
             z = 0.0;
         end
