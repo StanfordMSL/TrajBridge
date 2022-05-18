@@ -2,12 +2,16 @@ clear
 
 % Parameters
 Ndr = 5;     % Number of Drones.
-T  = 15;    % Total Time for Trajectory.
+T  = 30;    % Total Time for Trajectory.
 hz = 0;     % Frame Step. Set to 0 if you want to follow raw waypoints.
-R  = 1.5;   % Radius of formation (assumed circular)
+R  = 1.3;   % Radius of formation (assumed circular)
 
 % Trajectory
-P = [ 1.0   1.0   1.0    0.0  -1.0  -1.0  -1.0   0.0   1.0;
+% P = [ 3.0   3.0    -3.0  -3.0    3.0;
+%      -1.0   1.0    1.0   -1.0    -1.0; 
+%       1.0   1.0    1.0   1.0     1.0];
+
+P = [ 3.0   3.0   3.0    0.0  -3.0  -3.0  -3.0   0.0   3.0;
      -1.0   0.0   1.0    1.0   1.0   0.0  -1.0  -1.0  -1.0; 
       1.0   1.0   1.0    1.0   1.0   1.0   1.0   1.0   1.0];
 
@@ -18,19 +22,31 @@ dt = round(T/(Nfr-1),2);
 
 % Trajectory Generation
 if (hz == 0)
+    s = 0;
+    for k =1:Nfr-1
+        s = s + norm(P(:,k+1)-P(:,k));
+    end
+    v = s/T;
+    
     traj = zeros(4*Ndr+1,Nfr);
 
     for k = 1:Nfr
-        t = (k-1)*dt;
+        if k == 1
+            t = 0;
+        else
+            ds = norm(P(:,k) - P(:,k-1));
+            t = t+ds/v;
+        end
+        
         traj(1,k) = t;
         traj(2:end,k) = swarm_setpoint(P(:,k),R,Ndr,angle);
     end
 end
 
-liveplot(P,traj,Ndr)
+% liveplot(P,traj,Ndr)
 
 % Write to csv
-name = ['traj_',num2str(Ndr),'dr',num2str(T),'s.csv'];
+name = ['traj_',num2str(Ndr),'dr',num2str(T),'R',num2str(R*10),'s_mid.csv'];
 writematrix(traj,name) 
 
 function X = swarm_setpoint(P,R,N,angle)
