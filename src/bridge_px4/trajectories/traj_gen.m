@@ -8,7 +8,7 @@ R  = 1.5;   % Radius of formation (assumed circular)
 
 % Trajectory
 P = [ 3.0   3.0    -3.0  -3.0    3.0;
-     -1.0   1.0    1.0   -1.0    -1.0; 
+     -0.5   0.5    0.5   -0.5    -0.5; 
       1.0   1.0    1.0   1.0     1.0];
 
 % P = [ 3.0   3.0   3.0    0.0  -3.0  -3.0  -3.0   0.0   3.0;
@@ -68,7 +68,7 @@ end
 liveplot(P,traj,Ndr)
 
 % Write to csv
-name = ['traj_',num2str(Ndr),'dr',num2str(T),'R',num2str(R*10),'s_pts.csv'];
+name = ['traj_',num2str(Ndr),'dr',num2str(T),'R',num2str(R*10),'s_narrow.csv'];
 writematrix(traj,name) 
 
 function X = swarm_setpoint(P,R,N,angle)
