@@ -10,6 +10,7 @@ SetpointPublisher::SetpointPublisher()
     ros::param::get("~checkup_hz_min", checkup_hz_min);
     ros::param::get("~dt_fs", dt_fs);
     ros::param::get("~dt_rs",dt_rs);
+    ros::param::get("~z_fs",z_fs);
 
     // ROS Initialization
     pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
@@ -19,7 +20,7 @@ SetpointPublisher::SetpointPublisher()
     att_sp_pub  = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude",1);
     att_sp_sub  = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this);
 
-    pose_curr_sub = nh.subscribe("mavros/vision_pose/pose",1,&SetpointPublisher::pose_curr_cb,this);
+    pose_curr_sub = nh.subscribe("mavros/vision_pose/pose",10,&SetpointPublisher::pose_curr_cb,this);
     mav_state_sub = nh.subscribe("mavros/state",1,&SetpointPublisher::mav_state_cb,this);
 
     land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
@@ -140,7 +141,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
             ROS_INFO("SP_PUB_STATE: STARTUP");
         } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
         {
-            pose_sa.position.z = 1.0;
+            pose_sa.position.z = z_fs;
 
             sp_pub_state = HOVER;
             ROS_INFO("SP_PUB_STATE: HOVER");
@@ -191,7 +192,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         //pose_sa.position = pose_curr.pose.position;
         //pose_sa.orientation = quat_forward;
         pose_sa = pose_curr.pose;
-        
+
         // State Transition
         if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF) ) {
             land();
@@ -247,7 +248,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         {
             k_rs += 1;
             if  ( (k_rs >= n_rs)  && (sp_stream_state == SP_OFF) ) {
-                pose_sa.position.z = 1.0;
+                pose_sa.position.z = z_fs;
 
                 sp_pub_state = HOVER;
                 ROS_INFO("SP_PUB_STATE: HOVER");
@@ -298,7 +299,7 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     ros::Time t_now = ros::Time::now();
     if ((t_now - pose_curr.header.stamp) > checkup_dt_max) {
         if (mc_stream_state == MC_ON) {
-            ROS_INFO("MoCap Stream Broken");
+            ROS_INFO("MoCap Stream Broken. Last vision_pose message came in at: %f", pose_curr.header.stamp.toSec());
         }
         ROS_DEBUG("MoCap Stream Off");
 

@@ -109,7 +109,7 @@ void GCS::load_trajectory(const string& input)
 
         string line;
         vector<vector<double>> parsedCsv;
-
+            
         while(getline(data,line))
         {
             stringstream lineStream(line);
@@ -145,6 +145,7 @@ void GCS::load_trajectory(const string& input)
                 st_traj[k_dr][k_st][j] = parsedCsv[i][j];
             }
         }
+
     } else {
         cout << "Trajectory does not exist." << endl;
     }

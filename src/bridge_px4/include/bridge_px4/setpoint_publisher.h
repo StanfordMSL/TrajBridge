@@ -83,6 +83,7 @@ private:
    float checkup_hz_min;
    float dt_fs;
    float dt_rs;
+   float z_fs;
 
    // Position Publishers/Subscribers
    ros::Publisher     pose_sp_pub;
@@ -103,10 +104,10 @@ private:
    // ROS Timers
    ros::Timer setpointLoop;      // setpoint update timer
    ros::Timer checkupLoop;       // savepoint update timer
-   
+
    // ROS Services
    ros::ServiceClient land_client;
-   
+
    // Quad Setpoints
    geometry_msgs::PoseStamped  pose_sp_in;      // Setpoint Position In
    geometry_msgs::PoseStamped  pose_sp_out;     // Setpoint Position Out
@@ -114,7 +115,7 @@ private:
    geometry_msgs::TwistStamped vel_sp_in;       // Setpoint Velocity In
    geometry_msgs::Twist        vel_sp_out;      // Setpoint Velocity Out
 
-   mavros_msgs::AttitudeTarget att_sp_in;       // Setpoint Attitude (body rate, orientation, thrust) In 
+   mavros_msgs::AttitudeTarget att_sp_in;       // Setpoint Attitude (body rate, orientation, thrust) In
    mavros_msgs::AttitudeTarget att_sp_out;      // Setpoint Attitude (body rate, orientation, thrust) Out
 
    // Quad Parameters
