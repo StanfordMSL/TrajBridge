@@ -1,7 +1,0 @@
-<launch>
-  <group ns="drone7">
-    <node pkg="bridge_px4" type="mocap_vel" name ="mocap_vel" output="screen">
-      <param name="alpha" value="0.01"/>
-    </node>
-  </group>
-</launch>

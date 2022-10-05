@@ -14,12 +14,10 @@
 #include "ros/ros.h"
 
 #include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <mavros_msgs/Thrust.h>
+#include <geometry_msgs/AccelStamped.h>
 #include <mavros_msgs/AttitudeTarget.h>
-
 #include <geometry_msgs/Quaternion.h>
 
 #include <mavros_msgs/State.h>
@@ -27,6 +25,9 @@
 #include <mavros_msgs/CommandCode.h>
 
 #include <Eigen/Dense>
+
+// #include <mavros_msgs/Thrust.h>
+// #include <geometry_msgs/Twist.h>
 
 using namespace Eigen;
 using namespace std;
@@ -60,16 +61,15 @@ private:
       OB_OFF,
    } ob_mode_state;
 
-   enum sp_stream_state_machine {
-      SP_INIT,
-      SP_ON,
-      SP_OFF,
-   } sp_stream_state;
+   enum ac_mode_state_machine {
+      AC_INIT,
+      AC_ON,
+      AC_OFF,
+   } ac_mode_state;
 
    enum sp_type_state_machine {
       TP_NONE,
       TP_POS,
-      TP_VEL,
       TP_ATT,
    } sp_type_state;
 
@@ -77,88 +77,75 @@ private:
    string drone_id;
    float sp_out_hz;
    float checkup_hz;
-   float pos_hz_min;
-   float vel_hz_min;
-   float att_hz_min;
+   float sp_hz_min;
    float checkup_hz_min;
    float dt_fs;
    float dt_rs;
    float z_fs;
 
-   // Position Publishers/Subscribers
-   ros::Publisher     pose_sp_pub;
-   ros::Subscriber    pose_sp_sub;
+   // Subscribers
+   ros::Subscriber    pose_sp_sub;                 // Pose (setpoint)
+   ros::Subscriber    vels_sp_sub;                 // Velocities (setpoint) (lin+ang) 
+   ros::Subscriber    accs_sp_sub;                 // Accelerations (setpoint) (lin+ang) 
+   
+   ros::Subscriber    pose_cr_sub;                 // Pose (current)
+   ros::Subscriber    mavs_cr_sub;                 // MAV state (current)
 
-   // Velocity Publishers/Subscribers
-   ros::Publisher     vel_sp_pub;
-   ros::Subscriber    vel_sp_sub;
+   // Publishers
+   ros::Publisher     poseT_sp_pub;                // Position Setpoint
+   ros::Publisher     attdT_sp_pub;                // Attitude Setpoint
 
-   // Attitude Publishers/Subscribers
-   ros::Publisher     att_sp_pub;
-   ros::Subscriber    att_sp_sub;
-
-   // Drone State/Status Subscribers
-   ros::Subscriber    pose_curr_sub;
-   ros::Subscriber    mav_state_sub;
-
-   // ROS Timers
-   ros::Timer setpointLoop;      // setpoint update timer
-   ros::Timer checkupLoop;       // savepoint update timer
+   // Variables
+   geometry_msgs::PoseStamped  pose_sp;            // Pose (setpoint)
+   geometry_msgs::TwistStamped vels_sp;            // Velocities (setpoint) (lin+alg)
+   geometry_msgs::AccelStamped accs_sp;            // Accelerations (setpoint) (lin+alg)
+   geometry_msgs::PoseStamped  poseT_sp;           // Pose Target Setpoint
+   mavros_msgs::AttitudeTarget attdT_sp;           // Attitude Target Setpoint
+   geometry_msgs::PoseStamped  pose_cr;            // Current Pose
+   geometry_msgs::Pose         pose_st;            // Starting Pose
+   geometry_msgs::Pose         pose_sa;            // Savepoint Pose (for failsafes and active hover)
+   mavros_msgs::State          mode_cr;            // Current Mavros Mode
 
    // ROS Services
-   ros::ServiceClient land_client;
-
-   // Quad Setpoints
-   geometry_msgs::PoseStamped  pose_sp_in;      // Setpoint Position In
-   geometry_msgs::PoseStamped  pose_sp_out;     // Setpoint Position Out
-
-   geometry_msgs::TwistStamped vel_sp_in;       // Setpoint Velocity In
-   geometry_msgs::Twist        vel_sp_out;      // Setpoint Velocity Out
-
-   mavros_msgs::AttitudeTarget att_sp_in;       // Setpoint Attitude (body rate, orientation, thrust) In
-   mavros_msgs::AttitudeTarget att_sp_out;      // Setpoint Attitude (body rate, orientation, thrust) Out
-
-   // Quad Parameters
-   geometry_msgs::PoseStamped  pose_curr;       // Current Pose
-   geometry_msgs::Pose         pose_st;         // Starting Pose
-   geometry_msgs::Pose         pose_sa;         // Savepoint Pose (for failsafes and active hover)
-   mavros_msgs::State          mode_cr;         // Current Mavros Mode
+   ros::ServiceClient land_client;                 // Landing client
 
    // Counters and Time Variables
-   int k_main;                  // Main loop counter
-   int k_rs;                    // Restore Counter
-   int n_rs;                    // Total Restore Counter
+   int k_main;                                     // Main loop counter
+   int k_rs;                                       // Current Restore Counter
+   int n_rs;                                       // Total Restore Counter
+   Matrix<double,3,1> dt_max_vect;                 
+   ros::Timer setpointLoop;                        // setpoint update timer
+   ros::Timer checkupLoop;                         // savepoint update timer
+   ros::Time      t_fs;
    ros::Duration  t_last;
-   ros::Duration  pos_dt_max;
-   ros::Duration  vel_dt_max;
-   ros::Duration  att_dt_max;
+   ros::Duration  pose_dt_max;
+   ros::Duration  vels_dt_max;
+   ros::Duration  accs_dt_max;
    ros::Duration  dt_max;
    ros::Duration  checkup_dt_max;
-   ros::Time      t_fs;
-   Matrix<double,3,1> dt_max_vect;
 
    // Constants
    geometry_msgs::Quaternion quat_forward;
 
-   // Telemetry Function(s)
+   // Functions
    void pose_sp_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-   void vel_sp_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
-   void att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr& msg);
+   void vels_sp_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
+   void accs_sp_cb(const geometry_msgs::AccelStamped::ConstPtr& msg);
+   
+   void pose_cr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+   void mavs_cr_cb(const mavros_msgs::State::ConstPtr& msg);
 
-   void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-   void mav_state_cb(const mavros_msgs::State::ConstPtr& msg);
+   void pub_sp_pose();
+   void pub_sp_attd();
+   void pub_sp_active();
 
    void setpoint_cb(const ros::TimerEvent& event);
    void checkup_cb(const ros::TimerEvent& event);
 
-   // Functions
    void land();
 
-   void sp_type_assign();
-   void pub_sp_pos();
-   void pub_sp_vel();
-   void pub_sp_att();
-   void pub_sp_active();
+   void pose_compute();
+   void attD_compute();
 };
 
 #endif
