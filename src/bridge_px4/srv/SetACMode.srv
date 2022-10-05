@@ -1,0 +1,6 @@
+# Autonomous Control Mode Change Service
+
+uint8 mode
+---
+bool success
+uint8 result

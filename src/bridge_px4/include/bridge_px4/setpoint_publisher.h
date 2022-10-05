@@ -12,12 +12,14 @@
 #define __SETPOINT_PUBLISHER_NODE_H__
 
 #include "ros/ros.h"
+#include "bridge_px4/SetACMode.h"
 
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/AccelStamped.h>
 #include <mavros_msgs/AttitudeTarget.h>
+#include <mavros_msgs/ManualControl.h>
 #include <geometry_msgs/Quaternion.h>
 
 #include <mavros_msgs/State.h>
@@ -37,53 +39,59 @@ public:
    // Constructor
    SetpointPublisher();
    virtual ~SetpointPublisher();
+
+   bool setACmode(bridge_px4::SetACMode::Request& req, bridge_px4::SetACMode::Response& res);
+
 protected:
   ros::NodeHandle nh;
 private:
    // State Machines
-   enum sp_pub_state_machine {
+   enum sp_pub_state_machine {            // Setpoint publisher states
       STARTUP,
       LINKED,
       HOVER,
-      ACTIVE,
+      ACTIVE_POSE,                        // Send pose setpoints
+      ACTIVE_BORA,                        // Send body rate setpoints (thrust normalized)
+      ACTIVE_WRCH,                        // Send wrench setpoints (all normalized 1x[0 1],3x[-1 1])
       FAILSAFE,
    } sp_pub_state;
 
-   enum mc_stream_state_machine {
+   enum mc_stream_state_machine {         // Mocap stream states
       MC_INIT,
       MC_ON,
       MC_OFF,
    } mc_stream_state;
 
-   enum ob_mode_state_machine {
+   enum ob_mode_state_machine {           // Offboard mode states
       OB_INIT,
       OB_ON,
       OB_OFF,
    } ob_mode_state;
 
-   enum ac_mode_state_machine {
+   enum ac_mode_state_machine {           // Autonomous control mode states
       AC_INIT,
       AC_ON,
       AC_OFF,
    } ac_mode_state;
 
-   enum sp_type_state_machine {
-      TP_NONE,
-      TP_POS,
-      TP_ATT,
-   } sp_type_state;
+   enum sp_mode_state_machine {           // Setpoint mode states
+      SP_NONE,                            // No setpoints allowed
+      SP_POSE,                            // Send pose setpoints
+      SP_BORA,                            // Send body rate setpoints (thrust normalized)
+      SP_WRCH,                            // Send wrench setpoints (all normalized 1x[0 1],3x[-1 1])
+   } sp_mode_state;
 
-   // Input Params
-   string drone_id;
-   float sp_out_hz;
-   float checkup_hz;
-   float sp_hz_min;
-   float checkup_hz_min;
-   float dt_fs;
-   float dt_rs;
-   float z_fs;
+   // Node Parameters
+   float spo_hz;                          // Setpoint publisher output frequency
+   float cup_hz;                          // CheckUp callback frequency
+   float spi_hz_min;                      // Setpoint input minimum frequency
+   float mci_hz_min;                      // Mocap input minimum frequency
+   float fs_th;                           // Failsafe landing trigger threshold (s)
+   float rs_th;                           // Resume trigger threshold (s)
+   float fs_hov_z;                        // Failsafe hover height
+   float eps_p_th;                        // Position error threshold
 
-   // Subscribers
+   // ROS Subscribers
    ros::Subscriber    pose_sp_sub;                 // Pose (setpoint)
    ros::Subscriber    vels_sp_sub;                 // Velocities (setpoint) (lin+ang) 
    ros::Subscriber    accs_sp_sub;                 // Accelerations (setpoint) (lin+ang) 
@@ -91,41 +99,47 @@ private:
    ros::Subscriber    pose_cr_sub;                 // Pose (current)
    ros::Subscriber    mavs_cr_sub;                 // MAV state (current)
 
-   // Publishers
-   ros::Publisher     poseT_sp_pub;                // Position Setpoint
-   ros::Publisher     attdT_sp_pub;                // Attitude Setpoint
+   // ROS Publishers
+   ros::Publisher     pose_tg_pub;                 // Position Setpoint
+   ros::Publisher     bora_tg_pub;                 // Attitude Setpoint
+   ros::Publisher     wrch_tg_pub;                 // Attitude Setpoint
+
+   // Timer Loops
+   ros::Timer setpointLoop;                        // setpoint update timer
+   ros::Timer checkupLoop;                         // savepoint update timer
+
+   // ROS Clients
+   ros::ServiceClient land_client;                 // Landing client
 
    // Variables
    geometry_msgs::PoseStamped  pose_sp;            // Pose (setpoint)
    geometry_msgs::TwistStamped vels_sp;            // Velocities (setpoint) (lin+alg)
    geometry_msgs::AccelStamped accs_sp;            // Accelerations (setpoint) (lin+alg)
-   geometry_msgs::PoseStamped  poseT_sp;           // Pose Target Setpoint
-   mavros_msgs::AttitudeTarget attdT_sp;           // Attitude Target Setpoint
+
    geometry_msgs::PoseStamped  pose_cr;            // Current Pose
-   geometry_msgs::Pose         pose_st;            // Starting Pose
-   geometry_msgs::Pose         pose_sa;            // Savepoint Pose (for failsafes and active hover)
    mavros_msgs::State          mode_cr;            // Current Mavros Mode
 
-   // ROS Services
-   ros::ServiceClient land_client;                 // Landing client
-
+   geometry_msgs::PoseStamped  pose_tg;            // Pose Target 
+   mavros_msgs::AttitudeTarget bora_tg;            // Body Rate Target 
+   mavros_msgs::ManualControl  wrch_tg;            // Wrench Target
+   
+   geometry_msgs::Pose         pose_sa;            // Savepoint Pose (for failsafes and active hover)
+   Vector3f    eps_p;                                 // Position Error
    // Counters and Time Variables
    int k_main;                                     // Main loop counter
-   int k_rs;                                       // Current Restore Counter
-   int n_rs;                                       // Total Restore Counter
-   Matrix<double,3,1> dt_max_vect;                 
-   ros::Timer setpointLoop;                        // setpoint update timer
-   ros::Timer checkupLoop;                         // savepoint update timer
-   ros::Time      t_fs;
-   ros::Duration  t_last;
-   ros::Duration  pose_dt_max;
-   ros::Duration  vels_dt_max;
-   ros::Duration  accs_dt_max;
-   ros::Duration  dt_max;
-   ros::Duration  checkup_dt_max;
+   ros::Time      t_fs0;                           // Failsafe start time
+   ros::Duration  t_rs;                            // Reset time counter
+   // int k_rs;                                       // Current Restore Counter
+   // int n_rs;                                       // Total Restore Counter
+   // Matrix<double,3,1> dt_max_vect;                 
+   // ros::Duration  pose_dt_max;
+   // ros::Duration  vels_dt_max;
+   // ros::Duration  accs_dt_max;
+   float  spi_dt_max;
+   float  mci_dt_max;
 
    // Constants
-   geometry_msgs::Quaternion quat_forward;
+   geometry_msgs::Quaternion q_fw;                // Quaternion Default Forward Direction (along x-axis)
 
    // Functions
    void pose_sp_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
@@ -136,8 +150,8 @@ private:
    void mavs_cr_cb(const mavros_msgs::State::ConstPtr& msg);
 
    void pub_sp_pose();
-   void pub_sp_attd();
-   void pub_sp_active();
+   void pub_sp_bora();
+   void pub_sp_wrch();
 
    void setpoint_cb(const ros::TimerEvent& event);
    void checkup_cb(const ros::TimerEvent& event);
@@ -145,7 +159,8 @@ private:
    void land();
 
    void pose_compute();
-   void attD_compute();
+   void bora_compute();
+   void wrch_compute();
 };
 
 #endif

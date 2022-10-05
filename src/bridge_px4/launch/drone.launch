@@ -3,13 +3,14 @@
 
    <!-- Initialize the Onboard Setpoint Publisher -->
 	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
-	   <param name="hz_out" value="200.0"/>
-      <param name="hz_in_min" value="10.0"/>
-      <param name="checkup_hz" value="200.0"/>
-      <param name="checkup_hz_min" value="5.0"/>
-      <param name="dt_fs" value="3.0"/>
-      <param name="dt_rs" value="1.0"/>
-      <param name="z_fs" value="1.0"/>
+	   <param name="spo_hz" value="200.0"/>
+      <param name="cup_hz" value="200.0"/>
+      <param name="spi_hz_min" value="10.0"/>
+      <param name="mci_hz_min" value="5.0"/>
+      <param name="fs_th" value="3.0"/>
+      <param name="rs_th" value="1.0"/>
+      <param name="fs_hov_z" value="1.0"/>
+      <param name="eps_p_th" value="1.0"/>
 	</node>
 
    <!-- Initialize the High Rate Controller -->
