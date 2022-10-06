@@ -26,7 +26,7 @@
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/CommandCode.h>
 
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 // #include <mavros_msgs/Thrust.h>
 // #include <geometry_msgs/Twist.h>
