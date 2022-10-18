@@ -37,11 +37,10 @@ SetpointPublisher::SetpointPublisher()
     ROS_INFO("ROS Components Initialized");
 
     // Initialize State Machine
-    sp_pub_state    = STARTUP;
+    sp_pub_state    = INIT;
     mc_stream_state = MC_INIT;
     ob_mode_state   = OB_INIT;
     ac_mode_state   = AC_INIT;
-    sp_mode_state   = SP_NONE;
 
     ROS_INFO("State Machines Initialized");
     ROS_INFO("SP_MODE_STATE: SP_NONE");

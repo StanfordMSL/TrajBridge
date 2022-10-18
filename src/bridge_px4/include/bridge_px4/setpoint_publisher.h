@@ -47,13 +47,10 @@ protected:
 private:
    // State Machines
    enum sp_pub_state_machine {            // Setpoint publisher states
-      STARTUP,
+      INIT,
       LINKED,
       HOVER,
-      ACTIVE_POSE,                        // Send pose setpoints
-      ACTIVE_BORA,                        // Send body rate setpoints (thrust normalized)
-      ACTIVE_WRCH,                        // Send wrench setpoints (all normalized 1x[0 1],3x[-1 1])
-      FAILSAFE,
+      ACTIVE
    } sp_pub_state;
 
    enum mc_stream_state_machine {         // Mocap stream states
