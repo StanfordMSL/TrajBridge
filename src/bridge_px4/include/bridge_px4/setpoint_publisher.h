@@ -12,15 +12,17 @@
 #define __SETPOINT_PUBLISHER_NODE_H__
 
 #include "ros/ros.h"
-#include "bridge_px4/SetACMode.h"
+#include "bridge_px4/SetSPMode.h"
+#include "bridge_px4/ActACMode.h"
 
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/AccelStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <mavros_msgs/AttitudeTarget.h>
-#include <mavros_msgs/ManualControl.h>
-#include <geometry_msgs/Quaternion.h>
+#include <mavros_msgs/ActuatorControl.h>
 
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandTOL.h>
@@ -40,7 +42,8 @@ public:
    SetpointPublisher();
    virtual ~SetpointPublisher();
 
-   bool setACmode(bridge_px4::SetACMode::Request& req, bridge_px4::SetACMode::Response& res);
+   bool setSPmode(bridge_px4::SetSPMode::Request& req, bridge_px4::SetSPMode::Response& res);
+   bool actACmode(bridge_px4::ActACMode::Request& req, bridge_px4::ActACMode::Response& res);
 
 protected:
   ros::NodeHandle nh;
@@ -73,9 +76,9 @@ private:
 
    enum sp_mode_state_machine {           // Setpoint mode states
       SP_NONE,                            // No setpoints allowed
-      SP_POSE,                            // Send pose setpoints
+      SP_POTW,                            // Send pose/twist setpoints
       SP_BORA,                            // Send body rate setpoints (thrust normalized)
-      SP_WRCH,                            // Send wrench setpoints (all normalized 1x[0 1],3x[-1 1])
+      SP_NOWR,                            // Send wrench setpoints (all normalized 1x[0 1],3x[-1 1])
    } sp_mode_state;
 
    // Node Parameters
@@ -97,9 +100,9 @@ private:
    ros::Subscriber    mavs_cr_sub;                 // MAV state (current)
 
    // ROS Publishers
-   ros::Publisher     pose_tg_pub;                 // Position Setpoint
+   ros::Publisher     pose_tg_pub;                  // Pose Setpoint
    ros::Publisher     bora_tg_pub;                 // Attitude Setpoint
-   ros::Publisher     wrch_tg_pub;                 // Attitude Setpoint
+   ros::Publisher     nowr_tg_pub;                 // Wrench Setpoint
 
    // Timer Loops
    ros::Timer setpointLoop;                        // setpoint update timer
@@ -109,19 +112,20 @@ private:
    ros::ServiceClient land_client;                 // Landing client
 
    // Variables
-   geometry_msgs::PoseStamped  pose_sp;            // Pose (setpoint)
-   geometry_msgs::TwistStamped vels_sp;            // Velocities (setpoint) (lin+alg)
-   geometry_msgs::AccelStamped accs_sp;            // Accelerations (setpoint) (lin+alg)
+   geometry_msgs::PoseStamped   pose_sp;            // Pose (setpoint)
+   geometry_msgs::TwistStamped  vels_sp;            // Twist (setpoint) (lin+alg)
+   geometry_msgs::AccelStamped  accs_sp;            // Accelerations (setpoint) (lin+alg)
 
-   geometry_msgs::PoseStamped  pose_cr;            // Current Pose
-   mavros_msgs::State          mode_cr;            // Current Mavros Mode
-
-   geometry_msgs::PoseStamped  pose_tg;            // Pose Target 
-   mavros_msgs::AttitudeTarget bora_tg;            // Body Rate Target 
-   mavros_msgs::ManualControl  wrch_tg;            // Wrench Target
+   geometry_msgs::PoseStamped   pose_tg;            // Position Target 
+   mavros_msgs::AttitudeTarget  bora_tg;            // Body Rate Target 
+   mavros_msgs::ActuatorControl nowr_tg;            // Wrench Target
    
+   geometry_msgs::PoseStamped   pose_cr;            // Current Pose
+   mavros_msgs::State           mode_cr;            // Current Mavros Mode
+
    geometry_msgs::Pose         pose_sa;            // Savepoint Pose (for failsafes and active hover)
    Vector3f    eps_p;                                 // Position Error
+   
    // Counters and Time Variables
    int k_main;                                     // Main loop counter
    ros::Time      t_fs0;                           // Failsafe start time
@@ -148,7 +152,7 @@ private:
 
    void pub_sp_pose();
    void pub_sp_bora();
-   void pub_sp_wrch();
+   void pub_sp_nowr();
 
    void setpoint_cb(const ros::TimerEvent& event);
    void checkup_cb(const ros::TimerEvent& event);
@@ -157,7 +161,7 @@ private:
 
    void pose_compute();
    void bora_compute();
-   void wrch_compute();
+   void nowr_compute();
 };
 
 #endif

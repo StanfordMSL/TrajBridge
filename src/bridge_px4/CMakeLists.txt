@@ -22,7 +22,8 @@ add_message_files(
 
 add_service_files(
   FILES
-  SetACMode.srv
+  ActACMode.srv
+  SetSPMode.srv
 )
 
 generate_messages(
@@ -42,3 +43,9 @@ include_directories(
 
 add_executable(setpoint_publisher src/setpoint_publisher.cpp)
 target_link_libraries(setpoint_publisher ${catkin_LIBRARIES})
+
+add_executable(mocap_gen src/mocap_gen.cpp)
+target_link_libraries(mocap_gen ${catkin_LIBRARIES})
+
+add_executable(auto_rc src/auto_rc.cpp)
+target_link_libraries(auto_rc ${catkin_LIBRARIES})

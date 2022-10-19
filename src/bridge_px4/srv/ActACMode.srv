@@ -1,0 +1,6 @@
+# Autonomous Control Activation Service
+
+bool arm
+---
+bool success
+uint8 result

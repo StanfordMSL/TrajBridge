@@ -1,4 +1,4 @@
-# Autonomous Control Mode Change Service
+# Setpoint Mode Change Service
 
 uint8 mode
 ---

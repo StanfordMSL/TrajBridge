@@ -1,0 +1,41 @@
+<launch>
+   <!-- Initialize Mocap Generator -->
+   <node pkg="bridge_px4" type="mocap_gen" name ="mocap_gen" output="screen">
+   </node>
+
+   <!-- Launch the auto_rc node to mimic direct controller -->
+   <node pkg="bridge_px4" type="auto_rc" name ="auto_rc">
+   </node>
+
+   <group ns="drone1">   
+   <!-- Initialize the Onboard Setpoint Publisher -->
+   <node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
+	   <param name="spo_hz" value="200.0"/>
+      <param name="cup_hz" value="200.0"/>
+      <param name="spi_hz_min" value="10.0"/>
+      <param name="mci_hz_min" value="5.0"/>
+      <param name="fs_th" value="3.0"/>
+      <param name="rs_th" value="1.0"/>
+      <param name="fs_hov_z" value="1.0"/>
+      <param name="eps_p_th" value="1.0"/>
+   </node>
+
+   <!-- Initialize the mavros bridge over serial -->
+	<include file="$(find mavros)/launch/node.launch">
+	   <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+      <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+	   <arg name="fcu_url" value="udp://:14540@hostname:14580" />
+      <arg name="gcs_url" value="" />
+      <arg name="tgt_system" value="1" />
+      <arg name="tgt_component" value="1" />
+      <arg name="log_output" value="screen" />
+      <arg name="fcu_protocol" value="v2.0" />
+      <arg name="respawn_mavros" default="false" />
+	</include>
+
+   <!-- Turn of Sim Time (TODO: test if this is still needed) -->
+   <param name="/use_sim_time" value="false"/>
+
+   </group>
+
+</launch>
