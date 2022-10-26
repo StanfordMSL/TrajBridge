@@ -31,6 +31,10 @@ SetpointPublisher::SetpointPublisher()
     setpointLoop = nh.createTimer(ros::Duration(1.0/spo_hz),&SetpointPublisher::setpoint_cb, this);
     checkupLoop  = nh.createTimer(ros::Duration(1.0/cup_hz),&SetpointPublisher::checkup_cb, this);
 
+    // ROS Services
+    ac_mode_service = nh.advertiseService("act_ac_mode",&SetpointPublisher::actACmode,this);
+    sp_mode_service = nh.advertiseService("set_sp_mode",&SetpointPublisher::setSPmode,this);
+
     // ROS Clients
     land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
 
@@ -61,13 +65,13 @@ SetpointPublisher::~SetpointPublisher() {
 
 bool SetpointPublisher::setSPmode(bridge_px4::SetSPMode::Request& req, bridge_px4::SetSPMode::Response& res) {
     // Change Mode
-    if (req.mode == 0) {
+    if (req.mode == "SP_POTW") {
         sp_mode_state = SP_POTW;
         ROS_INFO("SP_MODE_STATE: SP_POTW");
-    } else if (req.mode == 1) {
+    } else if (req.mode == "SP_BORA") {
         sp_mode_state = SP_BORA;
         ROS_INFO("SP_MODE_STATE: SP_BORA");
-    } else if (req.mode == 2) {
+    } else if (req.mode == "SP_NOWR") {
         sp_mode_state = SP_NOWR;
         ROS_INFO("SP_MODE_STATE: SP_NOWR");
     } else {
@@ -305,6 +309,7 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 
     if (mci_dt > mci_dt_max) {
         if (mc_stream_state == MC_ON) {
+            cout << t_mci << t_now << endl;
             ROS_INFO("MoCap Stream Broken. Last vision_pose message came in at: %f", pose_cr.header.stamp.toSec());
         }
 

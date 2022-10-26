@@ -1,9 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 # license removed for brevity
 import rospy
 import json
 import numpy as np
-
+import torch
+from bridge_px4.srv import ActACMode
 from geometry_msgs.msg import PoseStamped
 
 ### Configuration ===========================================
@@ -33,9 +35,11 @@ N = P.shape[1]
 T = np.arange(0.0,N*dt,dt)
 
 # Initialize ROS Node
-pub = rospy.Publisher("drone4/setpoint/position", PoseStamped, queue_size=1)
+pub = rospy.Publisher("drone1/setpoint/pose", PoseStamped, queue_size=1)
+act_ac = rospy.ServiceProxy("drone1/act_ac_mode",ActACMode)
+
 rospy.init_node('gcs_node', anonymous=True)
-rate = rospy.Rate(20)
+rate = rospy.Rate(50)
 
 # Initialize ROS Variables
 pose = PoseStamped()
@@ -44,6 +48,12 @@ pose.pose.orientation.x = 0.0
 pose.pose.orientation.y = 0.0
 pose.pose.orientation.z = 0.0
 pose.header.frame_id = "map"
+
+# Wait a bit
+rospy.sleep(1.0)
+
+# Activate Autonomous mode
+resp1 = act_ac(1)
 
 # Initialize Counter Variables
 t_start = rospy.Time.now()
@@ -60,7 +70,6 @@ while True:
     pose.pose.position.x = p_now[0]
     pose.pose.position.y = p_now[1]
     pose.pose.position.z = p_now[2]
-    
     pub.publish(pose)
 
     # Counter Updates

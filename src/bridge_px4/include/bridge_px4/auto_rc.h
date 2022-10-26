@@ -18,6 +18,7 @@
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
+#include <bridge_px4/SetSPMode.h>
 
 using namespace std;
 
@@ -30,17 +31,19 @@ public:
 
   // Node Variables
   string state;
-  void rc_takeoff_sequence();
+  string sp_mode_val;
+  void rc_takeoff();
+  void setSPmode();
 
 protected:
   ros::NodeHandle nh;
-
 
 private:
   // ROS variables
   ros::Subscriber    state_sub;
   ros::ServiceClient arming_client;
-  ros::ServiceClient set_mode_client;
+  ros::ServiceClient px4_mode_client;
+  ros::ServiceClient sp_mode_client;
 
   // Functions
   void state_cb(const mavros_msgs::State::ConstPtr& msg);

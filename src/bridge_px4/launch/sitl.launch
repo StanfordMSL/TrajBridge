@@ -5,6 +5,9 @@
 
    <!-- Launch the auto_rc node to mimic direct controller -->
    <node pkg="bridge_px4" type="auto_rc" name ="auto_rc">
+	   <param name="sp_mode" value="SP_POTW"/>
+	   <!-- <param name="sp_mode" value="SP_BORA"/>
+	   <param name="sp_mode" value="SP_NOWR"/> -->
    </node>
 
    <group ns="drone1">   
@@ -32,9 +35,6 @@
       <arg name="fcu_protocol" value="v2.0" />
       <arg name="respawn_mavros" default="false" />
 	</include>
-
-   <!-- Turn of Sim Time (TODO: test if this is still needed) -->
-   <param name="/use_sim_time" value="false"/>
 
    </group>
 

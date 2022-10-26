@@ -108,6 +108,10 @@ private:
    ros::Timer setpointLoop;                        // setpoint update timer
    ros::Timer checkupLoop;                         // savepoint update timer
 
+   // ROS Services
+   ros::ServiceServer ac_mode_service;             // AC Mode Service
+   ros::ServiceServer sp_mode_service;             // SP Mode Service
+
    // ROS Clients
    ros::ServiceClient land_client;                 // Landing client
 

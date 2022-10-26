@@ -2,12 +2,16 @@
 
 Auto_RC::Auto_RC()
 {
+    // Load Node Parameters
+    ros::param::get("~sp_mode", sp_mode_val);
+
     // Setup ROS Subscribers
     state_sub = nh.subscribe("/drone1/mavros/state",1,&Auto_RC::state_cb,this);
 
     // Setup ROS Services
     arming_client = nh.serviceClient<mavros_msgs::CommandBool>("/drone1/mavros/cmd/arming");
-    set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("/drone1/mavros/set_mode");
+    px4_mode_client = nh.serviceClient<mavros_msgs::SetMode>("/drone1/mavros/set_mode");
+    sp_mode_client = nh.serviceClient<bridge_px4::SetSPMode>("/drone1/set_sp_mode");
 }
 
 Auto_RC::~Auto_RC()
@@ -19,20 +23,21 @@ void Auto_RC::state_cb(const mavros_msgs::State::ConstPtr& msg){
     state = msg->mode;
 }
 
-void Auto_RC::rc_takeoff_sequence()
+void Auto_RC::rc_takeoff()
 {
-    mavros_msgs::SetMode set_mode;
+    mavros_msgs::SetMode px4_mode;
     mavros_msgs::CommandBool arm_cmd;
+    bridge_px4::SetSPMode sp_mode;
 
-    set_mode.request.custom_mode = "POSCTL";
-    if (set_mode_client.call(set_mode) && set_mode.response.mode_sent)
+    px4_mode.request.custom_mode = "POSCTL";
+    if (px4_mode_client.call(px4_mode) && px4_mode.response.mode_sent)
     {
         ROS_INFO("Drone Switched to POSCTL.");
     } 
     ros::Duration(1.0).sleep();
 
-    set_mode.request.custom_mode = "OFFBOARD";
-    if (set_mode_client.call(set_mode) && set_mode.response.mode_sent)
+    px4_mode.request.custom_mode = "OFFBOARD";
+    if (px4_mode_client.call(px4_mode) && px4_mode.response.mode_sent)
     {
         ROS_INFO("Drone Switched to OFFBOARD.");
 
@@ -44,7 +49,14 @@ void Auto_RC::rc_takeoff_sequence()
     {
         ROS_INFO("Drone Armed. Taking Off.");
     }
-    ros::Duration(5.0).sleep();
+    ros::Duration(1.0).sleep();
+
+    sp_mode.request.mode = sp_mode_val;
+    if (sp_mode_client.call(sp_mode) && sp_mode.response.success)
+    {
+        ROS_INFO("Drone SP mode set to %s.",sp_mode_val.c_str());
+    }
+    ros::Duration(1.0).sleep();
 
     ros::shutdown();
 }
@@ -59,7 +71,7 @@ int main(int argc, char **argv)
     while(ros::ok()){
         // Take off when ready
         if (a_rc.state.substr(0,4) == "AUTO") {
-            a_rc.rc_takeoff_sequence();
+            a_rc.rc_takeoff();
         } else {
             // Carry on
         }

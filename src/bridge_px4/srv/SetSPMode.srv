@@ -1,6 +1,6 @@
 # Setpoint Mode Change Service
 
-uint8 mode
+string mode
 ---
 bool success
-uint8 result
+string result
