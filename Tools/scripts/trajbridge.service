@@ -1,0 +1,9 @@
+[Unit]
+Description=trajbridge drone side service
+After=network.target
+[Service]
+ExecStart=/usr/local/bin/trajbridge.sh
+ExecStartPre=/bin/sleep 10
+
+[Install]
+WantedBy=default.target
