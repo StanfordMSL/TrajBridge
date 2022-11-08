@@ -3,5 +3,13 @@
         "/home/lowjunen/StanfordMSL/TrajBridge/devel/lib/python2.7/dist-packages",
         "/opt/ros/melodic/lib/python2.7/dist-packages"
     ],
-    "cmake.sourceDirectory": "${workspaceFolder}/build/catkin_tools_prebuild"
+    "cmake.sourceDirectory": "${workspaceFolder}/build/catkin_tools_prebuild",
+    "python.analysis.extraPaths": [
+        "/home/lowjunen/StanfordMSL/TrajBridge/devel/lib/python2.7/dist-packages",
+        "/opt/ros/melodic/lib/python2.7/dist-packages"
+    ],
+    "files.associations": {
+        "unordered_map": "cpp",
+        "unordered_set": "cpp"
+    }
 }

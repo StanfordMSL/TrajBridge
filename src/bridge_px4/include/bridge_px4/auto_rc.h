@@ -31,9 +31,7 @@ public:
 
   // Node Variables
   string state;
-  string sp_mode_val;
   void rc_takeoff();
-  void setSPmode();
 
 protected:
   ros::NodeHandle nh;
@@ -43,7 +41,6 @@ private:
   ros::Subscriber    state_sub;
   ros::ServiceClient arming_client;
   ros::ServiceClient px4_mode_client;
-  ros::ServiceClient sp_mode_client;
 
   // Functions
   void state_cb(const mavros_msgs::State::ConstPtr& msg);

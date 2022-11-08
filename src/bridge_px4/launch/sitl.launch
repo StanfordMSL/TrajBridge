@@ -5,9 +5,6 @@
 
    <!-- Launch the auto_rc node to mimic direct controller -->
    <node pkg="bridge_px4" type="auto_rc" name ="auto_rc">
-	   <param name="sp_mode" value="SP_POTW"/>
-	   <!-- <param name="sp_mode" value="SP_BORA"/>
-	   <param name="sp_mode" value="SP_NOWR"/> -->
    </node>
 
    <group ns="drone1">   
@@ -17,10 +14,13 @@
       <param name="cup_hz" value="200.0"/>
       <param name="spi_hz_min" value="10.0"/>
       <param name="mci_hz_min" value="5.0"/>
-      <param name="fs_th" value="3.0"/>
-      <param name="rs_th" value="1.0"/>
-      <param name="fs_hov_z" value="1.0"/>
-      <param name="eps_p_th" value="1.0"/>
+      <param name="sa_z" value="1.0"/>
+      <param name="x_min" value="-7.8"/>
+      <param name="x_max" value="7.8"/>
+      <param name="y_min" value="-2.9"/>
+      <param name="y_max" value="2.9"/>
+      <param name="z_min" value="0.3"/>
+      <param name="z_max" value="2.7"/>
    </node>
 
    <!-- Initialize the mavros bridge over serial -->

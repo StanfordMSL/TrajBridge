@@ -4,7 +4,6 @@
 import rospy
 import json
 import numpy as np
-import torch
 from bridge_px4.srv import ActACMode
 from geometry_msgs.msg import PoseStamped
 
