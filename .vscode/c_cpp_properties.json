@@ -1,22 +1,22 @@
 {
-    "configurations": [
-        {
-            "browse": {
-                "databaseFilename": "",
-                "limitSymbolsToIncludedHeaders": true
-            },
-            "includePath": [
-                "/home/lowjunen/StanfordMSL/TrajBridge/devel/include",
-                "/opt/ros/melodic/include",
-                "/home/lowjunen/StanfordMSL/TrajBridge/src/bridge_px4/include",
-                "/usr/include"
-            ],
-            "name": "Linux",
-            "intelliSenseMode": "linux-gcc-x64",
-            "compilerPath": "/opt/gcc-arm-none-eabi-9-2020-q2-update/bin/arm-none-eabi-gcc",
-            "cStandard": "gnu17",
-            "cppStandard": "gnu++14"
-        }
-    ],
-    "version": 4
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/lowjunen/StanfordMSL/TrajBridge-PX4/src/bridge_px4/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
 }

@@ -24,6 +24,7 @@ add_service_files(
   FILES
   ActACMode.srv
   SetSPMode.srv
+  TxTraj.srv
 )
 
 generate_messages(
@@ -49,3 +50,5 @@ target_link_libraries(mocap_gen ${catkin_LIBRARIES})
 
 add_executable(auto_rc src/auto_rc.cpp)
 target_link_libraries(auto_rc ${catkin_LIBRARIES})
+
+catkin_install_python(PROGRAMS src/gcs.py src/controller.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

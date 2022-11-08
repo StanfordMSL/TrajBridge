@@ -93,9 +93,19 @@ bool SetpointPublisher::setSPmode(bridge_px4::SetSPMode::Request& req, bridge_px
 
 bool SetpointPublisher::actACmode(bridge_px4::ActACMode::Request& req, bridge_px4::ActACMode::Response& res) {
     // Change Mode
-    if (req.arm == true) {
-        ac_mode_state = AC_ON;
+    ac_mode_state = static_cast<ac_mode_state_machine>(req.state);
+    if (ac_mode_state == AC_ON) {
+        res.success = true;
+        res.result = req.state;
         ROS_INFO("AC_MODE_STATE: AC_ON");
+    } else if (ac_mode_state == AC_OFF) {
+        res.success = true;
+        res.result = req.state;
+        ROS_INFO("AC_MODE_STATE: AC_OFF");
+    } else if (ac_mode_state == AC_INIT) {
+        res.success = true;
+        res.result = req.state;
+        ROS_INFO("AC_MODE_STATE: AC_INIT");
     } else {
         ac_mode_state = AC_OFF;
         ROS_INFO("Unknown mode requested. AC not activated");
@@ -103,8 +113,6 @@ bool SetpointPublisher::actACmode(bridge_px4::ActACMode::Request& req, bridge_px
     }
 
     // Return checksum for verification (not completed/verified, still TODO)
-    res.success = true;
-    res.result = req.arm;
 
     return true;
 }
@@ -147,23 +155,11 @@ void SetpointPublisher::pub_pos() {
 
 void SetpointPublisher::pub_sp() {
     if (sp_mode_state == SP_POSE) {
-        pose_sp.header.stamp = ros::Time::now();
-        pose_sp.header.seq   = k_main;
-        pose_sp.header.frame_id = "map";
-
         pose_sp_pub.publish(pose_sp);
     } else if (sp_mode_state == SP_BORA) {
-        bora_sp.header.stamp = ros::Time::now();
-        bora_sp.header.seq   = k_main;
-        bora_sp.header.frame_id = "map";
-        // bora_sp.type_mask = bora_tg.IGNORE_ATTITUDE
-        
+        // bora_sp.type_mask = bora_tg.IGNORE_ATTITUDE        
         bora_sp_pub.publish(bora_sp);
-    } else if (sp_mode_state == SP_ATOP) {
-        atop_sp.header.stamp = ros::Time::now();
-        atop_sp.header.seq   = k_main;
-        atop_sp.header.frame_id = "map";
-        
+    } else if (sp_mode_state == SP_ATOP) {        
         atop_sp_pub.publish(atop_sp);
     } else {
         ROS_INFO("[SP PUB] SP Mode not recognized. Aborting trajectory");
@@ -262,22 +258,22 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     float t_now = ros::Time::now().toSec();
     
     // Get time since last setpoint and mocap data
-    float spi_dt = 999.0;
-    if (sp_mode_state == SP_POSE) {
+    float spi_dt = 0.0;
+    if ((sp_mode_state == SP_POSE) && (pose_sp.header.seq > 1)) {
         spi_dt = t_now-pose_sp.header.stamp.toSec();
-    } else if (sp_mode_state == SP_BORA) {
+    } else if ((sp_mode_state == SP_BORA) && (bora_sp.header.seq > 1)) {
         spi_dt = t_now-bora_sp.header.stamp.toSec();
-    } else if (sp_mode_state == SP_ATOP) {
+    } else if ((sp_mode_state == SP_ATOP) && (atop_sp.header.seq > 1)) {
         spi_dt = t_now-atop_sp.header.stamp.toSec();
-    } else {
-        ROS_INFO("SP Mode not recognized. Aborting trajectory");
-        ac_mode_state = AC_OFF;
     }
     float mci_dt = t_now-pose_cr.header.stamp.toSec();
 
     // Setpoint Time Failsafe
     if (spi_dt > spi_dt_max) {
         if (ac_mode_state == AC_ON) {
+            pose_sp.header.seq = 0;
+            bora_sp.header.seq = 0;
+            atop_sp.header.seq = 0;
             ROS_INFO("Setpoint Stream Stopped");
         }
         ac_mode_state = AC_OFF;
@@ -296,9 +292,9 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     // Map Limit Failsafe
     if (pose_cr.pose.position.x < map_lim(0,0) ||
         pose_cr.pose.position.x > map_lim(0,1) ||
-        pose_cr.pose.position.y > map_lim(1,0) ||
+        pose_cr.pose.position.y < map_lim(1,0) ||
         pose_cr.pose.position.y > map_lim(1,1) ||
-        pose_cr.pose.position.z > map_lim(2,0) ||
+        pose_cr.pose.position.z < map_lim(2,0) ||
         pose_cr.pose.position.z > map_lim(2,1)) {
         if (ac_mode_state == AC_ON) {
             ROS_INFO("Drone Out of Bounds");

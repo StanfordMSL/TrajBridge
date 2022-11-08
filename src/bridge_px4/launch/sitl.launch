@@ -23,6 +23,10 @@
       <param name="z_max" value="2.7"/>
    </node>
 
+   <!-- Initialize the Onboard Controller -->
+   <node pkg="bridge_px4" type="controller.py" name ="controller" output="screen">
+   </node>
+
    <!-- Initialize the mavros bridge over serial -->
 	<include file="$(find mavros)/launch/node.launch">
 	   <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
