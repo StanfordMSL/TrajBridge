@@ -1,0 +1,5 @@
+# Set Autonomous Control Service
+
+uint8 state
+---
+bool success

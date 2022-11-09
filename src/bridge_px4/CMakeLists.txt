@@ -22,10 +22,11 @@ add_message_files(
 
 add_service_files(
   FILES
-  ActACMode.srv
-  SetSPMode.srv
-  TxTraj.srv
+  TrigAC.srv
+  SendTX.srv
 )
+
+catkin_python_setup()
 
 generate_messages(
   DEPENDENCIES

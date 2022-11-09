@@ -12,8 +12,7 @@
 #define __SETPOINT_PUBLISHER_NODE_H__
 
 #include "ros/ros.h"
-#include "bridge_px4/SetSPMode.h"
-#include "bridge_px4/ActACMode.h"
+#include "bridge_px4/TrigAC.h"
 
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -42,9 +41,7 @@ public:
    SetpointPublisher();
    virtual ~SetpointPublisher();
 
-   bool setSPmode(bridge_px4::SetSPMode::Request& req, bridge_px4::SetSPMode::Response& res);
-   bool actACmode(bridge_px4::ActACMode::Request& req, bridge_px4::ActACMode::Response& res);
-
+   bool trigAC_cb(bridge_px4::TrigAC::Request& req, bridge_px4::TrigAC::Response& res);
 protected:
   ros::NodeHandle nh;
 private:
@@ -105,11 +102,10 @@ private:
    ros::Timer checkupLoop;                         // savepoint update timer
 
    // ROS Services
-   ros::ServiceServer ac_mode_service;             // AC Mode Service
-   ros::ServiceServer sp_mode_service;             // SP Mode Service
+   ros::ServiceServer trigAC_srv;               // AC Mode Service
 
    // ROS Clients
-   ros::ServiceClient land_client;                 // Landing client
+   ros::ServiceClient landDr_clt;                 // Landing client
 
    // Variables
    geometry_msgs::PoseStamped   pose_sp;            // Pose (setpoint)

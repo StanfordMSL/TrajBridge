@@ -1,6 +1,0 @@
-# Setpoint Mode Change Service
-
-string mode
----
-bool success
-string result

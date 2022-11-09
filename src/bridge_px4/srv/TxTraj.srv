@@ -1,7 +1,0 @@
-# Transmit Trajectory Service
-
-float64 dt
-float64[] xr
-float64 check
----
-bool success

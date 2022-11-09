@@ -15,7 +15,7 @@ SetpointPublisher::SetpointPublisher()
     ros::param::get("~z_min",map_lim(2,0));
     ros::param::get("~z_max",map_lim(2,1));
     
-    ROS_INFO("Node Parameters Loaded");
+    ROS_INFO("[SP PUB] Node Parameters Loaded");
 
     // ROS Subscribers
     pose_sp_sub = nh.subscribe("setpoint/pose",1,&SetpointPublisher::pose_sp_cb,this);
@@ -35,23 +35,22 @@ SetpointPublisher::SetpointPublisher()
     checkupLoop  = nh.createTimer(ros::Duration(1.0/cup_hz),&SetpointPublisher::checkup_cb, this);
 
     // ROS Services
-    ac_mode_service = nh.advertiseService("act_ac_mode",&SetpointPublisher::actACmode,this);
-    sp_mode_service = nh.advertiseService("set_sp_mode",&SetpointPublisher::setSPmode,this);
+    trigAC_srv = nh.advertiseService("trigAC",&SetpointPublisher::trigAC_cb,this);
 
     // ROS Clients
-    land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
+    landDr_clt = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
 
-    ROS_INFO("ROS Components Initialized");
+    ROS_INFO("[SP PUB] ROS Components Initialized");
 
     // Initialize State Machine
     sp_pub_state    = INIT;
     mc_stream_state = MC_INIT;
     ob_mode_state   = OB_INIT;
     ac_mode_state   = AC_INIT;
-    sp_mode_state  = SP_POSE;
+    sp_mode_state   = SP_POSE;
 
-    ROS_INFO("State Machines Initialized");
-    ROS_INFO("SP_MODE_STATE: SP_NONE");
+    ROS_INFO("[SP PUB] State Machines Initialized");
+    ROS_INFO("[SP PUB] SP_MODE_STATE: SP_POSE");
 
     // Initialize some useful variables
     q_fw.w=1.0, q_fw.x=0.0, q_fw.y=0.0, q_fw.z=0.0;
@@ -60,59 +59,31 @@ SetpointPublisher::SetpointPublisher()
     spi_dt_max = 1/spi_hz_min;
     mci_dt_max = 1/mci_hz_min;
 
-    ROS_INFO("Node Fully Initialized.");
+    ROS_INFO("[SP PUB] Node Fully Initialized.");
 }
 
 SetpointPublisher::~SetpointPublisher() {
-  ROS_WARN("Terminating Publisher");
+    ROS_WARN("[SP PUB] Terminating Publisher");
 }
 
-bool SetpointPublisher::setSPmode(bridge_px4::SetSPMode::Request& req, bridge_px4::SetSPMode::Response& res) {
-    // Change Mode
-    if (req.mode == "SP_POSE") {
-        sp_mode_state = SP_POSE;
-        ROS_INFO("SP_MODE_STATE: SP_POSE");
-    } else if (req.mode == "SP_BORA") {
-        sp_mode_state = SP_BORA;
-        ROS_INFO("SP_MODE_STATE: SP_BORA");
-    } else if (req.mode == "SP_ATOP") {
-        sp_mode_state = SP_ATOP;
-        ROS_INFO("SP_MODE_STATE: SP_ATOP");
-    } else {
-        sp_mode_state = SP_POSE;
-        ROS_INFO("Unknown mode requested. Reverting to SP_POTW");
-        ROS_INFO("SP_MODE_STATE: SP_POSE");
-    }
-
-    // Return checksum for verification (not completed/verified, still TODO)
-    res.success = true;
-    res.result = req.mode;
-
-    return true;
-}
-
-bool SetpointPublisher::actACmode(bridge_px4::ActACMode::Request& req, bridge_px4::ActACMode::Response& res) {
+bool SetpointPublisher::trigAC_cb(bridge_px4::TrigAC::Request& req, bridge_px4::TrigAC::Response& res) {
     // Change Mode
     ac_mode_state = static_cast<ac_mode_state_machine>(req.state);
     if (ac_mode_state == AC_ON) {
         res.success = true;
-        res.result = req.state;
-        ROS_INFO("AC_MODE_STATE: AC_ON");
+        ROS_INFO("[SP PUB] AC_MODE_STATE: AC_ON");
     } else if (ac_mode_state == AC_OFF) {
-        res.success = true;
-        res.result = req.state;
-        ROS_INFO("AC_MODE_STATE: AC_OFF");
+        res.success = false;
+        ROS_INFO("[SP PUB] AC_MODE_STATE: AC_OFF");
     } else if (ac_mode_state == AC_INIT) {
-        res.success = true;
-        res.result = req.state;
-        ROS_INFO("AC_MODE_STATE: AC_INIT");
+        res.success = false;
+        ROS_INFO("[SP PUB] AC_MODE_STATE: AC_INIT");
     } else {
+        res.success = false;
         ac_mode_state = AC_OFF;
-        ROS_INFO("Unknown mode requested. AC not activated");
-        ROS_INFO("AC_MODE_STATE: AC_OFF");
+        ROS_INFO("[SP PUB] Unknown mode requested. AC not activated");
+        ROS_INFO("[SP PUB] AC_MODE_STATE: AC_OFF");
     }
-
-    // Return checksum for verification (not completed/verified, still TODO)
 
     return true;
 }
@@ -157,7 +128,6 @@ void SetpointPublisher::pub_sp() {
     if (sp_mode_state == SP_POSE) {
         pose_sp_pub.publish(pose_sp);
     } else if (sp_mode_state == SP_BORA) {
-        // bora_sp.type_mask = bora_tg.IGNORE_ATTITUDE        
         bora_sp_pub.publish(bora_sp);
     } else if (sp_mode_state == SP_ATOP) {        
         atop_sp_pub.publish(atop_sp);
@@ -255,34 +225,47 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event) {
 }
 
 void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
-    float t_now = ros::Time::now().toSec();
+    double tk = ros::Time::now().toSec();
     
-    // Get time since last setpoint and mocap data
-    float spi_dt = 0.0;
-    if ((sp_mode_state == SP_POSE) && (pose_sp.header.seq > 1)) {
-        spi_dt = t_now-pose_sp.header.stamp.toSec();
-    } else if ((sp_mode_state == SP_BORA) && (bora_sp.header.seq > 1)) {
-        spi_dt = t_now-bora_sp.header.stamp.toSec();
-    } else if ((sp_mode_state == SP_ATOP) && (atop_sp.header.seq > 1)) {
-        spi_dt = t_now-atop_sp.header.stamp.toSec();
-    }
-    float mci_dt = t_now-pose_cr.header.stamp.toSec();
-
-    // Setpoint Time Failsafe
-    if (spi_dt > spi_dt_max) {
-        if (ac_mode_state == AC_ON) {
-            pose_sp.header.seq = 0;
-            bora_sp.header.seq = 0;
-            atop_sp.header.seq = 0;
-            ROS_INFO("Setpoint Stream Stopped");
+    // Get time since last setpoint input (only when active)
+    double Tsp[] = {pose_sp.header.stamp.toSec(),bora_sp.header.stamp.toSec(),atop_sp.header.stamp.toSec()};
+    
+    double spi_dt = 0.0;
+    if (sp_pub_state == ACTIVE) {
+        double tmax = 0.0;
+        int idx = -1;
+        for (int i=0;i<3;i++){
+            if (Tsp[i] > tmax) {
+                tmax = Tsp[i];
+                idx  = i;
+            }
         }
-        ac_mode_state = AC_OFF;
+        spi_dt = tk-tmax;
+        sp_mode_state = static_cast<sp_mode_state_machine>(idx);
+        // cout << spi_dt << endl;
+    } else {
+        spi_dt = 0.0;
     }
+
+    // Get time since last mocap input
+    double mci_dt = tk-pose_cr.header.stamp.toSec();
+
+    // // Setpoint Time Failsafe
+    // if (spi_dt > spi_dt_max) {
+    //     cout << tk << "|" << tk-spi_dt << endl;
+    //     if (ac_mode_state == AC_ON) {
+    //         pose_sp.header.seq = 0;
+    //         bora_sp.header.seq = 0;
+    //         atop_sp.header.seq = 0;
+    //         ROS_INFO("[SP PUB] Setpoint Stream Stopped");
+    //     }
+    //     ac_mode_state = AC_OFF;
+    // }
 
     // Mocap Time Failsafe
     if (mci_dt > mci_dt_max) {
         if (mc_stream_state == MC_ON) {
-            ROS_INFO("MoCap Stream Stopped");
+            ROS_INFO("[SP PUB] MoCap Stream Stopped");
         }
         mc_stream_state = MC_OFF;
     } else {
@@ -306,7 +289,7 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 
 void SetpointPublisher::land() {
     mavros_msgs::CommandTOL srv_land;
-    if (land_client.call(srv_land) && srv_land.response.success)
+    if (landDr_clt.call(srv_land) && srv_land.response.success)
     {
         ROS_INFO("Land Successful");
     } else {

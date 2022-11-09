@@ -1,5 +1,8 @@
 <launch>
       <node pkg="bridge_px4" type="gcs.py" name ="gcs" output="screen">
-            <param name="traj_name" value="line.csv"/>
+            <!-- <param name="traj_name" value="hover.csv"/> -->
+            <!-- <param name="traj_name" value="line.csv"/> -->
+            <param name="traj_name" value="inft.csv"/>
+            <param name="sp_mode" value="SP_ATOP"/>
       </node>
 </launch>

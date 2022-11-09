@@ -12,7 +12,7 @@
    <node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
 	   <param name="spo_hz" value="200.0"/>
       <param name="cup_hz" value="200.0"/>
-      <param name="spi_hz_min" value="10.0"/>
+      <param name="spi_hz_min" value="5.0"/>
       <param name="mci_hz_min" value="5.0"/>
       <param name="sa_z" value="1.0"/>
       <param name="x_min" value="-7.8"/>

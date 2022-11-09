@@ -1,6 +1,0 @@
-# Autonomous Control Activation Service
-
-uint8 state
----
-bool success
-uint8 result
