@@ -6,5 +6,9 @@
     "cmake.sourceDirectory": "${workspaceFolder}/src/bridge_px4",
     "files.associations": {
         "iostream": "cpp"
-    }
+    },
+    "python.analysis.extraPaths": [
+        "/home/lowjunen/StanfordMSL/TrajBridge-PX4/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ]
 }

@@ -3,7 +3,7 @@
    <node pkg="bridge_px4" type="mocap_gen" name ="mocap_gen" output="screen">
    </node>
 
-   <!-- Launch the auto_rc node to mimic direct controller -->
+   Launch the auto_rc node to mimic direct controller
    <node pkg="bridge_px4" type="auto_rc" name ="auto_rc">
    </node>
 
