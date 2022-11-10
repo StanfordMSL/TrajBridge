@@ -95,7 +95,7 @@ class Controller:
         self.xk[0] = msg.pose.position.x
         self.xk[1] = msg.pose.position.y
         self.xk[2] = msg.pose.position.z
-        self.xk[6] = msg.pose.orientation.w
+        self.xk[6] = -msg.pose.orientation.w
         self.xk[7] = msg.pose.orientation.x
         self.xk[8] = msg.pose.orientation.y
         self.xk[9] = msg.pose.orientation.z
@@ -150,7 +150,7 @@ class Controller:
         Nfr = self.Nfr
         
         if self.ct_state == mCT.CT_ON:
-            self.Uhtr = np.hstack((self.uout.reshape((4,1)),self.Uhtr[:,:-1]))
+            self.Uhtr = np.hstack((self.umot.reshape((4,1)),self.Uhtr[:,:-1]))
             
             if kt <= N-Nfr:
                 self.Xhrz = self.Xr[:,kt:kt+Nfr]
@@ -164,7 +164,6 @@ class Controller:
             self.upol[0:13] = self.xk
             self.upol[13:idx1] = self.Uhtr[:,0:self.Nhtr].flatten('F')
             self.upol[idx1:] = self.Xhrz[:,0:self.Nhrz].flatten('F')
-            print(self.upol.shape)
         # print(self.Uhtr[:,0])
 
     def controller(self):
