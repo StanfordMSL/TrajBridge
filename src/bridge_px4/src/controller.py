@@ -41,14 +41,19 @@ class Controller:
         self.ac_flag  = False
 
         # DNN Policies
+        self.Nhtr = 0
+        self.Nhrz = 30
         use_cuda = torch.cuda.is_available()                    
         self.device = torch.device("cuda:0" if use_cuda else "cpu") 
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        address = dir_path+"/dnn/polNN_10htr30hrz_300eps.pth"
+        add_polNN = dir_path+"/dnn/polNN_0htr30hrz_300eps.pth"
+        # add_polNN = dir_path+"/dnn/polNN_10htr30hrz_300eps.pth"
+        add_motNN = dir_path+"/dnn/motNN.pth"
 
-        self.polNN = torch.load(address,map_location=self.device)
+        self.polNN = torch.load(add_polNN,map_location=self.device)
         self.polNN.eval()
-        # motNN = torch.load('policies/motNN.pth')
+        self.motNN = torch.load(add_motNN,map_location=self.device)
+        self.motNN.eval()
 
         # Constants
         self.uhov = np.array([0.3,0.0,0.0,0.0]).reshape((4,1))
@@ -67,9 +72,12 @@ class Controller:
 
         # Actual Trajectory
         self.xk = np.zeros((13))
-        self.uk = np.zeros((4))
         self.Uhtr = np.tile(self.uhov,(1,self.Nfr))
         self.Xhrz = np.zeros((4,self.Nfr))
+        
+        self.upol = np.zeros((13+self.Nhtr*4+self.Nhrz*13))
+        self.umot = np.zeros((4))
+        self.uout = np.zeros((4))
 
         # ROS Variables
         self.pose_cr_sub = rospy.Subscriber("mavros/local_position/pose",PoseStamped,self.pose_cr_cb);
@@ -142,7 +150,7 @@ class Controller:
         Nfr = self.Nfr
         
         if self.ct_state == mCT.CT_ON:
-            self.Uhtr = np.hstack((self.uk.reshape((4,1)),self.Uhtr[:,:-1]))
+            self.Uhtr = np.hstack((self.uout.reshape((4,1)),self.Uhtr[:,:-1]))
             
             if kt <= N-Nfr:
                 self.Xhrz = self.Xr[:,kt:kt+Nfr]
@@ -150,7 +158,13 @@ class Controller:
                 xrk = self.Xr[:,kt:]
                 xrb = np.tile(self.Xr[:,-1].reshape((13,1)),(1,Nfr-N+kt))
                 self.Xhr = np.hstack((xrk,xrb))
-    
+
+            idx1 = 13 + (self.Nhtr*4)
+            
+            self.upol[0:13] = self.xk
+            self.upol[13:idx1] = self.Uhtr[:,0:self.Nhtr].flatten('F')
+            self.upol[idx1:] = self.Xhrz[:,0:self.Nhrz].flatten('F')
+            print(self.upol.shape)
         # print(self.Uhtr[:,0])
 
     def controller(self):
@@ -205,15 +219,18 @@ class Controller:
         # self.atop_sp.header.frame_id = "map"
         # self.atop_sp.group_mix = self.atop_sp.PX4_MIX_FLIGHT_CONTROL
 
-        x_tsr = np.concatenate((self.xk,self.Uhtr[:,0:10].flatten('F'),self.Xhrz[:,0:30].flatten('F')))
-        print(x_tsr.shape)
-        x_tsr = torch.from_numpy(x_tsr).float()
+        upol = torch.from_numpy(self.upol).float()
         if self.device == torch.device("cuda:0"):
-            x_tsr = x_tsr.cuda()
+            upol = upol.cuda()
+        self.umot = self.polNN(upol).cpu().detach().numpy()
 
-        uk = self.polNN(x_tsr).cpu().detach().numpy()
-        self.uk = np.array(uk)
-        print(self.uk)
+        umot = torch.from_numpy(self.umot).float()
+        if self.device == torch.device("cuda:0"):
+            umot = umot.cuda()
+        self.uout = self.motNN(umot).cpu().detach().numpy()
+
+        print(self.uout)
+
         self.pose_sp.header.stamp = rospy.Time.now()
         self.pose_sp.header.seq = self.ks
         self.pose_sp.header.frame_id = "map"

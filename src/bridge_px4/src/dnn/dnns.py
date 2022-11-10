@@ -13,6 +13,7 @@ class PolNN(torch.nn.Module):
         no  = nu                                # Total output size
 
         self.base_sp = "polNN"                  # base savepath
+
         # Initialize NN Variables
         super(PolNN, self).__init__()           # Init parent call
         self.Nhtr = Nhtr                        # History count
@@ -64,6 +65,31 @@ class AffNN(torch.nn.Module):
         x = self.layer3(F.relu(x))
         u = self.output_layer(x)
         return u
+
+class MotNN(torch.nn.Module):
+    def __init__(self):
+        # Constants
+        nhl = 100                               # number of hidden layers
+        ni  = 4                                 # Total input size
+        no  = 4                                 # Total output size
+
+        # Initialize NN Variables
+        super(MotNN, self).__init__()          # Init parent call
+        
+        # Initialize NN Structure
+        self.linear = torch.nn.Linear(ni,nhl)
+        self.layer1 = torch.nn.Linear(nhl,nhl)
+        self.layer2 = torch.nn.Linear(nhl,nhl)
+        self.layer3 = torch.nn.Linear(nhl,nhl)
+        self.output_layer = torch.nn.Linear(nhl,no)
+
+    def forward(self,x):
+        x = self.linear(x)
+        x = self.layer1(F.relu(x))
+        x = self.layer2(F.relu(x))
+        x = self.layer3(F.relu(x))
+        u = self.output_layer(x)
+        return u        
 
 class NNGym():
     def __init__(self,device,gym,Nhtr,Nhrz,pid):
