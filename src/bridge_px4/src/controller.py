@@ -41,22 +41,19 @@ class Controller:
         self.ac_flag  = False
 
         # DNN Policies
-        self.Nhtr = 0
+        self.Nhtr = 5
         self.Nhrz = 30
-        use_cuda = torch.cuda.is_available()                    
+        # use_cuda = torch.cuda.is_available()
+        use_cuda = False                    
         self.device = torch.device("cuda:0" if use_cuda else "cpu") 
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        add_polNN = dir_path+"/dnn/polNN_0htr30hrz_300eps.pth"
-        # add_polNN = dir_path+"/dnn/polNN_10htr30hrz_300eps.pth"
-        add_motNN = dir_path+"/dnn/motNN.pth"
+        add_polNN = dir_path+"/dnn/polNN_5htr30hrz_p1_1000eps.pth"
 
         self.polNN = torch.load(add_polNN,map_location=self.device)
         self.polNN.eval()
-        self.motNN = torch.load(add_motNN,map_location=self.device)
-        self.motNN.eval()
 
         # Constants
-        self.uhov = np.array([0.3,0.0,0.0,0.0]).reshape((4,1))
+        self.uhov = np.array([0.5,0.0,0.0,0.0]).reshape((4,1))
         self.Nfr = 30
 
         # SP Variables
@@ -68,6 +65,8 @@ class Controller:
         self.dt = 0.0
         self.Tr = np.zeros((1,self.Nfr))
         self.Xr = np.zeros((13,self.Nfr))
+        self.Ur = np.zeros((4,self.Nfr))
+
         self.N = self.Nfr
 
         # Actual Trajectory
@@ -75,8 +74,9 @@ class Controller:
         self.Uhtr = np.tile(self.uhov,(1,self.Nfr))
         self.Xhrz = np.zeros((4,self.Nfr))
         
-        self.upol = np.zeros((13+self.Nhtr*4+self.Nhrz*13))
-        self.umot = np.zeros((4))
+        Nupol = 13+self.Nhtr*4+self.Nhrz*13
+        self.upol = torch.zeros([Nupol],dtype=torch.float32)
+        self.umot = self.polNN(self.upol).cpu().detach().numpy()
         self.uout = np.zeros((4))
 
         # ROS Variables
@@ -88,17 +88,37 @@ class Controller:
         self.bora_pub = rospy.Publisher("setpoint/bora", AttitudeTarget, queue_size=1)
         self.atop_pub = rospy.Publisher("setpoint/atop", ActuatorControl, queue_size=1)
 
-        self.sendTX_srv = rospy.Service("sendTX",SendTX,self.sendTX_cb)
+        self.sendXU_srv = rospy.Service("sendXU",SendXU,self.sendXU_cb)
         self.trigAC_clt = rospy.ServiceProxy("trigAC",TrigAC)
+
+        # PX4 Secret Sauce
+        sqnorm = lambda x: np.inner(x,x)        
+        ct,km = 6.5,0.05
+        lx,ly = 0.15,0.15
+
+        G = np.array([  [-ly*ct, ly*ct, ly*ct,-ly*ct],
+                        [-lx*ct, lx*ct,-lx*ct, lx*ct],
+                        [ km*ct, km*ct,-km*ct,-km*ct],
+                        [    ct,    ct,    ct,    ct]])
+        E = np.linalg.pinv(G)
+        C = np.zeros((4,4))
+        C[0,0] = np.sqrt(sqnorm(E[:,0])/2)
+        C[1,1] = np.sqrt(sqnorm(E[:,1])/2)
+        C[2,2] = np.max(E[:,2])
+        C[3,3] = sum(abs(E[:,3]))/4
+
+        a = 0.7
+
+        self.a,self.G,self.C = a,G,C
 
     def pose_cr_cb(self,msg):
         self.xk[0] = msg.pose.position.x
         self.xk[1] = msg.pose.position.y
         self.xk[2] = msg.pose.position.z
         self.xk[6] = -msg.pose.orientation.w
-        self.xk[7] = msg.pose.orientation.x
-        self.xk[8] = msg.pose.orientation.y
-        self.xk[9] = msg.pose.orientation.z
+        self.xk[7] = -msg.pose.orientation.x
+        self.xk[8] = -msg.pose.orientation.y
+        self.xk[9] = -msg.pose.orientation.z
 
     def vel_cr_cb(self,msg):
         self.xk[3] = msg.twist.linear.x
@@ -108,21 +128,24 @@ class Controller:
         self.xk[11] = msg.twist.angular.y
         self.xk[12] = msg.twist.angular.z
 
-    def sendTX_cb(self,req):
+    def sendXU_cb(self,req):
         Xr = np.array(req.xr).reshape((13,-1),order='F')
-        check = sum(sum(Xr))
+        Ur = np.array(req.ur).reshape((4,-1),order='F')
+        check = sum(sum(Xr))+sum(sum(Ur))
 
-        res = TxTrajResponse()
+        res = SendXUResponse()
         if check == req.check:
             self.sp_mode = mSP(req.sp_mode)
             self.dt = req.dt
             self.Xr = Xr
+            self.Ur = Ur
             res = True
 
             self.N = Xr.shape[1]
             self.ct_state = mCT.CT_TAXI
             self.kt = 0
             self.ks = 0
+            self.Uhtr = np.tile(self.uhov,(1,self.Nfr))
         else:
             res = False
 
@@ -139,7 +162,7 @@ class Controller:
             if self.ac_flag == False:
                 self.ac_flag = self.trigAC_clt(mAC['AC_ON'].value).success
             elif np.linalg.norm(self.Xr[0:6,0]-self.xk[0:6]) < 0.1:
-                self.Tr = np.arange(0,self.N)*self.dt+rospy.Time.now().to_sec()
+                self.Tr = np.arange(0,self.N+1)*self.dt+rospy.Time.now().to_sec()
                 self.ct_state = mCT.CT_ON
         elif self.ct_state == mCT.CT_ON:
             self.controller()
@@ -157,13 +180,13 @@ class Controller:
             else:
                 xrk = self.Xr[:,kt:]
                 xrb = np.tile(self.Xr[:,-1].reshape((13,1)),(1,Nfr-N+kt))
-                self.Xhr = np.hstack((xrk,xrb))
+                self.Xhrz = np.hstack((xrk,xrb))
 
             idx1 = 13 + (self.Nhtr*4)
             
-            self.upol[0:13] = self.xk
-            self.upol[13:idx1] = self.Uhtr[:,0:self.Nhtr].flatten('F')
-            self.upol[idx1:] = self.Xhrz[:,0:self.Nhrz].flatten('F')
+            self.upol[0:13] = torch.from_numpy(self.xk)
+            self.upol[13:idx1] = torch.from_numpy(self.Uhtr[:,0:self.Nhtr].flatten('F'))
+            self.upol[idx1:] = torch.from_numpy(self.Xhrz[:,0:self.Nhrz].flatten('F'))
         # print(self.Uhtr[:,0])
 
     def controller(self):
@@ -213,46 +236,43 @@ class Controller:
         self.ks += 1
 
     def atop_con(self):
-        # self.atop_sp.header.stamp = rospy.Time.now()
-        # self.atop_sp.header.seq = self.ks
-        # self.atop_sp.header.frame_id = "map"
-        # self.atop_sp.group_mix = self.atop_sp.PX4_MIX_FLIGHT_CONTROL
+        # umo = self.Ur[:,self.kt]
+        self.umot = self.polNN(self.upol).cpu().detach().numpy()
 
-        upol = torch.from_numpy(self.upol).float()
-        if self.device == torch.device("cuda:0"):
-            upol = upol.cuda()
-        self.umot = self.polNN(upol).cpu().detach().numpy()
+        uact = (self.a)*(self.umot**2)+(1-self.a)*self.umot 
+        uact  = self.C@self.G@uact
 
-        umot = torch.from_numpy(self.umot).float()
-        if self.device == torch.device("cuda:0"):
-            umot = umot.cuda()
-        self.uout = self.motNN(umot).cpu().detach().numpy()
+        tk = rospy.Time.now().to_sec()
+        print(tk,uact)
 
-        print(self.uout)
+        # self.pose_sp.header.stamp = rospy.Time.now()
+        # self.pose_sp.header.seq = self.ks
+        # self.pose_sp.header.frame_id = "map"
 
-        self.pose_sp.header.stamp = rospy.Time.now()
-        self.pose_sp.header.seq = self.ks
-        self.pose_sp.header.frame_id = "map"
+        # X = self.Xhrz[:,0]
+        # self.pose_sp.pose.position.x = X[0]
+        # self.pose_sp.pose.position.y = X[1]
+        # self.pose_sp.pose.position.z = X[2]
+        # self.pose_sp.pose.orientation.w = X[6]
+        # self.pose_sp.pose.orientation.x = X[7]
+        # self.pose_sp.pose.orientation.y = X[8]
+        # self.pose_sp.pose.orientation.z = X[9]
 
-        X = self.Xhrz[:,0]
-        self.pose_sp.pose.position.x = X[0]
-        self.pose_sp.pose.position.y = X[1]
-        self.pose_sp.pose.position.z = X[2]
-        self.pose_sp.pose.orientation.w = X[6]
-        self.pose_sp.pose.orientation.x = X[7]
-        self.pose_sp.pose.orientation.y = X[8]
-        self.pose_sp.pose.orientation.z = X[9]
-
-        self.pose_pub.publish(self.pose_sp)
-        self.ks += 1
-                
-        # self.atop_sp.controls[0] = self.uk[0]
-        # self.atop_sp.controls[1] = self.uk[1]
-        # self.atop_sp.controls[2] = self.uk[2]
-        # self.atop_sp.controls[3] = self.uk[3]
-
-        # self.bora_pub.publish(self.bora_sp)
+        # self.pose_pub.publish(self.pose_sp)
         # self.ks += 1
+
+        self.atop_sp.header.stamp = rospy.Time.now()
+        self.atop_sp.header.seq = self.ks
+        self.atop_sp.header.frame_id = "map"
+        self.atop_sp.group_mix = self.atop_sp.PX4_MIX_FLIGHT_CONTROL
+
+        self.atop_sp.controls[0] = 0.1*uact[0]
+        self.atop_sp.controls[1] = 0.1*uact[1]
+        self.atop_sp.controls[2] = 0.1*uact[2]
+        self.atop_sp.controls[3] = uact[3]
+
+        self.atop_pub.publish(self.atop_sp)
+        self.ks += 1
 
 if __name__ == '__main__':
     rospy.init_node('controller_node')

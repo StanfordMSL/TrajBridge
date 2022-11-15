@@ -23,7 +23,7 @@ add_message_files(
 add_service_files(
   FILES
   TrigAC.srv
-  SendTX.srv
+  SendXU.srv
 )
 
 catkin_python_setup()

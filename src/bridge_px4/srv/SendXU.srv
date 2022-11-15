@@ -1,10 +1,11 @@
-# Send TX (time+state trajectory) Service
+# Send XU (state+input trajectory) Service
 uint8 sp_mode
 uint8 SP_POSE = 0
 uint8 SP_BORA = 1
 uint8 SP_ATOP = 2
 float64 dt
 float64[] xr
+float64[] ur
 float64 check
 ---
 bool success

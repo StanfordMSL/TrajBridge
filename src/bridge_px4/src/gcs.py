@@ -21,11 +21,11 @@ class GCS:
 
         # Trajectory Variables
         self.sp_mode = sp_mode
-        self.X,self.dt = self.traj_load(traj_name)
-        self.check = sum(sum(self.X))
+        self.X,self.U,self.dt = self.traj_load(traj_name)
+        self.check = sum(sum(self.X))+sum(sum(self.U))
 
         # ROS Variables
-        self.txtraj = rospy.ServiceProxy("drone1/sendTX",SendTX)
+        self.sendXU_clt = rospy.ServiceProxy("drone1/sendXU",SendXU)
 
         # Send Trajectory
         res = self.traj_send()
@@ -38,19 +38,20 @@ class GCS:
         data = np.genfromtxt(address,delimiter=',')
         
         # Extract Data
-        X = data[1:,1:]
-        dt = data[0,2]
-        
-        return X,dt
+        X = data[1:14,1:]
+        U = data[14:18,1:]
+        dt = data[0,2]-data[0,1]
+
+        return X,U,dt
     
     def traj_send(self):
-        req = SendTXRequest()
+        req = SendXURequest()
 
         req.sp_mode = mSP[self.sp_mode].value
-        req.xr,req.dt = list(self.X.flatten('F')),self.dt       
+        req.xr,req.ur,req.dt = list(self.X.flatten('F')),list(self.U.flatten('F')),self.dt       
         req.check = self.check
 
-        return self.txtraj(req)
+        return self.sendXU_clt(req)
 
 if __name__ == '__main__':
     rospy.init_node('gcs_node',disable_signals=True)
