@@ -176,6 +176,9 @@ add_dependencies(hr_control ${${PROJECT_NAME}_EXPORTED_TARGETS})
 add_executable(mocap_vel src/mocap_vel.cpp)
 target_link_libraries(mocap_vel ${catkin_LIBRARIES})
 
+add_executable(mocap_gps src/mocap_gps.cpp)
+target_link_libraries(mocap_gps ${catkin_LIBRARIES})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
