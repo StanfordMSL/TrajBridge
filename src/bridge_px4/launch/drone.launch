@@ -11,6 +11,7 @@
       <param name="checkup_hz_min" value="5.0"/>
       <param name="dt_fs" value="3.0"/>
       <param name="dt_rs" value="1.0"/>
+      <param name="hov_z" value="1.0"/>
 	</node>
 
    <!-- Initialize the High Rate Controller -->
