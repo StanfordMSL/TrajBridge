@@ -3,7 +3,7 @@
 SetpointPublisher::SetpointPublisher()
 {
     ros::param::get("~sp_out_hz", sp_out_hz);
-    ros::param::get("~checkup_hz", checkup_hz);`
+    ros::param::get("~checkup_hz", checkup_hz);
     ros::param::get("~pos_hz_min", pos_hz_min);
     ros::param::get("~vel_hz_min", vel_hz_min);
     ros::param::get("~att_hz_min", att_hz_min);

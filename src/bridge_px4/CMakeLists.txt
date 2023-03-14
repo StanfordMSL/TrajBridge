@@ -129,10 +129,6 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/bridge-px4.cpp
 # )
-## Declare a C++ library
-add_library(libpid
-  src/pid.cpp
-)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -144,40 +140,20 @@ add_library(libpid
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/bridge_px4_node.cpp)
 
-add_executable(setpoint_publisher src/setpoint_publisher.cpp)
-target_link_libraries(setpoint_publisher ${catkin_LIBRARIES})
-# add_dependencies(setpoint_publisher bridge_px4_gencpp)
+add_executable(auto_rc src/auto_rc.cpp)
+target_link_libraries(auto_rc ${catkin_LIBRARIES})
 
 add_executable(GCS src/GCS.cpp)
 target_link_libraries(GCS ${catkin_LIBRARIES})
-# add_dependencies(GCS bridge_px4_gencpp)
-
-add_executable(GCSVel src/GCSVel.cpp)
-target_link_libraries(GCSVel ${catkin_LIBRARIES})
-# add_dependencies(GCSVel bridge_px4_gencpp)
-
-add_executable(GCSVelTraj src/GCSVelTraj.cpp)
-target_link_libraries(GCSVelTraj ${catkin_LIBRARIES})
-# add_dependencies(GCSVelTraj bridge_px4_gencpp)
-
-add_executable(controller src/velocity_controller.cpp)
-target_link_libraries(controller libpid ${catkin_LIBRARIES})
 
 add_executable(mocap_gen src/mocap_gen.cpp)
 target_link_libraries(mocap_gen ${catkin_LIBRARIES})
 
-add_executable(auto_rc src/auto_rc.cpp)
-target_link_libraries(auto_rc ${catkin_LIBRARIES})
-
-add_executable(hr_control src/hr_control.cpp)
-target_link_libraries(hr_control ${catkin_LIBRARIES})
-add_dependencies(hr_control ${${PROJECT_NAME}_EXPORTED_TARGETS})
-
-add_executable(mocap_vel src/mocap_vel.cpp)
-target_link_libraries(mocap_vel ${catkin_LIBRARIES})
-
 add_executable(mocap_gps src/mocap_gps.cpp)
 target_link_libraries(mocap_gps ${catkin_LIBRARIES})
+
+add_executable(setpoint_publisher src/setpoint_publisher.cpp)
+target_link_libraries(setpoint_publisher ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
