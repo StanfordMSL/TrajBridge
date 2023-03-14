@@ -24,8 +24,8 @@ MocapGPS::~MocapGPS()
 void MocapGPS::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     pose_curr_out = *msg;
 
-    pose_curr_out.pose.position.x += x_init;
-    pose_curr_out.pose.position.y += y_init;
+    pose_curr_out.pose.position.x -= x_init;
+    pose_curr_out.pose.position.y -= y_init;
 
     pose_curr_pub.publish(pose_curr_out);
 }
