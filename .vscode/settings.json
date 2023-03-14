@@ -65,7 +65,8 @@
         "cfenv": "cpp",
         "cinttypes": "cpp",
         "typeindex": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "variant": "cpp"
     },
     "python.analysis.extraPaths": [
         "/opt/ros/melodic/lib/python2.7/dist-packages"
@@ -76,5 +77,6 @@
         "vect"
     ],
     "cmake.configureOnOpen": true,
-    "ros.distro": "noetic"
+    "ros.distro": "noetic",
+    "cmake.sourceDirectory": "${workspaceFolder}/src/bridge_px4"
 }

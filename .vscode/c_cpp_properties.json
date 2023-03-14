@@ -15,7 +15,8 @@
             "intelliSenseMode": "gcc-x64",
             "compilerPath": "/opt/gcc-arm-none-eabi-9-2020-q2-update/bin/arm-none-eabi-gcc",
             "cStandard": "gnu17",
-            "cppStandard": "gnu++14"
+            "cppStandard": "gnu++14",
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4
