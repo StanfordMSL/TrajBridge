@@ -13,20 +13,21 @@
 
 #include "ros/ros.h"
 
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Twist.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/Vector3Stamped.h>
+#include <geometry_msgs/QuaternionStamped.h>
 #include <mavros_msgs/Thrust.h>
+
+#include <geometry_msgs/PoseStamped.h>
+
+#include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/AttitudeTarget.h>
-
-#include <geometry_msgs/Quaternion.h>
-
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandTOL.h>
 #include <mavros_msgs/CommandCode.h>
 
 #include <Eigen/Dense>
+#include <cmath>
 
 using namespace Eigen;
 using namespace std;
@@ -40,107 +41,109 @@ protected:
   ros::NodeHandle nh;
 private:
    // State Machines
-   enum sp_pub_state_machine {
+   enum sp_pub_state_machine {                     // Setpoint Publisher (in)
       STARTUP,
       LINKED,
       HOVER,
       ACTIVE,
-      FAILSAFE,
    } sp_pub_state;
 
-   enum mc_stream_state_machine {
-      MC_INIT,
-      MC_ON,
-      MC_OFF,
-   } mc_stream_state;
+   enum ep_stream_state_machine {                  // External Pose Stream (MoCap/GPS)
+      EP_INIT,
+      EP_ON,
+      EP_OFF,
+   } ep_stream_state;
 
-   enum ob_mode_state_machine {
+   enum ob_mode_state_machine {                    // Offboard Mode
       OB_INIT,
       OB_ON,
       OB_OFF,
    } ob_mode_state;
 
-   enum sp_stream_state_machine {
+   enum sp_stream_state_machine {                  // Setpoint Stream (out)
       SP_INIT,
       SP_ON,
       SP_OFF,
    } sp_stream_state;
 
-   enum sp_type_state_machine {
-      TP_NONE,
-      TP_POS,
-      TP_VEL,
-      TP_ATT,
-   } sp_type_state;
+   // Constants
+   geometry_msgs::Quaternion quat_forward;         // Front Facing Attitude
 
-   // Input Params
-   string drone_id;
-   float sp_out_hz;
-   float checkup_hz;
-   float z_fs;
+   // Node Input Params
+   string drone_id;                                // Drone Name
+   float sp_out_hz;                                // Setpoint Output Rate
+   float checkup_hz;                               // Checkup Rate
+   float z_fs;                                     // Failsafe Altitude
+   float r_fs;                                     // Failsafe Ball Radius
 
    // Setpoint Subscribers
-   ros::Subscriber    pos_sp_sub;
-   ros::Subscriber    vel_sp_sub;
-   ros::Subscriber    att_sp_sub;
-   ros::Subscriber    rat_sp_sub;
+   ros::Subscriber    pos_sp_sub;                  // Setpoint (In) Position
+   ros::Subscriber    vel_sp_sub;                  // Setpoint (In) Linear Velocity
+   ros::Subscriber    att_sp_sub;                  // Setpoint (In) Attitude
+   ros::Subscriber    rat_sp_sub;                  // Setpoint (In) Angular Rate
+   ros::Subscriber    thr_sp_sub;                  // Setpoint (In) Throttle
 
    // Setpoint Publishers
-   ros::Publisher     pose_sp_pub;
-   ros::Publisher     vel_sp_pub;
-   ros::Publisher     att_sp_pub;
+   ros::Publisher     posT_sp_pub;                 // Position Target (position, velocity, acceleration)
+   ros::Publisher     attT_sp_pub;                 // Attitude Target (attitude, angular rate, thrust) 
 
    // Drone State/Status Subscribers
-   ros::Subscriber    pose_curr_sub;
-   ros::Subscriber    mav_state_sub;
+   ros::Subscriber    pose_curr_sub;               // Drone's Current Pose 
+   ros::Subscriber    mav_state_sub;               // Drone's Current Flight State (mav state)
 
    // ROS Timers
-   ros::Timer setpointLoop;      // setpoint update timer
-   ros::Timer checkupLoop;       // savepoint update timer
+   ros::Timer setpointLoop;                        // Setpoint update timer
+   ros::Timer checkupLoop;                         // Savepoint update timer
 
    // ROS Services
-   ros::ServiceClient land_client;
+   ros::ServiceClient land_client;                 // Client to Trigger Landing
 
-   // Quad Setpoints
-   geometry_msgs::PoseStamped  pose_sp_in;      // Setpoint Position In
-   geometry_msgs::PoseStamped  pose_sp_out;     // Setpoint Position Out
+   // Quad Setpoints (In)
+   geometry_msgs::PointStamped       pos_sp_in;    // Setpoint (In) Position
+   geometry_msgs::Vector3Stamped     vel_sp_in;    // Setpoint (In) Linear Velocity
+   geometry_msgs::QuaternionStamped  att_sp_in;    // Setpoint (In) Attitude
+   geometry_msgs::Vector3Stamped     rat_sp_in;    // Setpoint (In) Angular Rate
+   mavros_msgs::Thrust               thr_sp_in;    // Setpoint (In) Throttle
 
-   geometry_msgs::TwistStamped vel_sp_in;       // Setpoint Velocity In
-   geometry_msgs::Twist        vel_sp_out;      // Setpoint Velocity Out
-
-   mavros_msgs::AttitudeTarget att_sp_in;       // Setpoint Attitude (body rate, orientation, thrust) In
-   mavros_msgs::AttitudeTarget att_sp_out;      // Setpoint Attitude (body rate, orientation, thrust) Out
+   // Quad Setpoints (Out)
+   mavros_msgs::PositionTarget posT_sp_out;        // Setpoint Attitude (body rate, orientation, thrust) In
+   mavros_msgs::AttitudeTarget attT_sp_out;        // Setpoint Attitude (body rate, orientation, thrust) Out
 
    // Quad Parameters
-   geometry_msgs::PoseStamped  pose_curr;       // Current Pose
-   geometry_msgs::Pose         pose_st;         // Starting Pose
-   geometry_msgs::Pose         pose_sa;         // Savepoint Pose (for failsafes and active hover)
-   mavros_msgs::State          mode_cr;         // Current Mavros Mode
+   geometry_msgs::PoseStamped  pose_curr;          // Current Pose
+   geometry_msgs::Pose         pose_st;            // Starting Pose
+   geometry_msgs::Pose         pose_sa;            // Savepoint Pose (for failsafes and active hover)
+   mavros_msgs::State          mode_cr;            // Current Mavros Mode
+
+   // Counters
+   int k_main;                                     // Main loop counter
 
    // Checkup Variables
-   bool pos_check;
-   bool att_check;
-   bool vel_check;
-   
-   Matrix<double,3,1> dt_max_vect;
+   ros::Duration dt_max;                           // Maximum time without without target setpoints 
+   bool pos_check;                                 // Checker for Setpoint (In) Position Topic
+   bool vel_check;                                 // Checker for Setpoint (In) Attitude Topic
+   bool att_check;                                 // Checker for Setpoint (In) Linear Velocity Topic
+   bool rat_check;                                 // Checker for Setpoint (In) Angular Rate Topic
+   bool thr_check;                                 // Checker for Setpoint (In) Throttle Topic
 
-   // Constants
-   geometry_msgs::Quaternion quat_forward;
+   // Input Functions
+   void pos_sp_cb(const geometry_msgs::PointStamped::ConstPtr& msg);           // Update Setpoint Position
+   void vel_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg);         // Update Setpoint Velocity
+   void att_sp_cb(const geometry_msgs::QuaternionStamped::ConstPtr& msg);      // Update Setpoint Attitude
+   void rat_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg);         // Update Setpoint Rate
+   void thr_sp_cb(const mavros_msgs::Thrust::ConstPtr& msg);                     // Update Setpoint Thrust
 
-   // Telemetry Function(s)
-   void pose_sp_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-   void vel_sp_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
-   void att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr& msg);
+   // Node State Functions
+   void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);  // Update Current Position
+   void mav_state_cb(const mavros_msgs::State::ConstPtr& msg);          // Update Current mav state
+   void checkup_cb(const ros::TimerEvent& event);                       // Checkup Loop
 
-   void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-   void mav_state_cb(const mavros_msgs::State::ConstPtr& msg);
+   // Output Functions
+   void setpoint_cb(const ros::TimerEvent& event);                      // State Machine Loop
+   void pub_sp();                                                       // Publish Setpoint
 
-   void setpoint_cb(const ros::TimerEvent& event);
-   void checkup_cb(const ros::TimerEvent& event);
-
-   // Functions
-   void land();
-   void pub_sp();
+   // Service Function
+   void land();                                                         // Landing
 };
 
 #endif

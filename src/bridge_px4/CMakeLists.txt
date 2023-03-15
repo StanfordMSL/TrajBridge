@@ -141,8 +141,8 @@ include_directories(
 add_executable(auto_rc src/auto_rc.cpp)
 target_link_libraries(auto_rc ${catkin_LIBRARIES})
 
-add_executable(GCS src/GCS.cpp)
-target_link_libraries(GCS ${catkin_LIBRARIES})
+add_executable(gcs src/gcs.cpp)
+target_link_libraries(gcs ${catkin_LIBRARIES})
 
 add_executable(mocap_gen src/mocap_gen.cpp)
 target_link_libraries(mocap_gen ${catkin_LIBRARIES})

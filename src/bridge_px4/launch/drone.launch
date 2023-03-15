@@ -6,10 +6,11 @@
 	   <param name="sp_out_hz" value="200.0"/>
       <param name="checkup_hz" value="10.0"/>
       <param name="z_fs" value="2.0"/>
+      <param name="r_fs" value="1.0"/>
 	</node>
 
    <!-- Initialize the mavros bridge over serial -->
-	<include file="$(find mavros)/launch/node.launch">
+	<!-- <include file="$(find mavros)/launch/node.launch">
 	   <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
       <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
 
@@ -20,7 +21,7 @@
       <arg name="log_output" value="screen" />
       <arg name="fcu_protocol" value="v2.0" />
       <arg name="respawn_mavros" default="false" />
-	</include>
+	</include> -->
 
    </group>
 
