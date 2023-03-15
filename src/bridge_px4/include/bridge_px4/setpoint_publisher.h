@@ -77,25 +77,18 @@ private:
    string drone_id;
    float sp_out_hz;
    float checkup_hz;
-   float pos_hz_min;
-   float vel_hz_min;
-   float att_hz_min;
-   float checkup_hz_min;
-   float dt_fs;
-   float dt_rs;
    float z_fs;
 
-   // Position Publishers/Subscribers
-   ros::Publisher     pose_sp_pub;
-   ros::Subscriber    pose_sp_sub;
-
-   // Velocity Publishers/Subscribers
-   ros::Publisher     vel_sp_pub;
+   // Setpoint Subscribers
+   ros::Subscriber    pos_sp_sub;
    ros::Subscriber    vel_sp_sub;
-
-   // Attitude Publishers/Subscribers
-   ros::Publisher     att_sp_pub;
    ros::Subscriber    att_sp_sub;
+   ros::Subscriber    rat_sp_sub;
+
+   // Setpoint Publishers
+   ros::Publisher     pose_sp_pub;
+   ros::Publisher     vel_sp_pub;
+   ros::Publisher     att_sp_pub;
 
    // Drone State/Status Subscribers
    ros::Subscriber    pose_curr_sub;
@@ -124,17 +117,11 @@ private:
    geometry_msgs::Pose         pose_sa;         // Savepoint Pose (for failsafes and active hover)
    mavros_msgs::State          mode_cr;         // Current Mavros Mode
 
-   // Counters and Time Variables
-   int k_main;                  // Main loop counter
-   int k_rs;                    // Restore Counter
-   int n_rs;                    // Total Restore Counter
-   ros::Duration  t_last;
-   ros::Duration  pos_dt_max;
-   ros::Duration  vel_dt_max;
-   ros::Duration  att_dt_max;
-   ros::Duration  dt_max;
-   ros::Duration  checkup_dt_max;
-   ros::Time      t_fs;
+   // Checkup Variables
+   bool pos_check;
+   bool att_check;
+   bool vel_check;
+   
    Matrix<double,3,1> dt_max_vect;
 
    // Constants
@@ -153,12 +140,7 @@ private:
 
    // Functions
    void land();
-
-   void sp_type_assign();
-   void pub_sp_pos();
-   void pub_sp_vel();
-   void pub_sp_att();
-   void pub_sp_active();
+   void pub_sp();
 };
 
 #endif
