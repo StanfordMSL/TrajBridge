@@ -152,6 +152,10 @@ add_executable(GCS src/GCS.cpp)
 target_link_libraries(GCS ${catkin_LIBRARIES})
 # add_dependencies(GCS bridge_px4_gencpp)
 
+add_executable(GCSRogue src/GCSRogue.cpp)
+target_link_libraries(GCSRogue ${catkin_LIBRARIES})
+# add_dependencies(GCSRogue bridge_px4_gencpp)
+
 add_executable(GCSVel src/GCSVel.cpp)
 target_link_libraries(GCSVel ${catkin_LIBRARIES})
 # add_dependencies(GCSVel bridge_px4_gencpp)
