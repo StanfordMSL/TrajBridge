@@ -78,14 +78,10 @@ private:
 
    // Setpoint Subscribers
    ros::Subscriber    pos_sp_sub;                  // Setpoint (In) Position
-   ros::Subscriber    vel_sp_sub;                  // Setpoint (In) Linear Velocity
    ros::Subscriber    att_sp_sub;                  // Setpoint (In) Attitude
-   ros::Subscriber    rat_sp_sub;                  // Setpoint (In) Angular Rate
-   ros::Subscriber    thr_sp_sub;                  // Setpoint (In) Throttle
 
    // Setpoint Publishers
-   ros::Publisher     posT_sp_pub;                 // Position Target (position, velocity, acceleration)
-   ros::Publisher     attT_sp_pub;                 // Attitude Target (attitude, angular rate, thrust) 
+   ros::Publisher     pose_sp_pub;                 // Position Target (position, velocity, acceleration)
 
    // Drone State/Status Subscribers
    ros::Subscriber    pose_curr_sub;               // Drone's Current Pose 
@@ -100,14 +96,10 @@ private:
 
    // Quad Setpoints (In)
    geometry_msgs::PointStamped       pos_sp_in;    // Setpoint (In) Position
-   geometry_msgs::Vector3Stamped     vel_sp_in;    // Setpoint (In) Linear Velocity
    geometry_msgs::QuaternionStamped  att_sp_in;    // Setpoint (In) Attitude
-   geometry_msgs::Vector3Stamped     rat_sp_in;    // Setpoint (In) Angular Rate
-   mavros_msgs::Thrust               thr_sp_in;    // Setpoint (In) Throttle
 
    // Quad Setpoints (Out)
-   mavros_msgs::PositionTarget posT_sp_out;        // Setpoint Attitude (body rate, orientation, thrust) In
-   mavros_msgs::AttitudeTarget attT_sp_out;        // Setpoint Attitude (body rate, orientation, thrust) Out
+   geometry_msgs::PoseStamped pose_sp_out;        // Setpoint Attitude (body rate, orientation, thrust) In
 
    // Quad Parameters
    geometry_msgs::PoseStamped  pose_curr;          // Current Pose
@@ -121,17 +113,11 @@ private:
    // Checkup Variables
    ros::Duration dt_max;                           // Maximum time without without target setpoints 
    bool pos_check;                                 // Checker for Setpoint (In) Position Topic
-   bool vel_check;                                 // Checker for Setpoint (In) Attitude Topic
    bool att_check;                                 // Checker for Setpoint (In) Linear Velocity Topic
-   bool rat_check;                                 // Checker for Setpoint (In) Angular Rate Topic
-   bool thr_check;                                 // Checker for Setpoint (In) Throttle Topic
 
    // Input Functions
    void pos_sp_cb(const geometry_msgs::PointStamped::ConstPtr& msg);           // Update Setpoint Position
-   void vel_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg);         // Update Setpoint Velocity
    void att_sp_cb(const geometry_msgs::QuaternionStamped::ConstPtr& msg);      // Update Setpoint Attitude
-   void rat_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg);         // Update Setpoint Rate
-   void thr_sp_cb(const mavros_msgs::Thrust::ConstPtr& msg);                     // Update Setpoint Thrust
 
    // Node State Functions
    void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);  // Update Current Position

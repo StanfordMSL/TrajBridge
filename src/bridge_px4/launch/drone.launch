@@ -5,8 +5,8 @@
 	<node pkg="bridge_px4" type="setpoint_publisher" name ="setpoint_publisher" output="screen">
 	   <param name="sp_out_hz" value="200.0"/>
       <param name="checkup_hz" value="10.0"/>
-      <param name="z_fs" value="2.0"/>
-      <param name="r_fs" value="1.0"/>
+      <param name="z_fs" value="1.0"/>
+      <param name="r_fs" value="999.0"/>
 	</node>
 
    <!-- Initialize the mavros bridge over serial -->
