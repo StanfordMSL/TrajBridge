@@ -1,4 +1,4 @@
-# #!/usr/bin/env python3
+#!/usr/bin/env python3
 
 import rospy
 from typing import Tuple
@@ -12,13 +12,17 @@ class GCS:
         # Input Params
         drone_id  = rospy.get_param("gcs/drone_id")
         traj_name = rospy.get_param("gcs/traj_name")
+        laps = rospy.get_param("gcs/laps")
 
         # Trajectory Variables
         self.drone_id = drone_id
         self.T,self.X = self.traj_load(traj_name)
         self.dt = self.T[1]-self.T[0]
-        self.k = 0
         self.N = self.T.shape[0]
+        self.laps = laps
+
+        self.k = 0
+        self.lap = 0
 
         # Publishers
         self.pos_pub = rospy.Publisher(drone_id+"/setpoint/position",PointStamped,queue_size=1)
@@ -33,6 +37,7 @@ class GCS:
         # Extract Data
         T = data[0,:]
         X = data[1:14,:]
+        print("Starting at:",X[0:3,0])
 
         return T,X
             
@@ -72,7 +77,12 @@ class GCS:
         self.k += 1
 
         if self.k >= self.N:
-            rospy.signal_shutdown("GCS Send Complete")
+            if self.lap <= self.laps:
+                self.k = 0
+                self.lap += 1
+                print("Completed Lap:",self.lap,"of",self.laps)
+            else:
+                rospy.signal_shutdown("GCS Send Complete")
 
 if __name__ == '__main__':
     rospy.init_node('gcs_node',disable_signals=True)

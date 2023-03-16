@@ -1,9 +1,7 @@
 <launch>
       <node pkg="bridge_px4" type="gcs.py" name ="gcs" output="screen">
             <param name="drone_id" value="drone1"/>
-            <!-- <param name="traj_name" value="line.csv"/> -->
-            <!-- <param name="traj_name" value="slow_md-left.csv"/> -->
-            <param name="traj_name" value="turnsquare.csv"/>
-            <!-- <param name="traj_name" value="md-left.csv"/> -->
+            <param name="traj_name" value="circle.csv"/>
+            <param name="laps" value="3"/>
       </node>
 </launch>
