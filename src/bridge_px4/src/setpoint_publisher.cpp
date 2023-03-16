@@ -254,18 +254,19 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 }
 
 void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
+    // Current Time
     ros::Time t_now = ros::Time::now();
 
-    // TODO: bitwise form would be more elegant
+    // TODO: bitwise form would be more elegant, is ep check still valid?
 
     // Check if Target States are Publishing
-    pos_check = ((t_now - pos_sp_in.header.stamp) < dt_max) ? true : false;
-    vel_check = ((t_now - vel_sp_in.header.stamp) < dt_max) ? true : false;
-    att_check = ((t_now - att_sp_in.header.stamp) < dt_max) ? true : false;
-    rat_check = ((t_now - rat_sp_in.header.stamp) < dt_max) ? true : false;
-    thr_check = ((t_now - thr_sp_in.header.stamp) < dt_max) ? true : false;
-
     if (sp_pub_state == ACTIVE) {
+        pos_check = ((t_now - pos_sp_in.header.stamp) < dt_max) ? true : false;
+        vel_check = ((t_now - vel_sp_in.header.stamp) < dt_max) ? true : false;
+        att_check = ((t_now - att_sp_in.header.stamp) < dt_max) ? true : false;
+        rat_check = ((t_now - rat_sp_in.header.stamp) < dt_max) ? true : false;
+        thr_check = ((t_now - thr_sp_in.header.stamp) < dt_max) ? true : false;
+
         if ((pos_check == true) && (vel_check == true)) {
             posT_sp_out.type_mask = 4032;
         } else if ((pos_check == true) && (vel_check == false)) {
@@ -297,6 +298,13 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
         // AttitudeTarget: none=255,th+rat=128,rat=192,th+att=7,att=71,th+att+rat=0,att+rat=64,th=135
     }
     
+    // Check if Target States are Publishing
+    if ((t_now - pose_curr.header.stamp) < dt_max) {
+        ep_stream_state = EP_ON;
+    } else {
+        ep_stream_state = EP_OFF;
+    }
+
     // Check if Drone is in Safe Ball
     Eigen::Vector3f err_pos;
     err_pos <<  pose_curr.pose.position.x - posT_sp_out.position.x,

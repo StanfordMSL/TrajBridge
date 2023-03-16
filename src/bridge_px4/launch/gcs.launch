@@ -1,5 +1,5 @@
 <launch>
       <node pkg="bridge_px4" type="gcs" name ="gcs" output="screen">
-            <param name="drone_id" value="ASGARD"/>
+            <param name="drone_id" value="drone1"/>
       </node>
 </launch>
