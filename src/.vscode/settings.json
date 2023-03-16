@@ -1,0 +1,4 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/bridge_iroad",
+    "cmake.configureOnOpen": true
+}

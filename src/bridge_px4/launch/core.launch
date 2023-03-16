@@ -2,6 +2,7 @@
   <!-- VRPN Server -->
   <arg name="server" default="mocap.local"/>
 
+
   <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
     <rosparam subst_value="true">
       server: $(arg server)
@@ -14,7 +15,7 @@
     </rosparam>
 
     <!-- Drone1 Remap -->
-    <remap from="/vrpn_client_node/drone1/pose" to="drone1/mavros/vision_pose/pose" />
+    <!-- <remap from="/vrpn_client_node/drone1/pose" to="drone1/mavros/vision_pose/pose" /> -->
 
     <!-- Drone2 Remap -->
     <remap from="/vrpn_client_node/drone2/pose" to="drone2/mavros/vision_pose/pose" />
@@ -42,5 +43,18 @@
 
     <!-- GTarg Remap -->
     <remap from="/vrpn_client_node/gtarg/pose" to="gtarg/mavros/vision_pose/pose" />
+
+    <!-- GTarg Remap -->
+    <remap from="/vrpn_client_node/turtlebot_kh/pose" to="turtlebot_kh/mavros/vision_pose/pose" />
+
+
   </node>
+
+  <!-- Mocap to GPS simulation -->
+	<node pkg="bridge_px4" type="mocap_gps" name ="mocap_gps" output="screen">
+	   <param name="drone_name" value="drone1"/>
+     <param name="x_init" value="0.0"/>
+     <param name="y_init" value="0.0"/>
+	</node>
+  
 </launch>

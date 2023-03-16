@@ -4,74 +4,60 @@ SetpointPublisher::SetpointPublisher()
 {
     ros::param::get("~sp_out_hz", sp_out_hz);
     ros::param::get("~checkup_hz", checkup_hz);
-    ros::param::get("~pos_hz_min", pos_hz_min);
-    ros::param::get("~vel_hz_min", vel_hz_min);
-    ros::param::get("~att_hz_min", att_hz_min);
-    ros::param::get("~checkup_hz_min", checkup_hz_min);
-    ros::param::get("~dt_fs", dt_fs);
-    ros::param::get("~dt_rs",dt_rs);
     ros::param::get("~z_fs",z_fs);
+    ros::param::get("~r_fs",r_fs);
 
     // ROS Initialization
-    pose_sp_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
-    pose_sp_sub = nh.subscribe("setpoint/position",1,&SetpointPublisher::pose_sp_cb,this);
-    vel_sp_pub  = nh.advertise<geometry_msgs::Twist>("mavros/setpoint_velocity/cmd_vel_unstamped",1);
-    vel_sp_sub  = nh.subscribe("setpoint/velocity",1,&SetpointPublisher::vel_sp_cb,this);
-    att_sp_pub  = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude",1);
+    pos_sp_sub  = nh.subscribe("setpoint/position",1,&SetpointPublisher::pos_sp_cb,this);
     att_sp_sub  = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this);
 
-    pose_curr_sub = nh.subscribe("mavros/vision_pose/pose",10,&SetpointPublisher::pose_curr_cb,this);
-    mav_state_sub = nh.subscribe("mavros/state",1,&SetpointPublisher::mav_state_cb,this);
+    pose_sp_pub  = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
 
-    land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
+    pose_curr_sub = nh.subscribe("mavros/local_position/pose",10,&SetpointPublisher::pose_curr_cb,this);
+    mav_state_sub = nh.subscribe("mavros/state",1,&SetpointPublisher::mav_state_cb,this);
 
     setpointLoop = nh.createTimer(ros::Duration(1.0/sp_out_hz),&SetpointPublisher::setpoint_cb, this);
     checkupLoop  = nh.createTimer(ros::Duration(1.0/checkup_hz),&SetpointPublisher::checkup_cb, this);
+
+    land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
 
     ROS_INFO("ROS Components Initialized");
 
     // State Machine Initialization
     sp_pub_state    = STARTUP;
-    mc_stream_state = MC_INIT;
+    ep_stream_state = EP_INIT;
     ob_mode_state   = OB_INIT;
     sp_stream_state = SP_INIT;
-    sp_type_state   = TP_NONE;
     ROS_INFO("State Machines Initialized.");
     ROS_INFO("SP_PUB_STATE: STARTUP");
 
-    // Constants Initialized
-    quat_forward.w = 1;
-    quat_forward.x = 0;
-    quat_forward.y = 0;
-    quat_forward.z = 0;
-
-    n_rs = ceil(dt_rs*sp_out_hz);
+    // Constants and Counters Initialized
+    k_main = 0;
+    dt_max = ros::Duration(1.0/checkup_hz);
+    quat_forward.w = 1.0;
+    quat_forward.x = 0.0;
+    quat_forward.y = 0.0;
+    quat_forward.z = 0.0;
+    pos_check = false;
+    att_check = false;
 
     // Stream Timer Checks
-    pos_dt_max = ros::Duration(1.0/pos_hz_min);
-    vel_dt_max = ros::Duration(1.0/vel_hz_min);
-    att_dt_max = ros::Duration(1.0/att_hz_min);
-    checkup_dt_max  = ros::Duration(1.0/checkup_hz_min);
-    dt_max = pos_dt_max;
-    dt_max_vect(0,0) = pos_dt_max.toSec();
-    dt_max_vect(1,0) = vel_dt_max.toSec();
-    dt_max_vect(2,0) = att_dt_max.toSec();
-
     ROS_INFO("Timers Initialized.");
 }
+
 SetpointPublisher::~SetpointPublisher() {
-  ROS_WARN("Terminating Publisher");
+  ROS_WARN("Terminating SetpointPublisher");
 }
 
-void SetpointPublisher::pose_sp_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
-    pose_sp_in = *msg;
+void SetpointPublisher::pos_sp_cb(const geometry_msgs::PointStamped::ConstPtr& msg){
+    sp_stream_state = SP_ON;
+    pos_check = true;    
+    pos_sp_in = *msg;
 }
 
-void SetpointPublisher::vel_sp_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
-    vel_sp_in = *msg;
-}
-
-void SetpointPublisher::att_sp_cb(const mavros_msgs::AttitudeTarget::ConstPtr& msg){
+void SetpointPublisher::att_sp_cb(const geometry_msgs::QuaternionStamped::ConstPtr& msg){
+    sp_stream_state = SP_ON;
+    att_check = true;
     att_sp_in = *msg;
 }
 
@@ -81,11 +67,10 @@ void SetpointPublisher::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr&
 
 void SetpointPublisher::mav_state_cb(const mavros_msgs::State::ConstPtr& msg){
     mode_cr = *msg;
-
+    
     if (mode_cr.mode == "OFFBOARD") {
         ob_mode_state = OB_ON;
-    } else if ( (mode_cr.mode == "POSCTL") || (mode_cr.mode == "STABILIZED") || (mode_cr.mode == "ALTCTL") )
-    {
+    } else {
         ob_mode_state = OB_OFF;
     }
 
@@ -100,17 +85,18 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         // Do State Tasks
         ROS_DEBUG("STARTUP");
 
-        pose_sp_out.pose = pose_sa;
-        pose_sp_out.pose.position.z = 0.0f;
+        pose_sa = pose_curr.pose;
+        pose_sa.position.z = 0.0f;
 
-        pub_sp_pos();
+        pose_sp_out.pose = pose_sa;
+        pub_sp();
 
         // State Transition
-        if ((mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF))
+        if ((ep_stream_state == EP_ON) && (ob_mode_state == OB_OFF))
         {
             sp_pub_state = LINKED;
             ROS_INFO("SP_PUB_STATE: LINKED");
-        } else if ((mc_stream_state == MC_ON) && (ob_mode_state != OB_OFF))
+        } else if ((ep_stream_state == EP_ON) && (ob_mode_state != OB_OFF))
         {
             ROS_DEBUG("OFFBOARD switch is not off. Blocking state transform from STARTUP to LINKED.");
         } else
@@ -125,27 +111,25 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         // Do State Tasks
         ROS_DEBUG("LINKED");
 
-        pose_sa.position = pose_curr.pose.position;
-        pose_sa.orientation = quat_forward;
+        pose_sa = pose_curr.pose;
+        pose_sa.position.z = 0.0f;
 
         pose_sp_out.pose = pose_sa;
-        pose_sp_out.pose.position.z = 0.0f;
-
-        pub_sp_pos();
+        pub_sp();
 
         // State Transition
-        if (mc_stream_state == MC_OFF)
+        if (ep_stream_state == EP_OFF)
         {
             land();
             sp_pub_state = STARTUP;
             ROS_INFO("SP_PUB_STATE: STARTUP");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
+        } else if ( (ep_stream_state == EP_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
         {
-            pose_sa.position.z = z_fs;
+            pose_st = pose_sa;
 
             sp_pub_state = HOVER;
             ROS_INFO("SP_PUB_STATE: HOVER");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_ON) )
+        } else if ( (ep_stream_state == EP_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_ON) )
         {
             ROS_DEBUG("BOTH OB and SP are ON. Blocking state transform from LINKED to HOVER.");
         } else
@@ -159,21 +143,22 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         // Do State Tasks
         ROS_DEBUG("HOVER");
 
+        pose_sa.position.z = z_fs;
+        
         pose_sp_out.pose = pose_sa;
-
-        pub_sp_pos();
+        pub_sp();
 
         // State Transition
-        if (mc_stream_state == MC_OFF)
+        if (ep_stream_state == EP_OFF)
         {
             land();
             sp_pub_state = STARTUP;
             ROS_INFO("SP_PUB_STATE: STARTUP");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF)  ) {
+        } else if ( (ep_stream_state == EP_ON) && (ob_mode_state == OB_OFF)  ) {
             land();
             sp_pub_state = LINKED;
             ROS_INFO("SP_PUB_STATE: LINKED");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_ON) )
+        } else if ( (ep_stream_state == EP_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_ON) )
         {
             sp_pub_state = ACTIVE;
             ROS_INFO("SP_PUB_STATE: ACTIVE");
@@ -187,33 +172,28 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         // Do State Tasks
         ROS_DEBUG("ACTIVE");
 
-        pub_sp_active();
-
-        //pose_sa.position = pose_curr.pose.position;
-        //pose_sa.orientation = quat_forward;
         pose_sa = pose_curr.pose;
+        
+        pose_sp_out.pose.position = pos_sp_in.point;
+        pose_sp_out.pose.orientation = att_sp_in.quaternion;
+        pub_sp();
 
         // State Transition
-        if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF) ) {
+        if ( (ep_stream_state == EP_ON) && (ob_mode_state == OB_OFF) ) {
             land();
             sp_pub_state = LINKED;
             ROS_INFO("SP_PUB_STATE: LINKED");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
+        } else if ( (ep_stream_state == EP_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
         {
 //            pose_sa.position.z = 1.0;
 
             sp_pub_state = HOVER;
             ROS_INFO("SP_PUB_STATE: HOVER");
-        } else if (mc_stream_state == MC_OFF)
-        {
-            pose_sa.position = pose_curr.pose.position;
-            pose_sa.position.z = pose_sa.position.z-0.2;
+        } else if (ep_stream_state == EP_OFF) {
+            land();
 
-            t_fs = ros::Time::now();
-            k_rs = 0;
-
-            sp_pub_state = FAILSAFE;
-            ROS_INFO("SP_PUB_STATE: FAILSAFE");
+            sp_pub_state = STARTUP;
+            ROS_INFO("SP_PUB_STATE: INIT");
         } else {
             // Stay in State
         }
@@ -221,55 +201,10 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
     }
     break;
-    case FAILSAFE:
-    {
-        // Do State Tasks
-        ROS_DEBUG("FAILSAFE");
-
-        pose_sp_out.pose = pose_sa;
-
-        pub_sp_pos();
-
-        // State Transition
-        ros::Time t_now = ros::Time::now();
-        if ( (t_now - t_fs) >= ros::Duration(dt_fs) ) {
-            land();
-            sp_pub_state = STARTUP;
-            ROS_INFO("SP_PUB_STATE: STARTUP");
-        } else if ( (mc_stream_state == MC_OFF) && (ob_mode_state == OB_OFF) ) {
-            land();
-            sp_pub_state = STARTUP;
-            ROS_INFO("SP_PUB_STATE: STARTUP");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_OFF) ) {
-            land();
-            sp_pub_state = LINKED;
-            ROS_INFO("SP_PUB_STATE: LINKED");
-        } else if ( (mc_stream_state == MC_ON) && (ob_mode_state == OB_ON) )
-        {
-            k_rs += 1;
-            if  ( (k_rs >= n_rs)  && (sp_stream_state == SP_OFF) ) {
-                pose_sa.position.z = z_fs;
-
-                sp_pub_state = HOVER;
-                ROS_INFO("SP_PUB_STATE: HOVER");
-            } else if ( (k_rs >= n_rs)  && (sp_stream_state == SP_ON) ) {
-                sp_pub_state = ACTIVE;
-                ROS_INFO("SP_PUB_STATE: ACTIVE");
-            } else {
-                // Stay in failsafe mode.
-            }
-        }
-    }
-    break;
     default:
     {
         ROS_DEBUG("default (should not be here)");
-
         land();
-        pose_sp_out.pose = pose_curr.pose;
-        pose_sp_out.pose.position.z = 0.0f;
-
-        pub_sp_pos();
     }
     }
 
@@ -279,36 +214,35 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 }
 
 void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
+    // Current Time
+    ros::Time t_now = ros::Time::now();
 
-    sp_type_assign();
-    if (t_last > dt_max) {
-        if (sp_stream_state == SP_ON) {
-            ROS_INFO("Setpoint Stream Stopped");
-        }
+    // Check if Target States are Publishing
+    pos_check = ((t_now - pos_sp_in.header.stamp) < dt_max) ? true : false;
+    att_check = ((t_now - att_sp_in.header.stamp) < dt_max) ? true : false;
 
-        ROS_DEBUG("Setpoint Stream Off");
-
+    if ((pos_check == false) && (att_check == false)) {
         sp_stream_state = SP_OFF;
-    } else
-    {
-        ROS_DEBUG("Setpoint Stream On");
-
-        sp_stream_state = SP_ON;
+    }
+    
+    // Check if Target States are Publishing
+    if ((t_now - pose_curr.header.stamp) < dt_max) {
+        ep_stream_state = EP_ON;
+    } else {
+        ep_stream_state = EP_OFF;
     }
 
-    ros::Time t_now = ros::Time::now();
-    if ((t_now - pose_curr.header.stamp) > checkup_dt_max) {
-        if (mc_stream_state == MC_ON) {
-            ROS_INFO("MoCap Stream Broken. Last vision_pose message came in at: %f", pose_curr.header.stamp.toSec());
-        }
-        ROS_DEBUG("MoCap Stream Off");
+    // Check if Drone is in Safe Ball
+    Eigen::Vector3f err_pos;
+    err_pos <<  pose_curr.pose.position.x - pose_sp_out.pose.position.x,
+                pose_curr.pose.position.y - pose_sp_out.pose.position.y,
+                pose_curr.pose.position.z - pose_sp_out.pose.position.z;
 
-        mc_stream_state = MC_OFF;
-    } else
-    {
-        ROS_DEBUG("MoCap Stream On");
+    if (err_pos.norm() > r_fs) {
+        land();
 
-        mc_stream_state = MC_ON;
+        sp_pub_state = STARTUP;
+        ROS_INFO("SP_PUB_STATE: INIT");
     }
 }
 
@@ -322,110 +256,14 @@ void SetpointPublisher::land() {
     }
 }
 
-void SetpointPublisher::sp_type_assign() {
+void SetpointPublisher::pub_sp() {
     ros::Time t_now = ros::Time::now();
-    vector<double> delta_t(3, 0);
 
-    delta_t[0] = t_now.toSec() - pose_sp_in.header.stamp.toSec();
-    delta_t[1] = t_now.toSec() - vel_sp_in.header.stamp.toSec();
-    delta_t[2] = t_now.toSec() - att_sp_in.header.stamp.toSec();
-
-    // Check who is active
-    int count = 0;
-    int idx = 0;
-    for (int i = 0 ; i<3 ; i++) {
-        if ( delta_t[i] < dt_max_vect(i,0) ) {
-            count++;
-            idx = i;
-        }
-    }
-
-    if (count != 1) {
-        t_last = ros::Duration(999);
-
-        sp_type_state = TP_NONE;
-        dt_max = pos_dt_max;
-    } else {
-        t_last = ros::Duration(delta_t[idx]);
-
-        if (idx == 0) {
-            sp_type_state = TP_POS;
-            dt_max = pos_dt_max;
-            //ROS_INFO("Target POSITION Mode");
-        } else if (idx == 1) {
-            sp_type_state = TP_VEL;
-            dt_max = vel_dt_max;
-            //ROS_INFO("Target VELOCITY Mode");
-        } else if (idx == 2) {
-            sp_type_state = TP_ATT;
-            dt_max = att_dt_max;
-            //ROS_INFO("Target ATTITUDE Mode");
-        }
-    }
-}
-
-void SetpointPublisher::pub_sp_pos() {
-    pose_sp_out.header.stamp = ros::Time::now();
+    pose_sp_out.header.stamp = t_now;
     pose_sp_out.header.seq   = k_main;
-    pose_sp_out.header.frame_id = "map";
 
     pose_sp_pub.publish(pose_sp_out);
 
-    //std::cout << "Publishing Pos: " << k_main << std::endl;
-}
-
-void SetpointPublisher::pub_sp_vel() {
-    vel_sp_pub.publish(vel_sp_out);
-}
-
-void SetpointPublisher::pub_sp_att() {
-    att_sp_out.header.stamp = ros::Time::now();
-    att_sp_out.header.seq   = k_main;
-    att_sp_out.header.frame_id = "map";
-
-    att_sp_pub.publish(att_sp_out);
-
-    //std::cout << "Publishing BR " << k_main << std::endl;
-    //std::cout <<  att_sp_out.thrust << std::endl;
-}
-
-void SetpointPublisher::pub_sp_active() {
-    switch (sp_type_state)
-    {
-    case TP_NONE:
-    {
-        sp_stream_state = SP_OFF;
-        ROS_INFO("Trajectory Complete/Stopped");
-    }
-    break;
-    case TP_POS:
-    {
-        pose_sp_out.pose = pose_sp_in.pose;
-        pub_sp_pos();
-    }
-    break;
-    case TP_VEL:
-    {
-        vel_sp_out = vel_sp_in.twist;
-        pub_sp_vel();
-    }
-    break;
-    case TP_ATT:
-    {
-        att_sp_out.type_mask = att_sp_in.type_mask;
-        att_sp_out.body_rate = att_sp_in.body_rate;
-        att_sp_out.orientation = att_sp_in.orientation;
-        att_sp_out.thrust = att_sp_in.thrust;
-        pub_sp_att();
-        //cout <<  att_sp_in.thrust << std::endl;
-    }
-    break;
-    default:
-    {
-        sp_stream_state = SP_OFF;
-        ROS_INFO("STREAM TYPE UNKNOWN");
-    }
-    }
 }
 
 int main(int argc, char **argv)
