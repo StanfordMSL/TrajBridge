@@ -46,7 +46,7 @@ SetpointPublisher::SetpointPublisher()
 }
 
 SetpointPublisher::~SetpointPublisher() {
-  ROS_WARN("Terminating Publisher");
+  ROS_WARN("Terminating SetpointPublisher");
 }
 
 void SetpointPublisher::pos_sp_cb(const geometry_msgs::PointStamped::ConstPtr& msg){
