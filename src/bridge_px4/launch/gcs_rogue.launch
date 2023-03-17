@@ -1,5 +1,8 @@
 <launch>
-      <node pkg="bridge_px4" type="gcs_rogue.py" name ="gcs_rogue" output="screen">
+      <node pkg="bridge_px4" type="setpoint_transform.py" name ="rogue_transform" output="screen">
             <param name="drone_id" value="drone1"/>
+            <param name="x_offset" value="0.00"/>
+            <param name="y_offset" value="0.00"/>
+            <param name="z_offset" value="-0.50"/>
       </node>
 </launch>

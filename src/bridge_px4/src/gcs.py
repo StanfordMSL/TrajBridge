@@ -25,8 +25,8 @@ class GCS:
         self.lap = 0
 
         # Publishers
-        self.pos_pub = rospy.Publisher(drone_id+"/setpoint/position",PointStamped,queue_size=1)
-        self.att_pub = rospy.Publisher(drone_id+"/setpoint/attitude",QuaternionStamped,queue_size=1)
+        self.pos_pub = rospy.Publisher("gcs/setpoint/position",PointStamped,queue_size=1)
+        self.att_pub = rospy.Publisher("gcs/setpoint/attitude",QuaternionStamped,queue_size=1)
 
     def traj_load(self,traj_name) -> Tuple[np.ndarray,np.ndarray]:
         # Get Address of Trajectory
@@ -77,7 +77,7 @@ class GCS:
         self.k += 1
 
         if self.k >= self.N:
-            if self.lap <= self.laps:
+            if self.lap < self.laps:
                 self.k = 0
                 self.lap += 1
                 print("Completed Lap:",self.lap,"of",self.laps)
