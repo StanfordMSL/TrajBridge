@@ -1,7 +1,6 @@
 <launch>
       <node pkg="bridge_px4" type="gcs.py" name ="gcs" output="screen">
-            <param name="drone_id" value="drone1"/>
             <param name="traj_name" value="circle.csv"/>
-            <param name="laps" value="3"/>
+            <param name="laps" value="10"/>
       </node>
 </launch>

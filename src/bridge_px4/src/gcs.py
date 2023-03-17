@@ -10,12 +10,10 @@ import os
 class GCS:
     def __init__(self):
         # Input Params
-        drone_id  = rospy.get_param("gcs/drone_id")
         traj_name = rospy.get_param("gcs/traj_name")
         laps = rospy.get_param("gcs/laps")
 
         # Trajectory Variables
-        self.drone_id = drone_id
         self.T,self.X = self.traj_load(traj_name)
         self.dt = self.T[1]-self.T[0]
         self.N = self.T.shape[0]
