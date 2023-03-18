@@ -11,37 +11,55 @@ class GCS:
     def __init__(self):
         # Input Params
         traj_name = rospy.get_param("gcs/traj_name")
+        hold = rospy.get_param("gcs/hold")
         laps = rospy.get_param("gcs/laps")
 
         # Trajectory Variables
-        self.T,self.X = self.traj_load(traj_name)
-        self.dt = self.T[1]-self.T[0]
-        self.N = self.T.shape[0]
-        self.laps = laps
+        self.T,self.X,self.aN,self.dt = self.traj_gen(traj_name,hold,laps)
 
-        self.k = 0
-        self.lap = 0
+        # Counters
+        self.kf = 0
+        self.kN = 0
 
         # Publishers
         self.pos_pub = rospy.Publisher("gcs/setpoint/position",PointStamped,queue_size=1)
         self.att_pub = rospy.Publisher("gcs/setpoint/attitude",QuaternionStamped,queue_size=1)
 
-    def traj_load(self,traj_name) -> Tuple[np.ndarray,np.ndarray]:
+    def traj_gen(self,traj_name,hold,laps) -> Tuple[np.ndarray,np.ndarray]:
         # Get Address of Trajectory
         dir_path = os.path.dirname(os.path.realpath(__file__))
         address = dir_path+"/../trajectories/"+traj_name
-        data = np.genfromtxt(address,delimiter=',')
         
         # Extract Data
-        T = data[0,:]
-        X = data[1:14,:]
-        print("Starting at:",X[0:3,0])
+        data = np.genfromtxt(address,delimiter=',')
+        Td:np.ndarray = data[0,:]
+        Xd:np.ndarray = data[1:14,:]
 
-        return T,X
+        # Unpack Some Stuff
+        dt = Td[1]-Td[0]
+
+        # Generate Hold
+        hold = dt*(hold//dt)
+        Nh = int(hold/dt)+1
+        Xh = np.tile(Xd[:,0].reshape((13,1)),(1,Nh))
+
+        # Generate State Trajectory
+        X = np.hstack((Xh,np.tile(Xd,(1,laps))))
+
+        # Compute some useful stuff
+        Nd = Xd.shape[1]
+        aN = np.zeros(laps+1,dtype=int)           # array of milestones
+        aN[0] = int(Nh)
+        for i in range(1,laps+1):
+            aN[i] = aN[i-1]+Nd
+        
+        T = np.arange(0,(aN[-1]+1)*dt,dt)
+
+        return T,X,aN,dt
             
     def traj_out(self, event=None):
         # Unpack some stuff
-        k = self.k
+        kf = self.kf
         t_now = rospy.Time.now()
 
         # Variables to publish
@@ -50,37 +68,41 @@ class GCS:
 
         # Position
         pos_msg.header.stamp = t_now
-        pos_msg.header.seq = k
+        pos_msg.header.seq = kf
         pos_msg.header.frame_id = "map"
 
-        pos_msg.point.x = self.X[0,k]
-        pos_msg.point.y = self.X[1,k]
-        pos_msg.point.z = self.X[2,k]
+        pos_msg.point.x = self.X[0,kf]
+        pos_msg.point.y = self.X[1,kf]
+        pos_msg.point.z = self.X[2,kf]
 
         # Attitude
         att_msg.header.stamp = t_now
-        att_msg.header.seq = k
+        att_msg.header.seq = kf
         att_msg.header.frame_id = "map"
         
-        att_msg.quaternion.w = self.X[6,k]
-        att_msg.quaternion.x = self.X[7,k]
-        att_msg.quaternion.y = self.X[8,k]
-        att_msg.quaternion.z = self.X[9,k]
+        att_msg.quaternion.w = self.X[6,kf]
+        att_msg.quaternion.x = self.X[7,kf]
+        att_msg.quaternion.y = self.X[8,kf]
+        att_msg.quaternion.z = self.X[9,kf]
 
         # Publish
         self.pos_pub.publish(pos_msg)
         self.att_pub.publish(att_msg)
 
         # Update Counter
-        self.k += 1
+        self.kf += 1
 
-        if self.k >= self.N:
-            if self.lap < self.laps:
-                self.k = 0
-                self.lap += 1
-                print("Completed Lap:",self.lap,"of",self.laps)
+        if self.kf >= self.aN[self.kN]:
+            if self.kN == 0:
+                print("[GCS]: Completed Loiter. Proceeding to Trajectory")
             else:
-                rospy.signal_shutdown("GCS Send Complete")
+                print("[GCS]: Completed Lap:",self.kN,"of",len(self.aN)-1)
+            
+            self.kN += 1
+
+        if self.kf == self.aN[-1]:
+            print("[GCS]: Mission Complete")
+            rospy.signal_shutdown("GCS Send Complete")
 
 if __name__ == '__main__':
     rospy.init_node('gcs_node',disable_signals=True)
