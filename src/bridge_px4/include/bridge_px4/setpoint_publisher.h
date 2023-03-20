@@ -75,7 +75,8 @@ private:
    float checkup_hz;                               // Checkup Rate
    float z_fs;                                     // Failsafe Altitude
    float r_fs;                                     // Failsafe Ball Radius
-
+   bool land_fs;
+   
    // Setpoint Subscribers
    ros::Subscriber    pos_sp_sub;                  // Setpoint (In) Position
    ros::Subscriber    att_sp_sub;                  // Setpoint (In) Attitude
@@ -92,6 +93,7 @@ private:
    ros::Timer checkupLoop;                         // Savepoint update timer
 
    // ROS Services
+   ros::ServiceClient toff_client;                 // Client to Trigger Takeoff
    ros::ServiceClient land_client;                 // Client to Trigger Landing
 
    // Quad Setpoints (In)
@@ -129,6 +131,7 @@ private:
    void pub_sp();                                                       // Publish Setpoint
 
    // Service Function
+   void toff();                                                         // Takeoff
    void land();                                                         // Landing
 };
 

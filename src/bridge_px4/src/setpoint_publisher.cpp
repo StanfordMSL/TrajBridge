@@ -6,6 +6,7 @@ SetpointPublisher::SetpointPublisher()
     ros::param::get("~checkup_hz", checkup_hz);
     ros::param::get("~z_fs",z_fs);
     ros::param::get("~r_fs",r_fs);
+    ros::param::get("~land_fs",land_fs);
 
     // ROS Initialization
     pos_sp_sub  = nh.subscribe("setpoint/position",1,&SetpointPublisher::pos_sp_cb,this);
@@ -19,7 +20,8 @@ SetpointPublisher::SetpointPublisher()
     setpointLoop = nh.createTimer(ros::Duration(1.0/sp_out_hz),&SetpointPublisher::setpoint_cb, this);
     checkupLoop  = nh.createTimer(ros::Duration(1.0/checkup_hz),&SetpointPublisher::checkup_cb, this);
 
-    land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
+    toff_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
+    land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
 
     ROS_INFO("ROS Components Initialized");
 
@@ -246,14 +248,30 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     }
 }
 
-void SetpointPublisher::land() {
-    mavros_msgs::CommandTOL srv_land;
-    if (land_client.call(srv_land) && srv_land.response.success)
+void SetpointPublisher::toff() {
+    mavros_msgs::CommandTOL srv_toff;
+    srv_toff.request.altitude = z_fs;
+    srv_toff.request.min_pitch = 0.0;
+
+    if (land_client.call(srv_toff) && srv_toff.response.success)
     {
-        ROS_INFO("Land Successful");
+        ROS_INFO("Takeoff Successful");
     } else {
-        ROS_WARN("Land Failed");
+        ROS_WARN("Takeoff Failed");
     }
+}
+
+void SetpointPublisher::land() {
+    if (land_fs == true) {
+        mavros_msgs::CommandTOL srv_land;
+        if (land_client.call(srv_land) && srv_land.response.success)
+        {
+            ROS_INFO("Land Successful");
+        } else {
+            ROS_WARN("Land Failed");
+        }
+    }
+
 }
 
 void SetpointPublisher::pub_sp() {
