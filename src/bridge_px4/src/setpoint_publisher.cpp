@@ -128,6 +128,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         } else if ( (ep_stream_state == EP_ON) && (ob_mode_state == OB_ON) && (sp_stream_state == SP_OFF) )
         {
             pose_st = pose_sa;
+            toff();
 
             sp_pub_state = HOVER;
             ROS_INFO("SP_PUB_STATE: HOVER");
