@@ -6,6 +6,7 @@ SetpointPublisher::SetpointPublisher()
     ros::param::get("~checkup_hz", checkup_hz);
     ros::param::get("~z_fs",z_fs);
     ros::param::get("~r_fs",r_fs);
+    ros::param::get("~sp_toff",sp_toff);
     ros::param::get("~land_fs",land_fs);
 
     // ROS Initialization
@@ -250,15 +251,17 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 }
 
 void SetpointPublisher::toff() {
-    mavros_msgs::CommandTOL srv_toff;
-    srv_toff.request.altitude = z_fs;
-    srv_toff.request.min_pitch = 0.0;
+    if (sp_toff == false) {
+        mavros_msgs::CommandTOL srv_toff;
+        srv_toff.request.altitude = z_fs;
+        srv_toff.request.min_pitch = 0.0;
 
-    if (land_client.call(srv_toff) && srv_toff.response.success)
-    {
-        ROS_INFO("Takeoff Successful");
-    } else {
-        ROS_WARN("Takeoff Failed");
+        if (land_client.call(srv_toff) && srv_toff.response.success)
+        {
+            ROS_INFO("Takeoff Successful");
+        } else {
+            ROS_WARN("Takeoff Failed");
+        }
     }
 }
 

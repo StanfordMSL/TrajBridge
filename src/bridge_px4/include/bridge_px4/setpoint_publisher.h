@@ -75,8 +75,9 @@ private:
    float checkup_hz;                               // Checkup Rate
    float z_fs;                                     // Failsafe Altitude
    float r_fs;                                     // Failsafe Ball Radius
+   bool sp_toff;
    bool land_fs;
-   
+
    // Setpoint Subscribers
    ros::Subscriber    pos_sp_sub;                  // Setpoint (In) Position
    ros::Subscriber    att_sp_sub;                  // Setpoint (In) Attitude

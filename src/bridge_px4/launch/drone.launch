@@ -15,6 +15,7 @@
       <param name="checkup_hz" value="10.0"/>
       <param name="z_fs" value="1.0"/>
       <param name="r_fs" value="999.0"/>
+      <param name="sp_toff" value="true"/>
       <param name="land_fs" value="true"/>
 	</node>
 
