@@ -15,13 +15,13 @@
     </rosparam>
 
     <!-- Drone1 Remap -->
-    <!-- <remap from="/vrpn_client_node/drone1/pose" to="drone1/mavros/vision_pose/pose" /> -->
+    <remap from="/vrpn_client_node/drone1/pose" to="drone1/mavros/vision_pose/pose" />
 
     <!-- Drone2 Remap -->
-    <remap from="/vrpn_client_node/drone2/pose" to="drone2/mavros/vision_pose/pose" />
+    <!-- <remap from="/vrpn_client_node/drone2/pose" to="drone2/mavros/vision_pose/pose" /> -->
 
     <!-- Drone3 Remap -->
-    <remap from="/vrpn_client_node/drone3/pose" to="drone3/mavros/vision_pose/pose" />
+    <!-- <remap from="/vrpn_client_node/drone3/pose" to="drone3/mavros/vision_pose/pose" /> -->
 
     <!-- Drone4 Remap -->
     <remap from="/vrpn_client_node/drone4/pose" to="drone4/mavros/vision_pose/pose" />
@@ -52,9 +52,16 @@
 
   <!-- Mocap to GPS simulation -->
 	<node pkg="bridge_px4" type="mocap_gps" name ="mocap_gps" output="screen">
-	   <param name="drone_name" value="drone1"/>
+	   <param name="drone_name" value="drone2"/>
      <param name="x_init" value="0.0"/>
-     <param name="y_init" value="0.0"/>
+     <param name="y_init" value="-2.0"/>
 	</node>
-  
+
+  <!-- Mocap to GPS simulation -->
+	<node pkg="bridge_px4" type="mocap_gps" name ="mocap_gps" output="screen">
+	   <param name="drone_name" value="drone3"/>
+     <param name="x_init" value="0.0"/>
+     <param name="y_init" value="2.0"/>
+	</node>
+
 </launch>
