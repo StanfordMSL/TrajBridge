@@ -51,14 +51,14 @@
   </node>
 
   <!-- Mocap to GPS simulation -->
-	<node pkg="bridge_px4" type="mocap_gps" name ="mocap_gps" output="screen">
+	<node pkg="bridge_px4" type="mocap_gps" name ="mocap_gps2" output="screen">
 	   <param name="drone_name" value="drone2"/>
      <param name="x_init" value="0.0"/>
      <param name="y_init" value="-1.0"/>
 	</node>
 
   <!-- Mocap to GPS simulation -->
-	<node pkg="bridge_px4" type="mocap_gps" name ="mocap_gps" output="screen">
+	<node pkg="bridge_px4" type="mocap_gps" name ="mocap_gps3" output="screen">
 	   <param name="drone_name" value="drone3"/>
      <param name="x_init" value="0.0"/>
      <param name="y_init" value="1.0"/>
