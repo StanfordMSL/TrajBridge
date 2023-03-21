@@ -21,8 +21,8 @@ SetpointPublisher::SetpointPublisher()
     setpointLoop = nh.createTimer(ros::Duration(1.0/sp_out_hz),&SetpointPublisher::setpoint_cb, this);
     checkupLoop  = nh.createTimer(ros::Duration(1.0/checkup_hz),&SetpointPublisher::checkup_cb, this);
 
-    toff_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
-    land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
+    toff_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
+    land_client = nh.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
 
     ROS_INFO("ROS Components Initialized");
 
@@ -262,6 +262,8 @@ void SetpointPublisher::toff() {
         } else {
             ROS_WARN("Takeoff Failed");
         }
+    } else {
+        // Carry On
     }
 }
 
@@ -274,6 +276,8 @@ void SetpointPublisher::land() {
         } else {
             ROS_WARN("Land Failed");
         }
+    } else {
+        // Carry On
     }
 
 }
