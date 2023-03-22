@@ -1,7 +1,7 @@
 <launch>
       <node pkg="bridge_px4" type="gcs.py" name ="gcs" output="screen">
-            <param name="traj_name" value="line_bf.csv"/>
+            <param name="traj_name" value="od_line.csv"/>
             <param name="hold" value="5"/>
-            <param name="laps" value="1"/>
+            <param name="laps" value="99"/>
       </node>
 </launch>
