@@ -247,13 +247,13 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
 }
 
 void SetpointPublisher::land() {
-    mavros_msgs::CommandTOL srv_land;
-    if (land_client.call(srv_land) && srv_land.response.success)
-    {
-        ROS_INFO("Land Successful");
-    } else {
-        ROS_WARN("Land Failed");
-    }
+    // mavros_msgs::CommandTOL srv_land;
+    // if (land_client.call(srv_land) && srv_land.response.success)
+    // {
+    //     ROS_INFO("Land Successful");
+    // } else {
+    //     ROS_WARN("Land Failed");
+    // }
 }
 
 void SetpointPublisher::pub_sp() {
