@@ -87,6 +87,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         pose_sa = pose_curr.pose;
         pose_sa.position.z = 0.0f;
+        pose_st = pose_sa;
 
         pose_sp_out.pose = pose_sa;
         pub_sp();
@@ -113,6 +114,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         pose_sa = pose_curr.pose;
         pose_sa.position.z = 0.0f;
+        pose_st = pose_sa;
 
         pose_sp_out.pose = pose_sa;
         pub_sp();
@@ -144,7 +146,9 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         ROS_DEBUG("HOVER");
 
         pose_sa.position.z = z_fs;
-        
+        pose_st = pose_sa;
+        pose_st.position.z = 0.0;
+
         pose_sp_out.pose = pose_sa;
         pub_sp();
 
@@ -174,7 +178,11 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 
         pose_sa = pose_curr.pose;
         
-        pose_sp_out.pose.position = pos_sp_in.point;
+        pose_sp_out.pose.position.x = pos_sp_in.point.x + pose_st.position.x;
+        pose_sp_out.pose.position.y = pos_sp_in.point.y + pose_st.position.y;
+        pose_sp_out.pose.position.z = pos_sp_in.point.z + pose_st.position.z;
+
+
         pose_sp_out.pose.orientation = att_sp_in.quaternion;
         pub_sp();
 
