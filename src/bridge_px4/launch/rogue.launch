@@ -1,9 +1,10 @@
 <launch>
       <!-- Initialize the Onboard Setpoint Transformer -->
-      <node pkg="bridge_px4" type="setpoint_transform.py" name ="setpoint_transform" output="screen">
-            <param name="drone_id" value="drone2"/>
-            <param name="x_off" value="0.50"/>
+      <node pkg="bridge_px4" type="rogue.py" name ="rogue" output="screen">
+            <param name="drone_targ" value="drone3"/>
+            <param name="x_off" value="0.00"/>
             <param name="y_off" value="0.00"/>
-            <param name="z_off" value="1.00"/>
+            <param name="z_abs" value="4.00"/>
+            <param name="hz" value="100.00"/>
       </node>
 </launch>
