@@ -4,7 +4,7 @@
             <param name="drone_targ" value="drone3"/>
             <param name="x_off" value="0.00"/>
             <param name="y_off" value="0.00"/>
-            <param name="z_abs" value="4.00"/>
+            <param name="z_abs" value="2.00"/>
             <param name="hz" value="100.00"/>
       </node>
 </launch>
