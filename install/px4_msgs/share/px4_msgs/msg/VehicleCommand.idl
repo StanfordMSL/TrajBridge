@@ -1,0 +1,216 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from px4_msgs/msg/VehicleCommand.msg
+// generated code does not contain a copyright notice
+
+
+module px4_msgs {
+  module msg {
+    module VehicleCommand_Constants {
+      const uint16 VEHICLE_CMD_CUSTOM_0 = 0;
+      const uint16 VEHICLE_CMD_CUSTOM_1 = 1;
+      const uint16 VEHICLE_CMD_CUSTOM_2 = 2;
+      const uint16 VEHICLE_CMD_NAV_WAYPOINT = 16;
+      const uint16 VEHICLE_CMD_NAV_LOITER_UNLIM = 17;
+      const uint16 VEHICLE_CMD_NAV_LOITER_TURNS = 18;
+      const uint16 VEHICLE_CMD_NAV_LOITER_TIME = 19;
+      const uint16 VEHICLE_CMD_NAV_RETURN_TO_LAUNCH = 20;
+      const uint16 VEHICLE_CMD_NAV_LAND = 21;
+      const uint16 VEHICLE_CMD_NAV_TAKEOFF = 22;
+      const uint16 VEHICLE_CMD_NAV_PRECLAND = 23;
+      const uint16 VEHICLE_CMD_DO_ORBIT = 34;
+      const uint16 VEHICLE_CMD_NAV_ROI = 80;
+      const uint16 VEHICLE_CMD_NAV_PATHPLANNING = 81;
+      const uint16 VEHICLE_CMD_NAV_VTOL_TAKEOFF = 84;
+      const uint16 VEHICLE_CMD_NAV_VTOL_LAND = 85;
+      const uint16 VEHICLE_CMD_NAV_GUIDED_LIMITS = 90;
+      const uint16 VEHICLE_CMD_NAV_GUIDED_MASTER = 91;
+      const uint16 VEHICLE_CMD_NAV_DELAY = 93;
+      const uint16 VEHICLE_CMD_NAV_LAST = 95;
+      const uint16 VEHICLE_CMD_CONDITION_DELAY = 112;
+      const uint16 VEHICLE_CMD_CONDITION_CHANGE_ALT = 113;
+      const uint16 VEHICLE_CMD_CONDITION_DISTANCE = 114;
+      const uint16 VEHICLE_CMD_CONDITION_YAW = 115;
+      const uint16 VEHICLE_CMD_CONDITION_LAST = 159;
+      const uint16 VEHICLE_CMD_CONDITION_GATE = 4501;
+      const uint16 VEHICLE_CMD_DO_SET_MODE = 176;
+      const uint16 VEHICLE_CMD_DO_JUMP = 177;
+      const uint16 VEHICLE_CMD_DO_CHANGE_SPEED = 178;
+      const uint16 VEHICLE_CMD_DO_SET_HOME = 179;
+      const uint16 VEHICLE_CMD_DO_SET_PARAMETER = 180;
+      const uint16 VEHICLE_CMD_DO_SET_RELAY = 181;
+      const uint16 VEHICLE_CMD_DO_REPEAT_RELAY = 182;
+      const uint16 VEHICLE_CMD_DO_REPEAT_SERVO = 184;
+      const uint16 VEHICLE_CMD_DO_FLIGHTTERMINATION = 185;
+      const uint16 VEHICLE_CMD_DO_CHANGE_ALTITUDE = 186;
+      const uint16 VEHICLE_CMD_DO_SET_ACTUATOR = 187;
+      const uint16 VEHICLE_CMD_DO_LAND_START = 189;
+      const uint16 VEHICLE_CMD_DO_GO_AROUND = 191;
+      const uint16 VEHICLE_CMD_DO_REPOSITION = 192;
+      const uint16 VEHICLE_CMD_DO_PAUSE_CONTINUE = 193;
+      const uint16 VEHICLE_CMD_DO_SET_ROI_LOCATION = 195;
+      const uint16 VEHICLE_CMD_DO_SET_ROI_WPNEXT_OFFSET = 196;
+      const uint16 VEHICLE_CMD_DO_SET_ROI_NONE = 197;
+      const uint16 VEHICLE_CMD_DO_CONTROL_VIDEO = 200;
+      const uint16 VEHICLE_CMD_DO_SET_ROI = 201;
+      const uint16 VEHICLE_CMD_DO_DIGICAM_CONTROL = 203;
+      const uint16 VEHICLE_CMD_DO_MOUNT_CONFIGURE = 204;
+      const uint16 VEHICLE_CMD_DO_MOUNT_CONTROL = 205;
+      const uint16 VEHICLE_CMD_DO_SET_CAM_TRIGG_DIST = 206;
+      const uint16 VEHICLE_CMD_DO_FENCE_ENABLE = 207;
+      const uint16 VEHICLE_CMD_DO_PARACHUTE = 208;
+      const uint16 VEHICLE_CMD_DO_MOTOR_TEST = 209;
+      const uint16 VEHICLE_CMD_DO_INVERTED_FLIGHT = 210;
+      const uint16 VEHICLE_CMD_DO_GRIPPER = 211;
+      const uint16 VEHICLE_CMD_DO_SET_CAM_TRIGG_INTERVAL = 214;
+      const uint16 VEHICLE_CMD_DO_MOUNT_CONTROL_QUAT = 220;
+      const uint16 VEHICLE_CMD_DO_GUIDED_MASTER = 221;
+      const uint16 VEHICLE_CMD_DO_GUIDED_LIMITS = 222;
+      const uint16 VEHICLE_CMD_DO_LAST = 240;
+      const uint16 VEHICLE_CMD_PREFLIGHT_CALIBRATION = 241;
+      const uint16 PREFLIGHT_CALIBRATION_TEMPERATURE_CALIBRATION = 3;
+      const uint16 VEHICLE_CMD_PREFLIGHT_SET_SENSOR_OFFSETS = 242;
+      const uint16 VEHICLE_CMD_PREFLIGHT_UAVCAN = 243;
+      const uint16 VEHICLE_CMD_PREFLIGHT_STORAGE = 245;
+      const uint16 VEHICLE_CMD_PREFLIGHT_REBOOT_SHUTDOWN = 246;
+      const uint16 VEHICLE_CMD_OBLIQUE_SURVEY = 260;
+      const uint16 VEHICLE_CMD_GIMBAL_DEVICE_INFORMATION = 283;
+      const uint16 VEHICLE_CMD_MISSION_START = 300;
+      const uint16 VEHICLE_CMD_ACTUATOR_TEST = 310;
+      const uint16 VEHICLE_CMD_CONFIGURE_ACTUATOR = 311;
+      const uint16 VEHICLE_CMD_COMPONENT_ARM_DISARM = 400;
+      const uint16 VEHICLE_CMD_RUN_PREARM_CHECKS = 401;
+      const uint16 VEHICLE_CMD_INJECT_FAILURE = 420;
+      const uint16 VEHICLE_CMD_START_RX_PAIR = 500;
+      const uint16 VEHICLE_CMD_REQUEST_MESSAGE = 512;
+      const uint16 VEHICLE_CMD_SET_CAMERA_MODE = 530;
+      const uint16 VEHICLE_CMD_SET_CAMERA_ZOOM = 531;
+      const uint16 VEHICLE_CMD_SET_CAMERA_FOCUS = 532;
+      const uint16 VEHICLE_CMD_DO_GIMBAL_MANAGER_PITCHYAW = 1000;
+      const uint16 VEHICLE_CMD_DO_GIMBAL_MANAGER_CONFIGURE = 1001;
+      const uint16 VEHICLE_CMD_IMAGE_START_CAPTURE = 2000;
+      const uint16 VEHICLE_CMD_DO_TRIGGER_CONTROL = 2003;
+      const uint16 VEHICLE_CMD_VIDEO_START_CAPTURE = 2500;
+      const uint16 VEHICLE_CMD_VIDEO_STOP_CAPTURE = 2501;
+      const uint16 VEHICLE_CMD_LOGGING_START = 2510;
+      const uint16 VEHICLE_CMD_LOGGING_STOP = 2511;
+      const uint16 VEHICLE_CMD_CONTROL_HIGH_LATENCY = 2600;
+      const uint16 VEHICLE_CMD_DO_VTOL_TRANSITION = 3000;
+      const uint16 VEHICLE_CMD_ARM_AUTHORIZATION_REQUEST = 3001;
+      const uint16 VEHICLE_CMD_PAYLOAD_PREPARE_DEPLOY = 30001;
+      const uint16 VEHICLE_CMD_PAYLOAD_CONTROL_DEPLOY = 30002;
+      const uint16 VEHICLE_CMD_FIXED_MAG_CAL_YAW = 42006;
+      const uint16 VEHICLE_CMD_DO_WINCH = 42600;
+      const uint32 VEHICLE_CMD_PX4_INTERNAL_START = 65537;
+      const uint32 VEHICLE_CMD_SET_GPS_GLOBAL_ORIGIN = 100000;
+      const uint8 VEHICLE_MOUNT_MODE_RETRACT = 0;
+      const uint8 VEHICLE_MOUNT_MODE_NEUTRAL = 1;
+      const uint8 VEHICLE_MOUNT_MODE_MAVLINK_TARGETING = 2;
+      const uint8 VEHICLE_MOUNT_MODE_RC_TARGETING = 3;
+      const uint8 VEHICLE_MOUNT_MODE_GPS_POINT = 4;
+      const uint8 VEHICLE_MOUNT_MODE_ENUM_END = 5;
+      const uint8 VEHICLE_ROI_NONE = 0;
+      const uint8 VEHICLE_ROI_WPNEXT = 1;
+      const uint8 VEHICLE_ROI_WPINDEX = 2;
+      const uint8 VEHICLE_ROI_LOCATION = 3;
+      const uint8 VEHICLE_ROI_TARGET = 4;
+      const uint8 VEHICLE_ROI_ENUM_END = 5;
+      const uint8 PARACHUTE_ACTION_DISABLE = 0;
+      const uint8 PARACHUTE_ACTION_ENABLE = 1;
+      const uint8 PARACHUTE_ACTION_RELEASE = 2;
+      const uint8 FAILURE_UNIT_SENSOR_GYRO = 0;
+      const uint8 FAILURE_UNIT_SENSOR_ACCEL = 1;
+      const uint8 FAILURE_UNIT_SENSOR_MAG = 2;
+      const uint8 FAILURE_UNIT_SENSOR_BARO = 3;
+      const uint8 FAILURE_UNIT_SENSOR_GPS = 4;
+      const uint8 FAILURE_UNIT_SENSOR_OPTICAL_FLOW = 5;
+      const uint8 FAILURE_UNIT_SENSOR_VIO = 6;
+      const uint8 FAILURE_UNIT_SENSOR_DISTANCE_SENSOR = 7;
+      const uint8 FAILURE_UNIT_SENSOR_AIRSPEED = 8;
+      const uint8 FAILURE_UNIT_SYSTEM_BATTERY = 100;
+      const uint8 FAILURE_UNIT_SYSTEM_MOTOR = 101;
+      const uint8 FAILURE_UNIT_SYSTEM_SERVO = 102;
+      const uint8 FAILURE_UNIT_SYSTEM_AVOIDANCE = 103;
+      const uint8 FAILURE_UNIT_SYSTEM_RC_SIGNAL = 104;
+      const uint8 FAILURE_UNIT_SYSTEM_MAVLINK_SIGNAL = 105;
+      const uint8 FAILURE_TYPE_OK = 0;
+      const uint8 FAILURE_TYPE_OFF = 1;
+      const uint8 FAILURE_TYPE_STUCK = 2;
+      const uint8 FAILURE_TYPE_GARBAGE = 3;
+      const uint8 FAILURE_TYPE_WRONG = 4;
+      const uint8 FAILURE_TYPE_SLOW = 5;
+      const uint8 FAILURE_TYPE_DELAYED = 6;
+      const uint8 FAILURE_TYPE_INTERMITTENT = 7;
+      const uint8 SPEED_TYPE_AIRSPEED = 0;
+      const uint8 SPEED_TYPE_GROUNDSPEED = 1;
+      const uint8 SPEED_TYPE_CLIMB_SPEED = 2;
+      const uint8 SPEED_TYPE_DESCEND_SPEED = 3;
+      const int8 ARMING_ACTION_DISARM = 0;
+      const int8 ARMING_ACTION_ARM = 1;
+      const uint8 GRIPPER_ACTION_RELEASE = 0;
+      const uint8 GRIPPER_ACTION_GRAB = 1;
+      const uint8 ORB_QUEUE_LENGTH = 8;
+    };
+    @verbatim (language="comment", text=
+      " Vehicle Command uORB message. Used for commanding a mission / action / etc." "\n"
+      " Follows the MAVLink COMMAND_INT / COMMAND_LONG definition")
+    struct VehicleCommand {
+      @verbatim (language="comment", text=
+        " time since system start (microseconds)")
+      uint64 timestamp;
+
+      @verbatim (language="comment", text=
+        " Parameter 1, as defined by MAVLink uint16 VEHICLE_CMD enum.")
+      float param1;
+
+      @verbatim (language="comment", text=
+        " Parameter 2, as defined by MAVLink uint16 VEHICLE_CMD enum.")
+      float param2;
+
+      @verbatim (language="comment", text=
+        " Parameter 3, as defined by MAVLink uint16 VEHICLE_CMD enum.")
+      float param3;
+
+      @verbatim (language="comment", text=
+        " Parameter 4, as defined by MAVLink uint16 VEHICLE_CMD enum.")
+      float param4;
+
+      @verbatim (language="comment", text=
+        " Parameter 5, as defined by MAVLink uint16 VEHICLE_CMD enum.")
+      double param5;
+
+      @verbatim (language="comment", text=
+        " Parameter 6, as defined by MAVLink uint16 VEHICLE_CMD enum.")
+      double param6;
+
+      @verbatim (language="comment", text=
+        " Parameter 7, as defined by MAVLink uint16 VEHICLE_CMD enum.")
+      float param7;
+
+      @verbatim (language="comment", text=
+        " Command ID")
+      uint32 command;
+
+      @verbatim (language="comment", text=
+        " System which should execute the command")
+      uint8 target_system;
+
+      @verbatim (language="comment", text=
+        " Component which should execute the command, 0 for all components")
+      uint8 target_component;
+
+      @verbatim (language="comment", text=
+        " System sending the command")
+      uint8 source_system;
+
+      @verbatim (language="comment", text=
+        " Component sending the command")
+      uint8 source_component;
+
+      @verbatim (language="comment", text=
+        " 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)")
+      uint8 confirmation;
+
+      boolean from_external;
+    };
+  };
+};

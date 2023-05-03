@@ -1,0 +1,2 @@
+source;share/bridge_px4/environment/ament_prefix_path.sh
+source;share/bridge_px4/environment/path.sh

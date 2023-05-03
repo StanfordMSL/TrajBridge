@@ -1,0 +1,126 @@
+[0.017s] Invoking command in '/home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com': AMENT_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake /home/lowjunen/StanfordMSL/TrajBridge/src/px4_ros_com -DCMAKE_INSTALL_PREFIX=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com
+[0.126s] -- The C compiler identification is GNU 9.4.0
+[0.205s] -- The CXX compiler identification is GNU 9.4.0
+[0.212s] -- Check for working C compiler: /usr/bin/cc
+[0.322s] -- Check for working C compiler: /usr/bin/cc -- works
+[0.323s] -- Detecting C compiler ABI info
+[0.439s] -- Detecting C compiler ABI info - done
+[0.457s] -- Detecting C compile features
+[0.457s] -- Detecting C compile features - done
+[0.460s] -- Check for working CXX compiler: /usr/bin/c++
+[0.584s] -- Check for working CXX compiler: /usr/bin/c++ -- works
+[0.585s] -- Detecting CXX compiler ABI info
+[0.705s] -- Detecting CXX compiler ABI info - done
+[0.725s] -- Detecting CXX compile features
+[0.726s] -- Detecting CXX compile features - done
+[0.730s] -- Found ament_cmake: 0.9.11 (/opt/ros/foxy/share/ament_cmake/cmake)
+[0.770s] -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.8.10", minimum required is "3") 
+[0.771s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[1.036s] -- Found builtin_interfaces: 1.0.0 (/opt/ros/foxy/share/builtin_interfaces/cmake)
+[1.075s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.083s] -- Found rosidl_adapter: 1.3.0 (/opt/ros/foxy/share/rosidl_adapter/cmake)
+[1.214s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "1.1.1f")  
+[1.259s] -- Found FastRTPS: /opt/ros/foxy/include  
+[1.370s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.418s] -- Found eigen3_cmake_module: 0.1.1 (/opt/ros/foxy/share/eigen3_cmake_module/cmake)
+[1.424s] -- Found Eigen3: TRUE (found version "3.3.7") 
+[1.426s] -- Found geometry_msgs: 2.0.5 (/opt/ros/foxy/share/geometry_msgs/cmake)
+[1.535s] -- Found px4_msgs: 2.0.1 (/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/share/px4_msgs/cmake)
+[1.561s] -- Found rclcpp: 2.4.2 (/opt/ros/foxy/share/rclcpp/cmake)
+[1.638s] -- Found rmw_implementation_cmake: 1.0.4 (/opt/ros/foxy/share/rmw_implementation_cmake/cmake)
+[1.641s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[1.642s] -- Looking for pthread.h
+[1.753s] -- Looking for pthread.h - found
+[1.754s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[1.873s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+[1.873s] -- Looking for pthread_create in pthreads
+[1.970s] -- Looking for pthread_create in pthreads - not found
+[1.970s] -- Looking for pthread_create in pthread
+[2.095s] -- Looking for pthread_create in pthread - found
+[2.096s] -- Found Threads: TRUE  
+[2.356s] -- Found sensor_msgs: 2.0.5 (/opt/ros/foxy/share/sensor_msgs/cmake)
+[2.511s] -- Found ament_lint_auto: 0.9.8 (/opt/ros/foxy/share/ament_lint_auto/cmake)
+[2.632s] -- Added test 'copyright' to check source files copyright and LICENSE
+[2.639s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[2.640s] -- Configured cppcheck include dirs: /home/lowjunen/StanfordMSL/TrajBridge/src/px4_ros_com/include;$<BUILD_INTERFACE:/home/lowjunen/StanfordMSL/TrajBridge/src/px4_ros_com/include/px4_ros_com>
+[2.640s] -- Configured cppcheck exclude dirs and/or files: 
+[2.647s] -- Added test 'cpplint' to check C / C++ code against the Google style
+[2.648s] -- Configured cpplint exclude dirs and/or files: 
+[2.650s] -- Added test 'flake8' to check Python code syntax and style conventions
+[2.652s] -- Added test 'lint_cmake' to check CMake code style
+[2.653s] -- Added test 'pep257' to check Python code against some of the style conventions in PEP 257
+[2.659s] -- Added test 'uncrustify' to check C / C++ code style
+[2.660s] -- Configured uncrustify additional arguments: 
+[2.661s] -- Added test 'xmllint' to check XML markup files
+[2.669s] -- Configuring done
+[2.706s] -- Generating done
+[2.710s] -- Build files have been written to: /home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com
+[2.728s] Invoked command in '/home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com' returned '0': AMENT_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake /home/lowjunen/StanfordMSL/TrajBridge/src/px4_ros_com -DCMAKE_INSTALL_PREFIX=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com
+[2.734s] Invoking command in '/home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com': AMENT_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com -- -j12 -l12
+[2.810s] [35m[1mScanning dependencies of target debug_vect_advertiser[0m
+[2.810s] [35m[1mScanning dependencies of target frame_transforms[0m
+[2.810s] [35m[1mScanning dependencies of target offboard_control[0m
+[2.814s] [35m[1mScanning dependencies of target vehicle_gps_position_listener[0m
+[2.823s] [35m[1mScanning dependencies of target sensor_combined_listener[0m
+[2.886s] [ 10%] [32mBuilding CXX object CMakeFiles/debug_vect_advertiser.dir/src/examples/advertisers/debug_vect_advertiser.cpp.o[0m
+[2.889s] [ 20%] [32mBuilding CXX object CMakeFiles/offboard_control.dir/src/examples/offboard/offboard_control.cpp.o[0m
+[2.892s] [ 30%] [32mBuilding CXX object CMakeFiles/vehicle_gps_position_listener.dir/src/examples/listeners/vehicle_gps_position_listener.cpp.o[0m
+[2.894s] [ 40%] [32mBuilding CXX object CMakeFiles/sensor_combined_listener.dir/src/examples/listeners/sensor_combined_listener.cpp.o[0m
+[3.004s] [ 50%] [32mBuilding CXX object CMakeFiles/frame_transforms.dir/src/lib/frame_transforms.cpp.o[0m
+[9.669s] [ 60%] [32m[1mLinking CXX executable debug_vect_advertiser[0m
+[10.255s] [ 60%] Built target debug_vect_advertiser
+[11.302s] [ 70%] [32m[1mLinking CXX executable offboard_control[0m
+[11.845s] [ 70%] Built target offboard_control
+[12.681s] [ 80%] [32m[1mLinking CXX executable vehicle_gps_position_listener[0m
+[13.320s] [ 80%] Built target vehicle_gps_position_listener
+[13.356s] [ 90%] [32m[1mLinking CXX executable sensor_combined_listener[0m
+[13.861s] [ 90%] Built target sensor_combined_listener
+[15.133s] [100%] [32m[1mLinking CXX shared library libframe_transforms.so[0m
+[15.523s] [100%] Built target frame_transforms
+[15.541s] Invoked command in '/home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com' returned '0': AMENT_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com -- -j12 -l12
+[15.589s] Invoking command in '/home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com': AMENT_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com
+[15.604s] -- Install configuration: ""
+[15.604s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/px4_ros_com/sensor_combined_listener
+[15.608s] -- Set runtime path of "/home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/px4_ros_com/sensor_combined_listener" to ""
+[15.608s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/px4_ros_com/vehicle_gps_position_listener
+[15.613s] -- Set runtime path of "/home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/px4_ros_com/vehicle_gps_position_listener" to ""
+[15.614s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/px4_ros_com/debug_vect_advertiser
+[15.615s] -- Set runtime path of "/home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/px4_ros_com/debug_vect_advertiser" to ""
+[15.615s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/px4_ros_com/offboard_control
+[15.617s] -- Set runtime path of "/home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/px4_ros_com/offboard_control" to ""
+[15.618s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/environment/library_path.sh
+[15.618s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/environment/library_path.dsv
+[15.618s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/include/px4_ros_com
+[15.618s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/include/px4_ros_com/frame_transforms.h
+[15.618s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/libframe_transforms.so
+[15.624s] -- Set runtime path of "/home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/lib/libframe_transforms.so" to ""
+[15.624s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com//launch
+[15.624s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com//launch/offboard_control_launch.yaml
+[15.625s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com//launch/sensor_combined_listener.launch.py
+[15.625s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com//test
+[15.625s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com//test/test_output.py
+[15.625s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com//test/__init__.py
+[15.625s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com//test/test_input.py
+[15.625s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com//test/pipeline_io_test.py
+[15.625s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/ament_index/resource_index/package_run_dependencies/px4_ros_com
+[15.626s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/ament_index/resource_index/parent_prefix_path/px4_ros_com
+[15.626s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/environment/ament_prefix_path.sh
+[15.627s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/environment/ament_prefix_path.dsv
+[15.627s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/environment/path.sh
+[15.627s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/environment/path.dsv
+[15.627s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/local_setup.bash
+[15.627s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/local_setup.sh
+[15.628s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/local_setup.zsh
+[15.628s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/local_setup.dsv
+[15.628s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/package.dsv
+[15.628s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/ament_index/resource_index/packages/px4_ros_com
+[15.629s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/cmake/export_frame_transformsExport.cmake
+[15.629s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/cmake/export_frame_transformsExport-noconfig.cmake
+[15.629s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/cmake/ament_cmake_export_dependencies-extras.cmake
+[15.629s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/cmake/ament_cmake_export_targets-extras.cmake
+[15.629s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/cmake/ament_cmake_export_include_directories-extras.cmake
+[15.629s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/cmake/ament_cmake_export_libraries-extras.cmake
+[15.630s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/cmake/px4_ros_comConfig.cmake
+[15.630s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/cmake/px4_ros_comConfig-version.cmake
+[15.630s] -- Installing: /home/lowjunen/StanfordMSL/TrajBridge/install/px4_ros_com/share/px4_ros_com/package.xml
+[15.637s] Invoked command in '/home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com' returned '0': AMENT_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs:/opt/ros/foxy LD_LIBRARY_PATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/lowjunen/StanfordMSL/TrajBridge/build/px4_ros_com
