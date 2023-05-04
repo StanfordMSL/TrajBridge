@@ -3,9 +3,9 @@
 <package format="3">
   <name>bridge_px4</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="lowjunen@gmail.com">lowjunen</maintainer>
-  <license>TODO: License declaration</license>
+  <description>ROS2 Version of TrajBridge</description>
+  <maintainer email="jelow@stanford.edu">lowjunen</maintainer>
+  <license>MIT License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
