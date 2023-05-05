@@ -1,6 +1,0 @@
-Invoking command in '/home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake /home/lowjunen/StanfordMSL/TrajBridge/src/bridge_px4 -DCMAKE_INSTALL_PREFIX=/home/lowjunen/StanfordMSL/TrajBridge/install/bridge_px4
-Invoked command in '/home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake /home/lowjunen/StanfordMSL/TrajBridge/src/bridge_px4 -DCMAKE_INSTALL_PREFIX=/home/lowjunen/StanfordMSL/TrajBridge/install/bridge_px4
-Invoking command in '/home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4 -- -j12 -l12
-Invoked command in '/home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --build /home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4 -- -j12 -l12
-Invoking command in '/home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4
-Invoked command in '/home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4' returned '0': CMAKE_PREFIX_PATH=/opt/ros/foxy /usr/bin/cmake --install /home/lowjunen/StanfordMSL/TrajBridge/build/bridge_px4
