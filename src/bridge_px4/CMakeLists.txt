@@ -40,7 +40,7 @@ target_include_directories(frame_transforms PUBLIC
 )
 
 # Executables
-add_executable(test_node src/test_node.cpp)
+add_executable(test_node src/bridge_px4/test_node.cpp)
 ament_target_dependencies(test_node rclcpp px4_msgs)
 install(TARGETS test_node DESTINATION lib/${PROJECT_NAME})
 
