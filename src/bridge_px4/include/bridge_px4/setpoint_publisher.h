@@ -6,8 +6,9 @@
  *
  */
 
-#ifndef SETPOINT_PUBLISHER_H
-#define SETPOINT_PUBLISHER_H
+// #ifndef SETPOINT_PUBLISHER_H
+// #define SETPOINT_PUBLISHER_H
+
 
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -19,18 +20,20 @@
 #include <chrono>
 #include <iostream>
 
-// using namespace std::chrono;
-// using namespace std::chrono_literals;
+using namespace std::chrono;
+using namespace std::chrono_literals;
 using namespace px4_msgs::msg;
 
-class SetpointPublisher : public rclcpp::Node 
-{ 
-public:
-   // Constructor
-   SetpointPublisher() : Node("setpoint_publisher_node") {}
-private:
-   rclcpp::TimerBase::SharedPtr timer_;
-};
+// class SetpointPublisher : public rclcpp::Node 
+// { 
+// public:
+//    // Constructor
+//    SetpointPublisher() : Node("setpoint_publisher") {}
+// private:
+//    rclcpp::TimerBase::SharedPtr timer_;
+
+//    void timerCallback();
+// };
 
 
-#endif // FRAME_TRANSFORMS_H
+// #endif // FRAME_TRANSFORMS_H

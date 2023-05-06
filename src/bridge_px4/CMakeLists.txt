@@ -40,9 +40,9 @@ target_include_directories(frame_transforms PUBLIC
 )
 
 # Executables
-add_executable(test_node src/test_node.cpp)
-ament_target_dependencies(test_node rclcpp px4_msgs)
-install(TARGETS test_node DESTINATION lib/${PROJECT_NAME})
+add_executable(setpoint_publisher src/setpoint_publisher.cpp)
+ament_target_dependencies(setpoint_publisher rclcpp px4_msgs)
+install(TARGETS setpoint_publisher DESTINATION lib/${PROJECT_NAME})
 
 ############
 # Install ##
