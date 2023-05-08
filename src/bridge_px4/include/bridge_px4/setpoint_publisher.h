@@ -9,7 +9,7 @@
 // #ifndef SETPOINT_PUBLISHER_H
 // #define SETPOINT_PUBLISHER_H
 
-
+#include <px4_msgs/msg/actuator_motors.hpp>
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>

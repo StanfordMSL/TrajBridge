@@ -6,36 +6,39 @@ class SetpointPublisher : public rclcpp::Node
 public:
     SetpointPublisher() : Node("setpoint_publisher")
     {
-		trajectory_setpoint_publisher_ = this->create_publisher<TrajectorySetpoint>("/fmu/in/test_in", 1);
+		actuator_setpoint_publisher_ = this->create_publisher<ActuatorMotors>("/fmu/in/offboard_actuator_motors", 1);
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(5),
-            std::bind(&SetpointPublisher::publish_trajectory_setpoint, this));
+            std::bind(&SetpointPublisher::publish_actuator_setpoint, this));
     }
 private:
-	rclcpp::Publisher<TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
+	rclcpp::Publisher<ActuatorMotors>::SharedPtr actuator_setpoint_publisher_;
 
-	void publish_trajectory_setpoint();
+	void publish_actuator_setpoint();
 
     rclcpp::TimerBase::SharedPtr timer_;
 };
 
-void SetpointPublisher::publish_trajectory_setpoint()
+void SetpointPublisher::publish_actuator_setpoint()
 {
-	TrajectorySetpoint msg{};
-	msg.position = {0.0, 0.0, -5.0};
-	msg.yaw = -3.14; // [-PI:PI]
+	ActuatorMotors msg{};
+	msg.control = {	0.1, 0.1, 0.1, 0.1,
+					0.0, 0.0, 0.0, 0.0,
+					0.0, 0.0, 0.0, 0.0};
 	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-	trajectory_setpoint_publisher_->publish(msg);}
+	actuator_setpoint_publisher_->publish(msg);
+}
 
 int main(int argc, char **argv)
 {
 	std::cout << "Starting Setpoint Publisher Node." << std::endl;
 
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<SetpointPublisher>();
-  rclcpp::spin(node);
+  	rclcpp::init(argc, argv);
+  	auto node = std::make_shared<SetpointPublisher>();
+  	rclcpp::spin(node);
 	rclcpp::shutdown();
+	
 	return 0;
 }
 
