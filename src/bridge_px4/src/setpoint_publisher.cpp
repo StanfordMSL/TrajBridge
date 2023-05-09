@@ -6,7 +6,7 @@ class SetpointPublisher : public rclcpp::Node
 public:
     SetpointPublisher() : Node("setpoint_publisher")
     {
-		actuator_setpoint_publisher_ = this->create_publisher<ActuatorMotors>("/fmu/in/offboard_actuator_motors", 1);
+		actuator_setpoint_publisher_ = this->create_publisher<ActuatorMotors>("/fmu/in/offboard/actuator_motors", 1);
 
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(5),
