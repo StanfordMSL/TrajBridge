@@ -40,9 +40,9 @@ target_include_directories(frame_transforms PUBLIC
 )
 
 # Executables
-add_executable(setpoint_publisher src/setpoint_publisher.cpp)
-ament_target_dependencies(setpoint_publisher rclcpp px4_msgs)
-install(TARGETS setpoint_publisher DESTINATION lib/${PROJECT_NAME})
+add_executable(offboard_control src/offboard_control.cpp)
+ament_target_dependencies(offboard_control rclcpp px4_msgs)
+install(TARGETS offboard_control DESTINATION lib/${PROJECT_NAME})
 
 ############
 # Install ##
