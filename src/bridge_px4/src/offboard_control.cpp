@@ -5,6 +5,7 @@
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
+#include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <stdint.h>
 
@@ -20,7 +21,19 @@ class OffboardControl : public rclcpp::Node
 public:
 	OffboardControl() : Node("offboard_control")
 	{
+		// Subscribers
+		rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
+		auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 5), qos_profile);
+		
+		subscription_ = this->create_subscription<px4_msgs::msg::VehicleLocalPosition>("/fmu/out/vehicle_local_position", qos,
+		[this](const px4_msgs::msg::VehicleLocalPosition::UniquePtr msg) {
+			px = msg->x;
+			py = msg->y;
+			pz = -msg->z;	
+			std::cout << pz << std::endl;		
+		});
 
+		// Publishers
 		offboard_control_mode_publisher_ = this->create_publisher<OffboardControlMode>("/fmu/in/offboard_control_mode", 10);
 		trajectory_setpoint_publisher_ = this->create_publisher<TrajectorySetpoint>("/fmu/in/trajectory_setpoint", 10);
 		actuator_setpoint_publisher_ = this->create_publisher<VehicleActuatorSetpoint>("/fmu/in/vehicle_actuator_setpoint", 1);
@@ -38,9 +51,13 @@ public:
 				this->arm();
 			}
 
+			if (pz > 4) {
+				act_trig = true;
+			}			
+
 			// offboard_control_mode needs to be paired with trajectory_setpoint
-			publish_offboard_control_mode();
-			// publish_trajectory_setpoint();
+			publish_offboard_control_mode(act_trig);
+			publish_trajectory_setpoint();
 			publish_actuator_setpoint();
 
 			// stop the counter after reaching 11
@@ -57,6 +74,8 @@ public:
 private:
 	rclcpp::TimerBase::SharedPtr timer_;
 
+	rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr subscription_;
+
 	rclcpp::Publisher<OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
 	rclcpp::Publisher<TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
 	rclcpp::Publisher<VehicleActuatorSetpoint>::SharedPtr actuator_setpoint_publisher_;
@@ -64,9 +83,14 @@ private:
 
 	std::atomic<uint64_t> timestamp_;   //!< common synced timestamped
 
+	float px;
+	float py;
+	float pz;
+	bool act_trig{false};
+
 	uint64_t offboard_setpoint_counter_;   //!< counter for the number of setpoints sent
 
-	void publish_offboard_control_mode();
+	void publish_offboard_control_mode(const bool act_trig);
 	void publish_trajectory_setpoint();
 	void publish_actuator_setpoint();
 	void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
@@ -96,15 +120,22 @@ void OffboardControl::disarm()
  * @brief Publish the offboard control mode.
  *        For this example, only position and altitude controls are active.
  */
-void OffboardControl::publish_offboard_control_mode()
+void OffboardControl::publish_offboard_control_mode(const bool act_trig)
 {
 	OffboardControlMode msg{};
-	msg.position = true;
 	msg.velocity = false;
 	msg.acceleration = false;
 	msg.attitude = false;
 	msg.body_rate = false;
-	msg.actuator = false;
+
+	if (act_trig == false) {
+		msg.position = true;
+		msg.actuator = false;
+	} else {
+		msg.position = false;
+		msg.actuator = true;
+	}
+		
 	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
 	offboard_control_mode_publisher_->publish(msg);
 }
@@ -129,7 +160,8 @@ void OffboardControl::publish_trajectory_setpoint()
 void OffboardControl::publish_actuator_setpoint()
 {	
 	VehicleActuatorSetpoint msg{};
-	msg.control = {	0.8, 0.8, 0.8, 0.8 };
+	// msg.control = {	0.8, 0.8, 0.8, 0.8 };
+	msg.control = {	NAN, NAN, NAN, NAN };
 	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
 	actuator_setpoint_publisher_->publish(msg);
 }
