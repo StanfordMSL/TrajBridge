@@ -20,55 +20,28 @@ find_package(ament_cmake REQUIRED)
 find_package(VRPN REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-#################
-# Setup targets #
-#################
-
-include_directories(include)
-
-# Add vrpn_mocap lib
 add_library(vrpn_mocap src/client.cpp src/tracker.cpp)
-ament_target_dependencies(vrpn_mocap rclcpp VRPN std_msgs px4_msgs Eigen3)
 target_include_directories(vrpn_mocap PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}>
-    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
-)
-install(TARGETS vrpn_mocap DESTINATION lib/${PROJECT_NAME})
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(vrpn_mocap rclcpp VRPN std_msgs geometry_msgs px4_msgs Eigen3)
 
-# Executables
+install(TARGETS vrpn_mocap
+        DESTINATION lib/${PROJECT_NAME})
+
 add_executable(client_node src/client_node.cpp)
 target_include_directories(client_node PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}>
-    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
 target_link_libraries(client_node vrpn_mocap)
-install(TARGETS client_node DESTINATION lib/${PROJECT_NAME})
 
-############
-# Install ##
-############
-
-# Export information to downstream packages
-ament_export_dependencies(ament_cmake rclcpp eigen3_cmake_module Eigen3 px4_msgs)
-ament_export_include_directories(include)
-ament_export_include_directories(include)
-ament_export_libraries(vrpn_mocap)
-
-# install launch directory
-install(DIRECTORY launch
-        DESTINATION share/${PROJECT_NAME})
-
-#install config directory
-install(DIRECTORY config
-        DESTINATION share/${PROJECT_NAME})
-
-
-############
-# Testing ##
-############
+install(TARGETS client_node
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -77,5 +50,13 @@ if(BUILD_TESTING)
     rclcpp::rclcpp INTERFACE_INCLUDE_DIRECTORIES)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+# install launch directory
+install(DIRECTORY launch
+        DESTINATION share/${PROJECT_NAME})
+
+#install config directory
+install(DIRECTORY config
+        DESTINATION share/${PROJECT_NAME})
 
 ament_package()

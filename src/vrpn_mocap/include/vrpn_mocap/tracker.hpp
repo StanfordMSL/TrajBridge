@@ -1,38 +1,27 @@
-/****************************************************************************
- * MIT License
- *
- * Copyright (c) 2023 JunEn Low
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- ****************************************************************************/
+// MIT License
+//
+// Copyright (c) 2022 Alvin Sun
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
-/**
- * @brief Tracker node to convert vrpn data to ROS2 topics readable by PX4.
- * @file tracker.hpp
- * @author JunEn Low <jelow@stanford.edu>
- *
- * Adapted from Alvin Sun's tracker.hpp
- */
-
-#ifndef TRACKER_HPP
-#define TRACKER_HPP
+#ifndef VRPN_MOCAP__TRACKER_HPP_
+#define VRPN_MOCAP__TRACKER_HPP_
 
 #include <memory>
 #include <string>
@@ -43,10 +32,17 @@
 #include "vrpn_Tracker.h"
 
 #include "px4_msgs/msg/vehicle_odometry.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "geometry_msgs/msg/accel_stamped.hpp"
+
 #include "rclcpp/rclcpp.hpp"
 
 namespace vrpn_mocap
 {
+
+/**
+ * @brief a ROS2 node for tracking a single object in a VRPN network
+ */
 class Tracker : public rclcpp::Node
 {
 public:
@@ -107,7 +103,10 @@ public:
 
   vrpn_Tracker_Remote vrpn_tracker_;
 
-  std::vector<PublisherT<px4_msgs::msg::VehicleOdometry>::SharedPtr> odom_pubs_;
+  std::vector<PublisherT<px4_msgs::msg::VehicleOdometry>::SharedPtr> pose_pubs_;
+  std::vector<PublisherT<geometry_msgs::msg::TwistStamped>::SharedPtr> twist_pubs_;
+  std::vector<PublisherT<geometry_msgs::msg::AccelStamped>::SharedPtr> accel_pubs_;
+
   rclcpp::TimerBase::SharedPtr timer_;
 
   template<typename MsgT>
@@ -132,10 +131,12 @@ public:
   }
 
   static void VRPN_CALLBACK HandlePose(void * tracker, const vrpn_TRACKERCB tracker_pose);
+  static void VRPN_CALLBACK HandleTwist(void * tracker, const vrpn_TRACKERVELCB tracker_vel);
+  static void VRPN_CALLBACK HandleAccel(void * tracker, const vrpn_TRACKERACCCB tracker_acc);
 
   friend class Client;
 };
 
 }  // namespace vrpn_mocap
 
-#endif  // TRACKER_HPP
+#endif  // VRPN_MOCAP__TRACKER_HPP_
