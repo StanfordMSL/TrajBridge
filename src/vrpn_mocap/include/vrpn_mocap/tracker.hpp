@@ -1,24 +1,35 @@
-// MIT License
-//
-// Copyright (c) 2022 Alvin Sun
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+/****************************************************************************
+ * MIT License
+ *
+ * Copyright (c) 2023 JunEn Low
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ ****************************************************************************/
+
+/**
+ * @brief Tracker node to convert vrpn data to ROS2 topics readable by PX4.
+ * @file tracker.hpp
+ * @author JunEn Low <jelow@stanford.edu>
+ *
+ * Adapted from Alvin Sun's tracker.hpp
+ */
 
 #ifndef TRACKER_HPP
 #define TRACKER_HPP
@@ -27,7 +38,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <math.h>
 
 #include "vrpn_Connection.h"
 #include "vrpn_Tracker.h"
@@ -37,10 +47,6 @@
 
 namespace vrpn_mocap
 {
-
-/**
- * @brief a ROS2 node for tracking a single object in a VRPN network
- */
 class Tracker : public rclcpp::Node
 {
 public:
@@ -126,11 +132,10 @@ public:
   }
 
   static void VRPN_CALLBACK HandlePose(void * tracker, const vrpn_TRACKERCB tracker_pose);
-  static void VRPN_CALLBACK HandleTwist(void * tracker, const vrpn_TRACKERVELCB tracker_vel);
 
   friend class Client;
 };
 
 }  // namespace vrpn_mocap
 
-#endif  // VRPN_MOCAP__TRACKER_HPP_
+#endif  // TRACKER_HPP
