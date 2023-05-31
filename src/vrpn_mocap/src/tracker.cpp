@@ -22,19 +22,18 @@
 
 #include "vrpn_mocap/tracker.hpp"
 
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Geometry>
 #include <chrono>
 #include <functional>
 #include <memory>
 #include <regex>
 #include <string>
+#include <math.h>
 
 namespace vrpn_mocap
 {
 
-using geometry_msgs::msg::AccelStamped;
-using geometry_msgs::msg::PoseStamped;
-using geometry_msgs::msg::TwistStamped;
+using px4_msgs::msg::VehicleOdometry;
 using namespace std::chrono_literals;
 
 std::string Tracker::ValidNodeName(const std::string & tracker_name)
@@ -77,7 +76,6 @@ Tracker::~Tracker()
 {
   vrpn_tracker_.unregister_change_handler(this, &Tracker::HandlePose);
   vrpn_tracker_.unregister_change_handler(this, &Tracker::HandleTwist);
-  vrpn_tracker_.unregister_change_handler(this, &Tracker::HandleAccel);
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Destroyed new tracker " << name_);
 }
@@ -86,7 +84,6 @@ void Tracker::Init()
 {
   vrpn_tracker_.register_change_handler(this, &Tracker::HandlePose);
   vrpn_tracker_.register_change_handler(this, &Tracker::HandleTwist);
-  vrpn_tracker_.register_change_handler(this, &Tracker::HandleAccel);
   vrpn_tracker_.shutup = true;
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Created new tracker " << name_);
@@ -99,23 +96,32 @@ void VRPN_CALLBACK Tracker::HandlePose(void * data, const vrpn_TRACKERCB tracker
   Tracker * tracker = static_cast<Tracker *>(data);
 
   // lazy initialization of publisher
-  auto pub = tracker->GetOrCreatePublisher<PoseStamped>(
-    static_cast<size_t>(tracker_pose.sensor), "pose", &tracker->pose_pubs_);
+  auto pub = tracker->GetOrCreatePublisher<VehicleOdometry>(
+    static_cast<size_t>(tracker_pose.sensor), "vodom", &tracker->odom_pubs_);
 
   // populate message
-  PoseStamped msg;
-  msg.header.frame_id = tracker->frame_id_;
-  msg.header.stamp = tracker->get_clock()->now();
+  px4_msgs::msg::VehicleOdometry msg;
 
-  msg.pose.position.x = tracker_pose.pos[0];
-  msg.pose.position.y = tracker_pose.pos[1];
-  msg.pose.position.z = tracker_pose.pos[2];
+  msg.timestamp = tracker->get_clock()->now().seconds();
+  
+  msg.pose_frame = msg.POSE_FRAME_NED;
+  msg.position[0] = tracker_pose.pos[0];
+  msg.position[1] = tracker_pose.pos[1];
+  msg.position[2] = tracker_pose.pos[2];
 
-  msg.pose.orientation.x = tracker_pose.quat[0];
-  msg.pose.orientation.y = tracker_pose.quat[1];
-  msg.pose.orientation.z = tracker_pose.quat[2];
-  msg.pose.orientation.w = tracker_pose.quat[3];
+  msg.q[0] = tracker_pose.quat[0];
+  msg.q[1] = tracker_pose.quat[1];
+  msg.q[2] = tracker_pose.quat[2];
+  msg.q[3] = tracker_pose.quat[3];
 
+  msg.velocity_frame = msg.VELOCITY_FRAME_UNKNOWN;
+  msg.velocity = {NAN,NAN,NAN};
+  msg.angular_velocity = {NAN,NAN,NAN};
+
+  msg.position_variance = {NAN,NAN,NAN};
+  msg.orientation_variance = {NAN,NAN,NAN};
+  msg.velocity_variance = {NAN,NAN,NAN};
+  
   pub->publish(msg);
 }
 
@@ -123,58 +129,42 @@ void VRPN_CALLBACK Tracker::HandleTwist(void * data, const vrpn_TRACKERVELCB tra
 {
   Tracker * tracker = static_cast<Tracker *>(data);
 
-  // lazy initialization of publisher
-  auto pub = tracker->GetOrCreatePublisher<TwistStamped>(
-    static_cast<size_t>(tracker_twist.sensor), "pose", &tracker->twist_pubs_);
-
-  // populate message
-  TwistStamped msg;
-  msg.header.frame_id = tracker->frame_id_;
-  msg.header.stamp = tracker->get_clock()->now();
-
-  msg.twist.linear.x = tracker_twist.vel[0];
-  msg.twist.linear.y = tracker_twist.vel[1];
-  msg.twist.linear.z = tracker_twist.vel[2];
-
+  // Some math
   const Eigen::Quaterniond quat(
     tracker_twist.vel_quat[3], tracker_twist.vel_quat[0], tracker_twist.vel_quat[1],
     tracker_twist.vel_quat[2]);
   const Eigen::AngleAxisd axis_ang(quat);
   const Eigen::Vector3d rot_vel = axis_ang.axis() * axis_ang.angle() / tracker_twist.vel_quat_dt;
-  msg.twist.angular.x = rot_vel.x();
-  msg.twist.angular.y = rot_vel.y();
-  msg.twist.angular.z = rot_vel.z();
-
-  pub->publish(msg);
-}
-
-void VRPN_CALLBACK Tracker::HandleAccel(void * data, const vrpn_TRACKERACCCB tracker_accel)
-{
-  Tracker * tracker = static_cast<Tracker *>(data);
 
   // lazy initialization of publisher
-  auto pub = tracker->GetOrCreatePublisher<AccelStamped>(
-    static_cast<size_t>(tracker_accel.sensor), "accel", &tracker->accel_pubs_);
+  auto pub = tracker->GetOrCreatePublisher<VehicleOdometry>(
+    static_cast<size_t>(tracker_twist.sensor), "vodom", &tracker->odom_pubs_);
 
   // populate message
-  AccelStamped msg;
-  msg.header.frame_id = tracker->frame_id_;
-  msg.header.stamp = tracker->get_clock()->now();
+  px4_msgs::msg::VehicleOdometry msg;
 
-  msg.accel.linear.x = tracker_accel.acc[0];
-  msg.accel.linear.y = tracker_accel.acc[1];
-  msg.accel.linear.z = tracker_accel.acc[2];
+  msg.timestamp = tracker->get_clock()->now().seconds();
 
-  const Eigen::Quaterniond quat(
-    tracker_accel.acc_quat[3], tracker_accel.acc_quat[0], tracker_accel.acc_quat[1],
-    tracker_accel.acc_quat[2]);
-  const Eigen::AngleAxisd axis_ang(quat);
-  const Eigen::Vector3d rot_acc = axis_ang.axis() * axis_ang.angle() / tracker_accel.acc_quat_dt;
-  msg.accel.angular.x = rot_acc.x();
-  msg.accel.angular.y = rot_acc.y();
-  msg.accel.angular.z = rot_acc.z();
+  msg.pose_frame = msg.POSE_FRAME_NED;
+  msg.position = {NAN,NAN,NAN};
+  msg.q = {NAN,NAN,NAN,NAN};
 
+  msg.velocity_frame = msg.VELOCITY_FRAME_UNKNOWN;
+  msg.velocity[0] = tracker_twist.vel[0];
+  msg.velocity[1] = tracker_twist.vel[1];
+  msg.velocity[2] = tracker_twist.vel[2];
+
+  msg.angular_velocity[0] = rot_vel.x();
+  msg.angular_velocity[1] = rot_vel.y();
+  msg.angular_velocity[2] = rot_vel.z();
+
+  msg.position_variance = {NAN,NAN,NAN};
+  msg.orientation_variance = {NAN,NAN,NAN};
+  msg.velocity_variance = {NAN,NAN,NAN};
+  
   pub->publish(msg);
+
 }
+
 
 }  // namespace vrpn_mocap

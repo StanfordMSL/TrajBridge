@@ -159,11 +159,11 @@ void OffboardControl::publish_trajectory_setpoint()
  */
 void OffboardControl::publish_actuator_setpoint()
 {	
-	VehicleActuatorSetpoint msg{};
-	// msg.control = {	0.8, 0.8, 0.8, 0.8 };
-	msg.control = {	NAN, NAN, NAN, NAN };
-	msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-	actuator_setpoint_publisher_->publish(msg);
+	// VehicleActuatorSetpoint msg{};
+	// // msg.control = {	0.8, 0.8, 0.8, 0.8 };
+	// msg.control = {	NAN, NAN, NAN, NAN };
+	// msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
+	// actuator_setpoint_publisher_->publish(msg);
 }
 
 /**

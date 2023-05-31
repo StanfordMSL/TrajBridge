@@ -20,20 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef VRPN_MOCAP__TRACKER_HPP_
-#define VRPN_MOCAP__TRACKER_HPP_
+#ifndef TRACKER_HPP
+#define TRACKER_HPP
 
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+#include <math.h>
 
 #include "vrpn_Connection.h"
 #include "vrpn_Tracker.h"
 
-#include "geometry_msgs/msg/accel_stamped.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "px4_msgs/msg/vehicle_odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 namespace vrpn_mocap
@@ -102,10 +101,7 @@ public:
 
   vrpn_Tracker_Remote vrpn_tracker_;
 
-  std::vector<PublisherT<geometry_msgs::msg::PoseStamped>::SharedPtr> pose_pubs_;
-  std::vector<PublisherT<geometry_msgs::msg::TwistStamped>::SharedPtr> twist_pubs_;
-  std::vector<PublisherT<geometry_msgs::msg::AccelStamped>::SharedPtr> accel_pubs_;
-
+  std::vector<PublisherT<px4_msgs::msg::VehicleOdometry>::SharedPtr> odom_pubs_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   template<typename MsgT>
@@ -131,7 +127,6 @@ public:
 
   static void VRPN_CALLBACK HandlePose(void * tracker, const vrpn_TRACKERCB tracker_pose);
   static void VRPN_CALLBACK HandleTwist(void * tracker, const vrpn_TRACKERVELCB tracker_vel);
-  static void VRPN_CALLBACK HandleAccel(void * tracker, const vrpn_TRACKERACCCB tracker_acc);
 
   friend class Client;
 };

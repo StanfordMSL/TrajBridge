@@ -39,10 +39,10 @@ target_include_directories(frame_transforms PUBLIC
 	$<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
-# Executables
-add_executable(offboard_control src/offboard_control.cpp)
-ament_target_dependencies(offboard_control rclcpp px4_msgs)
-install(TARGETS offboard_control DESTINATION lib/${PROJECT_NAME})
+# # Executables
+# add_executable(offboard_control src/offboard_control.cpp)
+# ament_target_dependencies(offboard_control rclcpp px4_msgs)
+# install(TARGETS offboard_control DESTINATION lib/${PROJECT_NAME})
 
 ############
 # Install ##

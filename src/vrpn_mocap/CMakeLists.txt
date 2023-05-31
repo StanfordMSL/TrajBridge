@@ -24,39 +24,38 @@ find_package(px4_msgs REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+#################
+# Setup targets #
+#################
+
+include_directories(include)
+
+# Add vrpn_mocap lib
 add_library(vrpn_mocap src/client.cpp src/tracker.cpp)
-target_include_directories(vrpn_mocap PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(vrpn_mocap rclcpp VRPN std_msgs px4_msgs Eigen3)
+target_include_directories(vrpn_mocap PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}>
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+)
+install(TARGETS vrpn_mocap DESTINATION lib/${PROJECT_NAME})
 
-install(TARGETS vrpn_mocap
-        DESTINATION lib/${PROJECT_NAME})
-
+# Executables
 add_executable(client_node src/client_node.cpp)
 target_include_directories(client_node PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}>
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 target_link_libraries(client_node vrpn_mocap)
+install(TARGETS client_node DESTINATION lib/${PROJECT_NAME})
 
-install(TARGETS client_node
-  DESTINATION lib/${PROJECT_NAME})
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # add rclcpp include dir to ament_cppcheck
-  get_target_property(ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS
-    rclcpp::rclcpp INTERFACE_INCLUDE_DIRECTORIES)
-  ament_lint_auto_find_test_dependencies()
-endif()
+############
+# Install ##
+############
 
 # Export information to downstream packages
-ament_export_dependencies(ament_cmake rclcpp rosidl_default_runtime eigen3_cmake_module Eigen3 px4_msgs)
-
-ament_export_targets(export_frame_transforms HAS_LIBRARY_TARGET)
-
+ament_export_dependencies(ament_cmake rclcpp eigen3_cmake_module Eigen3 px4_msgs)
 ament_export_include_directories(include)
-ament_export_libraries(frame_transforms)
+ament_export_include_directories(include)
+ament_export_libraries(vrpn_mocap)
 
 # install launch directory
 install(DIRECTORY launch
@@ -65,5 +64,18 @@ install(DIRECTORY launch
 #install config directory
 install(DIRECTORY config
         DESTINATION share/${PROJECT_NAME})
+
+
+############
+# Testing ##
+############
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # add rclcpp include dir to ament_cppcheck
+  get_target_property(ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS
+    rclcpp::rclcpp INTERFACE_INCLUDE_DIRECTORIES)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_package()
