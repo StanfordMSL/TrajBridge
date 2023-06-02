@@ -65,7 +65,8 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "bit": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "unordered_set": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages",
