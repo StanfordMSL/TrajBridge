@@ -113,10 +113,10 @@ void VRPN_CALLBACK Tracker::HandlePose(void * data, const vrpn_TRACKERCB tracker
   msg.position[1] = tracker_pose.pos[2];
   msg.position[2] = -tracker_pose.pos[1];
 
-  msg.q[0] = tracker_pose.quat[3];
-  msg.q[1] = tracker_pose.quat[0];
-  msg.q[2] = tracker_pose.quat[2];
-  msg.q[3] = -tracker_pose.quat[1];
+  msg.q[0] = tracker_pose.quat[0];
+  msg.q[1] = tracker_pose.quat[1];
+  msg.q[2] = tracker_pose.quat[3];
+  msg.q[3] = -tracker_pose.quat[2];
 
   msg.velocity_frame = msg.VELOCITY_FRAME_UNKNOWN;
   msg.velocity = {NAN,NAN,NAN};
