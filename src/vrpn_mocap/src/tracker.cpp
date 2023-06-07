@@ -101,7 +101,7 @@ void VRPN_CALLBACK Tracker::HandlePose(void * data, const vrpn_TRACKERCB tracker
 
   // lazy initialization of publisher
   auto pub = tracker->GetOrCreatePublisher<VehicleOdometry>(
-    static_cast<size_t>(tracker_pose.sensor), "in/vehicle_mocap_odometry", &tracker->pose_pubs_);
+    static_cast<size_t>(tracker_pose.sensor), "in/vehicle_visual_odometry", &tracker->pose_pubs_);
 
   // populate message
   VehicleOdometry msg;
