@@ -10,9 +10,11 @@ SetpointPublisher::SetpointPublisher()
     // ROS Initialization
     pos_sp_sub  = nh.subscribe("setpoint/position",1,&SetpointPublisher::pos_sp_cb,this);
     att_sp_sub  = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this);
+    vel_sp_sub  = nh.subscribe("setpoint/velocity",1,&SetpointPublisher::vel_sp_cb,this);
 
     pose_sp_pub  = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
-
+    twst_sp_pub  = nh.advertise<geometry_msgs::Twist>("mavros/setpoint_velocity/cmd_vel_unstamped",1);
+    
     pose_curr_sub = nh.subscribe("mavros/local_position/pose",10,&SetpointPublisher::pose_curr_cb,this);
     mav_state_sub = nh.subscribe("mavros/state",1,&SetpointPublisher::mav_state_cb,this);
 
@@ -28,6 +30,7 @@ SetpointPublisher::SetpointPublisher()
     ep_stream_state = EP_INIT;
     ob_mode_state   = OB_INIT;
     sp_stream_state = SP_INIT;
+    sp_type_state   = TP_NONE;
     ROS_INFO("State Machines Initialized.");
     ROS_INFO("SP_PUB_STATE: STARTUP");
 
@@ -40,6 +43,7 @@ SetpointPublisher::SetpointPublisher()
     quat_forward.z = 0.0;
     pos_check = false;
     att_check = false;
+    vel_check = false;
 
     // Stream Timer Checks
     ROS_INFO("Timers Initialized.");
@@ -59,6 +63,12 @@ void SetpointPublisher::att_sp_cb(const geometry_msgs::QuaternionStamped::ConstP
     sp_stream_state = SP_ON;
     att_check = true;
     att_sp_in = *msg;
+}
+
+void SetpointPublisher::vel_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg){
+    sp_stream_state = SP_ON;
+    vel_check = true;
+    vel_sp_in = *msg;
 }
 
 void SetpointPublisher::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
@@ -90,7 +100,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         pose_st = pose_sa;
 
         pose_sp_out.pose = pose_sa;
-        pub_sp();
+        pub_sp_pose();
 
         // State Transition
         if ((ep_stream_state == EP_ON) && (ob_mode_state == OB_OFF))
@@ -117,7 +127,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         pose_st = pose_sa;
 
         pose_sp_out.pose = pose_sa;
-        pub_sp();
+        pub_sp_pose();
 
         // State Transition
         if (ep_stream_state == EP_OFF)
@@ -150,7 +160,7 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         pose_st.position.z = 0.0;
 
         pose_sp_out.pose = pose_sa;
-        pub_sp();
+        pub_sp_pose();
 
         // State Transition
         if (ep_stream_state == EP_OFF)
@@ -176,15 +186,9 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
         // Do State Tasks
         ROS_DEBUG("ACTIVE");
 
+        pub_sp_active();
+
         pose_sa = pose_curr.pose;
-        
-        pose_sp_out.pose.position.x = pos_sp_in.point.x + pose_st.position.x;
-        pose_sp_out.pose.position.y = pos_sp_in.point.y + pose_st.position.y;
-        pose_sp_out.pose.position.z = pos_sp_in.point.z + pose_st.position.z;
-
-
-        pose_sp_out.pose.orientation = att_sp_in.quaternion;
-        pub_sp();
 
         // State Transition
         if ( (ep_stream_state == EP_ON) && (ob_mode_state == OB_OFF) ) {
@@ -222,18 +226,21 @@ void SetpointPublisher::setpoint_cb(const ros::TimerEvent& event)
 }
 
 void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
+    sp_type_assign();
+
     // Current Time
     ros::Time t_now = ros::Time::now();
 
     // Check if Target States are Publishing
     pos_check = ((t_now - pos_sp_in.header.stamp) < dt_max) ? true : false;
     att_check = ((t_now - att_sp_in.header.stamp) < dt_max) ? true : false;
+    vel_check = ((t_now - vel_sp_in.header.stamp) < dt_max) ? true : false;
 
-    if ((pos_check == false) && (att_check == false)) {
+    if ((pos_check == false) && (att_check == false) && (vel_check == false)) {
         sp_stream_state = SP_OFF;
     }
     
-    // Check if Target States are Publishing
+    // Check if Current States are Publishing
     if ((t_now - pose_curr.header.stamp) < dt_max) {
         ep_stream_state = EP_ON;
     } else {
@@ -241,17 +248,17 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     }
 
     // Check if Drone is in Safe Ball
-    Eigen::Vector3f err_pos;
-    err_pos <<  pose_curr.pose.position.x - pose_sp_out.pose.position.x,
-                pose_curr.pose.position.y - pose_sp_out.pose.position.y,
-                pose_curr.pose.position.z - pose_sp_out.pose.position.z;
+    // Eigen::Vector3f err_pos;
+    // err_pos <<  pose_curr.pose.position.x - pose_sp_out.pose.position.x,
+    //             pose_curr.pose.position.y - pose_sp_out.pose.position.y,
+    //             pose_curr.pose.position.z - pose_sp_out.pose.position.z;
 
-    if (err_pos.norm() > r_fs) {
-        land();
+    // if (err_pos.norm() > r_fs) {
+    //     land();
 
-        sp_pub_state = STARTUP;
-        ROS_INFO("SP_PUB_STATE: INIT");
-    }
+    //     sp_pub_state = STARTUP;
+    //     ROS_INFO("SP_PUB_STATE: INIT");
+    // }
 }
 
 void SetpointPublisher::land() {
@@ -264,7 +271,48 @@ void SetpointPublisher::land() {
     // }
 }
 
-void SetpointPublisher::pub_sp() {
+void SetpointPublisher::sp_type_assign() {
+    if ((pos_check == true) && (att_check == true)) {
+        sp_type_state = TP_POSE;
+    } else if (vel_check == true) {
+        sp_type_state = TP_TWST;
+    } else {
+        sp_type_state = TP_NONE;
+    }
+
+    // ros::Time t_now = ros::Time::now();
+    // vector<double> delta_t(2, 0);
+
+    // delta_t[0] = t_now.toSec() - pos_sp_in.header.stamp.toSec();
+    // delta_t[1] = t_now.toSec() - vel_sp_in.header.stamp.toSec();
+
+    // int count = 0;
+    // int idx = 0;
+    // for (int i = 0 ; i<2 ; i++) {
+    //     if ( delta_t[i] < (1/sp_gcs_hz_min) ) {
+    //         count++;
+    //         idx = i;
+    //     }
+    // }
+
+    // if (count != 1) {
+    //     t_last = ros::Duration(999);
+
+    //     sp_type_state = TP_NONE;
+    // } else {
+    //     t_last = ros::Duration(delta_t[idx]);
+
+    //     if (idx == 0) {
+    //         sp_type_state = TP_POSE;
+    //         // ROS_INFO("Target POSE Mode");
+    //     } else if (idx == 1) {
+    //         sp_type_state = TP_TWST;
+    //         //ROS_INFO("Target TWIST Mode");
+    //     }
+    // }
+}
+
+void SetpointPublisher::pub_sp_pose() {
     ros::Time t_now = ros::Time::now();
 
     pose_sp_out.header.stamp = t_now;
@@ -272,6 +320,40 @@ void SetpointPublisher::pub_sp() {
 
     pose_sp_pub.publish(pose_sp_out);
 
+}
+
+void SetpointPublisher::pub_sp_twst() {
+    twst_sp_pub.publish(twst_sp_out);
+}
+
+void SetpointPublisher::pub_sp_active() {
+    switch (sp_type_state)
+    {
+    case TP_NONE:
+    {
+        sp_stream_state = SP_OFF;
+        ROS_INFO("Trajectory Complete/Stopped");
+    }
+    break;
+    case TP_POSE:
+    {
+        pose_sp_out.pose.position    = pos_sp_in.point;
+        pose_sp_out.pose.orientation = att_sp_in.quaternion;
+        pub_sp_pose();
+    }
+    break;
+    case TP_TWST:
+    {
+        twst_sp_out.linear = vel_sp_in.vector;
+        pub_sp_twst();
+    }
+    break;
+    default:
+    {
+        sp_stream_state = SP_OFF;
+        ROS_INFO("STREAM TYPE UNKNOWN");
+    }
+    }
 }
 
 int main(int argc, char **argv)

@@ -19,6 +19,7 @@
 #include <mavros_msgs/Thrust.h>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Twist.h>
 
 #include <mavros_msgs/PositionTarget.h>
 #include <mavros_msgs/AttitudeTarget.h>
@@ -66,6 +67,12 @@ private:
       SP_OFF,
    } sp_stream_state;
 
+   enum sp_type_state_machine {                  // Setpoint Stream (out)
+      TP_NONE,
+      TP_POSE,
+      TP_TWST,
+   } sp_type_state;
+
    // Constants
    geometry_msgs::Quaternion quat_forward;         // Front Facing Attitude
 
@@ -79,9 +86,11 @@ private:
    // Setpoint Subscribers
    ros::Subscriber    pos_sp_sub;                  // Setpoint (In) Position
    ros::Subscriber    att_sp_sub;                  // Setpoint (In) Attitude
-
+   ros::Subscriber    vel_sp_sub;                  // Setpoint (In) Velocity
+   
    // Setpoint Publishers
    ros::Publisher     pose_sp_pub;                 // Position Target (position, velocity, acceleration)
+   ros::Publisher     twst_sp_pub;                 // Velocity Target
 
    // Drone State/Status Subscribers
    ros::Subscriber    pose_curr_sub;               // Drone's Current Pose 
@@ -97,9 +106,11 @@ private:
    // Quad Setpoints (In)
    geometry_msgs::PointStamped       pos_sp_in;    // Setpoint (In) Position
    geometry_msgs::QuaternionStamped  att_sp_in;    // Setpoint (In) Attitude
+   geometry_msgs::Vector3Stamped     vel_sp_in;    // Setpoint (In) Velocity
 
    // Quad Setpoints (Out)
    geometry_msgs::PoseStamped pose_sp_out;        // Setpoint Attitude (body rate, orientation, thrust) In
+   geometry_msgs::Twist       twst_sp_out;        // Setpoint Velocity 
 
    // Quad Parameters
    geometry_msgs::PoseStamped  pose_curr;          // Current Pose
@@ -114,10 +125,12 @@ private:
    ros::Duration dt_max;                           // Maximum time without without target setpoints 
    bool pos_check;                                 // Checker for Setpoint (In) Position Topic
    bool att_check;                                 // Checker for Setpoint (In) Linear Velocity Topic
+   bool vel_check;                                 // Checker for Setpoint (In) Linear Velocity Topic
 
    // Input Functions
    void pos_sp_cb(const geometry_msgs::PointStamped::ConstPtr& msg);           // Update Setpoint Position
    void att_sp_cb(const geometry_msgs::QuaternionStamped::ConstPtr& msg);      // Update Setpoint Attitude
+   void vel_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg);         // Update Setpoint Velocity
 
    // Node State Functions
    void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);  // Update Current Position
@@ -126,7 +139,10 @@ private:
 
    // Output Functions
    void setpoint_cb(const ros::TimerEvent& event);                      // State Machine Loop
-   void pub_sp();                                                       // Publish Setpoint
+   void pub_sp_active();
+   void pub_sp_pose();
+   void pub_sp_twst();                                                       // Publish Setpoint
+   void sp_type_assign();
 
    // Service Function
    void land();                                                         // Landing
