@@ -5,3 +5,13 @@ launch:
     exec: "offboard_control"
     name: "offboard_control"
     output: "screen"
+    param:
+    -
+        name: "pos_ref"
+        value: [0.0, 0.0, -1.0]
+    -
+        name: "lim_safe"
+        value:  1.2
+    -
+        name: "lim_test"
+        value: 0.1
