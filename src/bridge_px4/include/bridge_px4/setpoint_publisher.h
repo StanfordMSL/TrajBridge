@@ -87,6 +87,7 @@ private:
    ros::Subscriber    pos_sp_sub;                  // Setpoint (In) Position
    ros::Subscriber    att_sp_sub;                  // Setpoint (In) Attitude
    ros::Subscriber    vel_sp_sub;                  // Setpoint (In) Velocity
+   ros::Subscriber    bdr_sp_sub;                  // Setpoint (In) BodyRate
    
    // Setpoint Publishers
    ros::Publisher     pose_sp_pub;                 // Position Target (position, velocity, acceleration)
@@ -107,6 +108,7 @@ private:
    geometry_msgs::PointStamped       pos_sp_in;    // Setpoint (In) Position
    geometry_msgs::QuaternionStamped  att_sp_in;    // Setpoint (In) Attitude
    geometry_msgs::Vector3Stamped     vel_sp_in;    // Setpoint (In) Velocity
+   geometry_msgs::Vector3Stamped     bdr_sp_in;    // Setpoint (In) BodyRate
 
    // Quad Setpoints (Out)
    geometry_msgs::PoseStamped pose_sp_out;        // Setpoint Attitude (body rate, orientation, thrust) In
@@ -126,11 +128,13 @@ private:
    bool pos_check;                                 // Checker for Setpoint (In) Position Topic
    bool att_check;                                 // Checker for Setpoint (In) Linear Velocity Topic
    bool vel_check;                                 // Checker for Setpoint (In) Linear Velocity Topic
+   bool bdr_check;                                 // Checker for Setpoint (In) Angular Velocity Topic
 
    // Input Functions
    void pos_sp_cb(const geometry_msgs::PointStamped::ConstPtr& msg);           // Update Setpoint Position
    void att_sp_cb(const geometry_msgs::QuaternionStamped::ConstPtr& msg);      // Update Setpoint Attitude
    void vel_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg);         // Update Setpoint Velocity
+   void bdr_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg);         // Update Setpoint BodyRate
 
    // Node State Functions
    void pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);  // Update Current Position

@@ -8,9 +8,10 @@ SetpointPublisher::SetpointPublisher()
     ros::param::get("~r_fs",r_fs);
 
     // ROS Initialization
-    pos_sp_sub  = nh.subscribe("setpoint/position",1,&SetpointPublisher::pos_sp_cb,this);
-    att_sp_sub  = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this);
-    vel_sp_sub  = nh.subscribe("setpoint/velocity",1,&SetpointPublisher::vel_sp_cb,this);
+    pos_sp_sub = nh.subscribe("setpoint/position",1,&SetpointPublisher::pos_sp_cb,this);
+    att_sp_sub = nh.subscribe("setpoint/attitude",1,&SetpointPublisher::att_sp_cb,this);
+    vel_sp_sub = nh.subscribe("setpoint/velocity",1,&SetpointPublisher::vel_sp_cb,this);
+    bdr_sp_sub = nh.subscribe("setpoint/bodyrate",1,&SetpointPublisher::bdr_sp_cb,this); 
 
     pose_sp_pub  = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local",1);
     twst_sp_pub  = nh.advertise<geometry_msgs::Twist>("mavros/setpoint_velocity/cmd_vel_unstamped",1);
@@ -44,6 +45,7 @@ SetpointPublisher::SetpointPublisher()
     pos_check = false;
     att_check = false;
     vel_check = false;
+    bdr_check = false;
 
     // Stream Timer Checks
     ROS_INFO("Timers Initialized.");
@@ -69,6 +71,12 @@ void SetpointPublisher::vel_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr&
     sp_stream_state = SP_ON;
     vel_check = true;
     vel_sp_in = *msg;
+}
+
+void SetpointPublisher::bdr_sp_cb(const geometry_msgs::Vector3Stamped::ConstPtr& msg){
+    sp_stream_state = SP_ON;
+    bdr_check = true;
+    bdr_sp_in = *msg;
 }
 
 void SetpointPublisher::pose_curr_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
@@ -235,8 +243,9 @@ void SetpointPublisher::checkup_cb(const ros::TimerEvent& event) {
     pos_check = ((t_now - pos_sp_in.header.stamp) < dt_max) ? true : false;
     att_check = ((t_now - att_sp_in.header.stamp) < dt_max) ? true : false;
     vel_check = ((t_now - vel_sp_in.header.stamp) < dt_max) ? true : false;
+    bdr_check = ((t_now - bdr_sp_in.header.stamp) < dt_max) ? true : false;
 
-    if ((pos_check == false) && (att_check == false) && (vel_check == false)) {
+    if ((pos_check == false) && (att_check == false) && (vel_check == false) && (bdr_check == false)) {
         sp_stream_state = SP_OFF;
     }
     
@@ -274,7 +283,7 @@ void SetpointPublisher::land() {
 void SetpointPublisher::sp_type_assign() {
     if ((pos_check == true) && (att_check == true)) {
         sp_type_state = TP_POSE;
-    } else if (vel_check == true) {
+    } else if ((vel_check == true) && (bdr_check == true)) {
         sp_type_state = TP_TWST;
     } else {
         sp_type_state = TP_NONE;
@@ -344,7 +353,8 @@ void SetpointPublisher::pub_sp_active() {
     break;
     case TP_TWST:
     {
-        twst_sp_out.linear = vel_sp_in.vector;
+        twst_sp_out.linear  = vel_sp_in.vector;
+        twst_sp_out.angular = bdr_sp_in.vector;
         pub_sp_twst();
     }
     break;
