@@ -106,7 +106,7 @@ void VRPN_CALLBACK Tracker::HandlePose(void * data, const vrpn_TRACKERCB tracker
   // populate message
   VehicleOdometry msg;
 
-  msg.timestamp = tracker->get_clock()->now().seconds();
+  msg.timestamp = (int)(tracker->get_clock()->now().nanoseconds() / 1000);
   
   msg.pose_frame = msg.POSE_FRAME_FRD;
   msg.position[0] = tracker_pose.pos[0];
