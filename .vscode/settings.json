@@ -1,0 +1,13 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/lowjunen/StanfordMSL/TrajBridge/install/ros2_comm/lib/python3.8/site-packages",
+        "/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages",
+        "/opt/ros/foxy/lib/python3.8/site-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/lowjunen/StanfordMSL/TrajBridge/install/ros2_comm/lib/python3.8/site-packages",
+        "/home/lowjunen/StanfordMSL/TrajBridge/install/px4_msgs/lib/python3.8/site-packages",
+        "/opt/ros/foxy/lib/python3.8/site-packages"
+    ],
+    "git.ignoreLimitWarning": true
+}
