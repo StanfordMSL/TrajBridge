@@ -2,7 +2,7 @@ from enum import Enum
 
 class StateMachine(Enum):
     """Enum class for pilot state."""
-    IDLE = 0
+    STARTUP = 0
     TAKEOFF = 1
     WAYPOINT = 2
     READY = 3

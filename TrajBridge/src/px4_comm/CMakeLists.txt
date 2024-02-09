@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(ros2_comm)
+project(px4_comm)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -28,21 +28,22 @@ find_package(px4_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-# # Generate ROS2 messages
-# rosidl_generate_interfaces(${PROJECT_NAME}
-#   "msg/HorizonSetpoint.msg"
-# )
+# Generate ROS2 messages
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/SampleMsg.msg"
+)
 
 # Include Cpp "include" directory
 include_directories(include)
 
+# cpp_sample_node
+add_executable(cpp_sample_node src/cpp_sample_node.cpp)
+ament_target_dependencies(cpp_sample_node rclcpp px4_msgs)
+install(TARGETS cpp_sample_node DESTINATION lib/${PROJECT_NAME})
+
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
-# Install Mission files
-install(DIRECTORY
-  DESTINATION lib/${PROJECT_NAME}
-)
 # Install Launch files
 install(DIRECTORY
   launch
@@ -51,10 +52,7 @@ install(DIRECTORY
 
 # Install Python executables
 install(PROGRAMS
-  scripts/setpoint_position.py
-  scripts/state_machine.py
+  scripts/state_machine_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
-
-
 ament_package()

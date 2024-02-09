@@ -2,9 +2,9 @@
 
 import numpy as np
 
-import sfti_ros_com.ball_timer as bt
-import sfti_ros_com.offboard_controller as oc
-import sfti_ros_com.states_modes as sm
+import px4_comm.ball_timer as bt
+import px4_comm.offboard_controller as oc
+import px4_comm.states_modes as sm
 
 import rclpy
 from rclpy.node import Node
@@ -77,7 +77,7 @@ class StateMachine(Node):
         self.ams_sp = ActuatorMotors()                                  # actuator motors setpoint command
         
         # Initialize state machine variables
-        self.drone_state = sm.StateMachine.IDLE                         # drone state
+        self.drone_state = sm.StateMachine.STARTUP                         # drone state
         self.publisher_mode = sm.PublisherMode.STATE_MACHINE_WP         # publisher mode
         self.smp_sp = TrajectorySetpoint()                              # state machine position setpoint command
         self.wp_rdy = np.array(wp_rdy)                                  # state machine ready waypoint

@@ -9,7 +9,7 @@ from px4_msgs.msg import (
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 
-import sfti_ros_com.states_modes as sm
+import px4_comm.states_modes as sm
 
 class OffboardController():
     '''
