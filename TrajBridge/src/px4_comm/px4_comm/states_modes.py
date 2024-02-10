@@ -2,13 +2,14 @@ from enum import Enum
 
 class StateMachine(Enum):
     """Enum class for pilot state."""
-    STARTUP = 0
-    TAKEOFF = 1
-    WAYPOINT = 2
-    READY = 3
-    ACTIVE = 4
-    HOVER = 5
-    LAND = 6
+    STARTUP_AUTO = 0
+    STARTUP_USER = 1
+    TAKEOFF = 2
+    WAYPOINT = 3
+    READY = 4
+    ACTIVE = 5
+    HOVER = 6
+    LAND = 7
 
 class PublisherMode(Enum):
     """Enum class for publisher mode."""

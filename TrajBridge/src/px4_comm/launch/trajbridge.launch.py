@@ -10,6 +10,8 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             parameters=[
+                {'auto_start': True},
+                {'auto_land': False},
                 {'wp_ready': [  0.0,  0.0, -5.0,  0.0]},
             ]
         )
