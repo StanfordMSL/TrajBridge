@@ -15,11 +15,11 @@ from px4_msgs.msg import (
 import generate_min_snap as gms
 import trajectory_helper as th
 
-class Spline2Position(Node):
-    """Node for generating position (with feed-forward) commands from spline."""
+class Spline2Velocity(Node):
+    """Node for generating velocity (with feed-forward) commands from spline."""
 
     def __init__(self) -> None:
-        super().__init__('spline2position_node')
+        super().__init__('spline2velocity_node')
 
         # Required Parameters
         self.declare_parameter('trajectory',rclpy.Parameter.Type.STRING)        
@@ -54,11 +54,11 @@ class Spline2Position(Node):
         self.tf = tf
         self.CP = gms.solve_min_snap(tf,fo0,f01)
 
-        self.pos_sp = TrajectorySetpoint()                              # position with ff setpoint command
+        self.vel_sp = TrajectorySetpoint()                              # velocity with ff setpoint command
 
         # Create subscribers
-        self.sp_position_with_ff_publisher = self.create_publisher(
-            TrajectorySetpoint,'/setpoint_control/position_with_ff', qos_profile)
+        self.sp_velocity_with_ff_publisher = self.create_publisher(
+            TrajectorySetpoint,'/setpoint_control/velocity_with_ff', qos_profile)
 
         # Create a timer to publish control commands
         self.cmdLoop = self.create_timer(1/hz_ctl, self.controller)
@@ -72,24 +72,24 @@ class Spline2Position(Node):
         if tk <= self.tf:
             fo = th.ts_to_fo(tk,self.tf,self.CP)
             
-            self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+            self.vel_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
-            self.pos_sp.position = fo[0:3,0].astype(np.float32)
-            self.pos_sp.velocity = fo[0:3,1].astype(np.float32)
-            self.pos_sp.acceleration = fo[0:3,2].astype(np.float32)
-            self.pos_sp.jerk = fo[0:3,3].astype(np.float32)
+            self.vel_sp.position = np.array([None,None,None]).astype(np.float32)
+            self.vel_sp.velocity = fo[0:3,1].astype(np.float32)
+            self.vel_sp.acceleration = fo[0:3,2].astype(np.float32)
+            self.vel_sp.jerk = fo[0:3,3].astype(np.float32)
 
-            self.pos_sp.yaw = float(fo[3,0])
-            self.pos_sp.yawspeed = float(fo[3,1])
+            self.vel_sp.yaw = float(fo[3,0])
+            self.vel_sp.yawspeed = float(fo[3,1])
 
-            self.sp_position_with_ff_publisher.publish(self.pos_sp)
+            self.sp_velocity_with_ff_publisher.publish(self.vel_sp)
         else:
             exit()
 
 def main(args=None) -> None:
-    print('Starting spline2position node...')
+    print('Starting spline2velocity node...')
     rclpy.init(args=args)
-    controller = Spline2Position()
+    controller = Spline2Velocity()
     rclpy.spin(controller)
     controller.destroy_node()
     rclpy.shutdown()
