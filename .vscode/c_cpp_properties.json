@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "${workspaceFolder}/TrajBridge/install/px4_comm/include/**",
+        "${workspaceFolder}/TrajBridge/install/px4_msgs/include/**",
+        "/opt/ros/foxy/include/**",
+        "/opt/ros/humble/include/**",
+        "${workspaceFolder}/TrajBridge/src/px4_comm/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

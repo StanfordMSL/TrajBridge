@@ -1,0 +1,12 @@
+{
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/TrajBridge/install/px4_msgs/lib/python3.8/site-packages",
+        "/opt/ros/foxy/lib/python3.8/site-packages",
+        "/opt/ros/humble/lib/python3.8/site-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/TrajBridge/install/px4_msgs/lib/python3.8/site-packages",
+        "/opt/ros/foxy/lib/python3.8/site-packages",
+        "/opt/ros/humble/lib/python3.8/site-packages"
+    ]
+}
