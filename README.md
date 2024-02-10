@@ -1,3 +1,3 @@
 # TrajBridge
 TrajBridge is a package that bridges PX4 to ROS2 for easy testing of trajectory following algorithms within a motion capture environment. It is set up such that a user need only to call the package within their work environment and then publish to their choice of setpoint topic type with [position,velocity,vehicle attitude and actuator motors]. The package runs a state machine that takes care of the rest with a few potentially handy parameters exposed. Given the popularity of machine-learning based work,
-we have also included a simple neural network controller as an example implementation (ControlMLP).
+we have also included a spline controller (SplineController) and a simple neural network controller (MLPController) as example implementations.
