@@ -22,7 +22,7 @@ class StateMachine(Node):
     """Node for controlling a vehicle using an SFTI pilot."""
 
     def __init__(self) -> None:
-        super().__init__('mission_node')
+        super().__init__('state_machine_node')
 
         # Required Parameters
         self.declare_parameter('wp_ready',rclpy.Parameter.Type.DOUBLE_ARRAY)        
@@ -90,7 +90,7 @@ class StateMachine(Node):
 
         # Print outs
         print("-------------------------------------------------------------------------------")
-        print("State Machine: IDLE")
+        print("State Machine: STARTUP")
 
     def get_publisher_mode(self):
         """Get the current publisher mode."""
@@ -151,7 +151,7 @@ class StateMachine(Node):
         self.offboard_controller.set_offboard_control_mode(pub_mode)
 
         # Drone State Machine
-        if self.drone_state == sm.StateMachine.IDLE:
+        if self.drone_state == sm.StateMachine.STARTUP:
             # Looping State Actions
             self.update_smp_sp(np.array([xv_cr[0],xv_cr[1],0.0,0.0]))               # Set waypoint to current xy-position (grounded altitude)
             self.offboard_controller.set_trajectory_setpoint(self.smp_sp)           # Publish desired position  

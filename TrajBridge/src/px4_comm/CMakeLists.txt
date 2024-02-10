@@ -53,6 +53,7 @@ install(DIRECTORY
 # Install Python executables
 install(PROGRAMS
   scripts/state_machine_node.py
+  scripts/spline2position_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 ament_package()

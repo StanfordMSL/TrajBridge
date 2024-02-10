@@ -29,7 +29,7 @@ class OffboardController():
         
         # Create Publishers
         self.vehicle_command_publisher = self.node.create_publisher(
-            VehicleCommand,'fmu/in/vehicle_command', qos_profile)
+            VehicleCommand,'/fmu/in/vehicle_command', qos_profile)
         self.offboard_control_mode_publisher = self.node.create_publisher(
             OffboardControlMode,'/fmu/in/offboard_control_mode', qos_profile)
         self.trajectory_setpoint_publisher = self.node.create_publisher(
