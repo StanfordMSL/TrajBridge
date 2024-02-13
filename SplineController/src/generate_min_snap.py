@@ -1,5 +1,8 @@
 # Minimum Snap Trajectory Generation Method
 import numpy as np
+import json
+import os
+from typing import Union, Optional,List
 import scipy.sparse as sps
 import scipy.linalg as spl
 import sys
@@ -16,10 +19,28 @@ Nfo = 4                                                         # Number of Flat
 kdr = np.array([4,4,4,2])                                       # Target derivative to minimize
 mu  = np.array([1.0,1.0,1.0,1.0])                               # Scaling for each parameter
 
-def solve_min_snap(tf:np.ndarray,fo0:np.ndarray,fo1:np.ndarray):
+def solve_min_snap(input1:Union[str,List[np.float64]],input2:Optional[List[np.ndarray]]=None):
+    # Unpack trajectories from either .json or list of [time] and [flat outputs]
+    if isinstance(input1, str) and input2 is None:
+        trajectories_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "trajectories")       
+        trajectory_path   = os.path.join(trajectories_path,input1+".json")    
+        with open(trajectory_path) as json_file:
+            config = json.load(json_file)
+
+        T = []
+        FO = []
+        for wp in config:
+            T.append(config[wp]["t"])
+            FO.append(config[wp]["fo"])
+    elif isinstance(input1, List[np.float64]) and isinstance(input2, List[np.ndarray]):
+        T = input1
+        FO = input2
+    else:
+        print("Invalid input types. Please provide either a string or a list of [time] and [flat outputs].")
+
     # Some useful intermediate variables
-    Tkf = np.array([0.0,tf])                                    # Keyframe times
-    FOkf = np.array([fo0,fo1])                                # Keyframe Flat Outputs
+    Tkf = np.array(T)                                           # Keyframe times
+    FOkf = np.array(FO)                                         # Keyframe Flat Outputs
 
     # Generate QP Terms
     P,q = Pq_gen(Tkf)                                           # Min Snap Cost
@@ -36,11 +57,13 @@ def solve_min_snap(tf:np.ndarray,fo0:np.ndarray,fo1:np.ndarray):
         sigma = qpsolvers.solve_qp(P,q,G=None,h=None,A=A,b=b,solver="osqp")       # Solve QP
         SM = sigma.reshape((-1,Nfo,Nco))                                # Reshape to match keyframes
         
-        tf = Tkf[-1]
-        Ti = np.linspace(0.0,tf,Nco)
-        CP = SM2CP(SM,Ti)
+        Nsm = SM.shape[0]
+        TT = np.zeros((Nsm,Nco))
+        for i in range(0,Nsm):
+            TT[i,:] = np.linspace(Tkf[i],Tkf[i+1],Nco)
+        CP = SM2CP(SM,TT)
 
-        return CP
+        return Tkf,CP
     
     except:
         # print("[adMS] Trajectory not feasible. Aborting.")
@@ -109,11 +132,12 @@ def Ab_gen(Tkf:np.ndarray,FOkf:np.ndarray):
                 # Populate Output
                 Ak = np.zeros((2,(Nco*Nfo*Nsm)))
                 bk = np.zeros(2)
-                if np.isnan(b0) == False:
+
+                if b0 is not None:
                     Ak[0,idx10:idx1f] = a0
                     bk[0] = b0
 
-                    if np.isnan(bf) == False:
+                    if bf is not None:
                         Ak[1,idx10:idx1f] = af
                         bk[1] = bf
                     else:
@@ -121,7 +145,7 @@ def Ab_gen(Tkf:np.ndarray,FOkf:np.ndarray):
                             Ak[1,idx10:idx1f] = af
                             Ak[1,idx20:idx2f] = -af                     
                 else:
-                    if np.isnan(bf) == False:            
+                    if bf is not None:            
                         Ak[0,idx10:idx1f] = af
                         bk[0] = bf
                     else:
@@ -184,16 +208,18 @@ def poly2kdr(t,kdr):
 
     return a
     
-def SM2CP(SM:np.ndarray,T:np.ndarray):
+def SM2CP(SM:np.ndarray,TT:np.ndarray):
     # Unpack some stuff
-    Ncp = T.size
+    Nsm = SM.shape[0]
+    Ncp = TT.shape[1]
 
     # Output Variable
-    FO = np.zeros((Nfo,Ncp))
+    CP = np.zeros((Nsm,Nfo,Ncp))
 
     # Roll-out trajectory
-    for i in range(0,Ncp):
+    for i in range(0,Nsm):
         for j in range(0,Nfo):                    # at the ends, so we zero them accordingly.
-            a = poly2kdr(T[i],0)
-            FO[j,i] = a@SM[0,j,:]        
-    return FO
+            for k in range(0,Ncp):
+                a = poly2kdr(TT[i,k],0)
+                CP[i,j,k] = a@SM[i,j,:]        
+    return CP

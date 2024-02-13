@@ -40,20 +40,15 @@ class Spline2Position(Node):
         )
 
         # Unpack trajectories
-        trajectories_path = os.path.join(os.path.dirname(os.path.dirname(gms.__file__)), "trajectories")       
-        trajectory_path   = os.path.join(trajectories_path,tj_nme+".json")    
+        output = gms.solve_min_snap(tj_nme)
+        if output is not False:
+            Tkf, CP = output
+        else:
+            raise ValueError("Trajectory not feasible. Aborting.")
 
-        with open(trajectory_path) as json_file:
-            config = json.load(json_file)
-
-        tf = config["flight_time"]
-        fo0 = np.array(config["flat_outputs"]["initial"])
-        f01 = np.array(config["flat_outputs"]["final"])
-
-        # Some Useful Intermediate Variables
-        self.tf = tf
-        self.CP = gms.solve_min_snap(tf,fo0,f01)
-
+        # Initialize class variables
+        self.Tkf,self.CP = Tkf,CP
+        self.ksm,self.Nsm = 0, len(Tkf)-1
         self.pos_sp = TrajectorySetpoint()                              # position with ff setpoint command
 
         # Create subscribers
@@ -69,8 +64,14 @@ class Spline2Position(Node):
     def controller(self) -> None:
         tk = self.get_clock().now().nanoseconds / 1e9 - self.t0
 
-        if tk <= self.tf:
-            fo = th.ts_to_fo(tk,self.tf,self.CP)
+        if tk <= self.Tkf[-1]:
+            if tk > self.Tkf[self.ksm+1]:
+                self.ksm += 1
+
+            tf_sm = self.Tkf[self.ksm+1]-self.Tkf[self.ksm]
+            tk_sm = tk-self.Tkf[self.ksm]
+            CP_sm = self.CP[self.ksm,:,:]
+            fo = th.ts_to_fo(tk_sm,tf_sm,CP_sm)
             
             self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
