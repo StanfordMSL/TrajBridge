@@ -16,7 +16,7 @@ class BallTimer():
         tk = time_now                                               # Current time
         sk = np.linalg.norm((position_now-self.pos_des))            # Current distance error (l2-norm)
         tol = self.pos_tol                                          # Tolerance
-
+        
         if (sk < tol) and (tk > tf):
             return True                                             # Time finished
         elif (sk > tol):

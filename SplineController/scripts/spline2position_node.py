@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
 import numpy as np
-import json
-import os
 
 import rclpy
 from rclpy.node import Node
@@ -18,19 +17,9 @@ import trajectory_helper as th
 class Spline2Position(Node):
     """Node for generating position (with feed-forward) commands from spline."""
 
-    def __init__(self) -> None:
+    def __init__(self,trajectory_name:str,control_frequency:int=200) -> None:
         super().__init__('spline2position_node')
 
-        # Required Parameters
-        self.declare_parameter('trajectory',rclpy.Parameter.Type.STRING)        
-        
-        # Optional Parameters
-        self.declare_parameter('control_frequency',200)
-
-        # Get Parameters
-        tj_nme = self.get_parameter('trajectory').value
-        hz_ctl = self.get_parameter('control_frequency').value
-        
         # Configure QoS profile for publishing and subscribing
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -40,7 +29,7 @@ class Spline2Position(Node):
         )
 
         # Unpack trajectories
-        output = gms.solve_min_snap(tj_nme)
+        output = gms.solve_min_snap(trajectory_name)
         if output is not False:
             Tkf, CP = output
         else:
@@ -56,10 +45,16 @@ class Spline2Position(Node):
             TrajectorySetpoint,'/setpoint_control/position_with_ff', qos_profile)
 
         # Create a timer to publish control commands
-        self.cmdLoop = self.create_timer(1/hz_ctl, self.controller)
+        self.cmdLoop = self.create_timer(1/control_frequency, self.controller)
 
         # Current Time
         self.t0 = self.get_clock().now().nanoseconds / 1e9
+
+        print('=========================================')
+        print('Trajectory Name:',trajectory_name)
+        print('Control Frequency:',control_frequency)
+        print('=========================================')
+        print('Trajectory Started.')
 
     def controller(self) -> None:
         tk = self.get_clock().now().nanoseconds / 1e9 - self.t0
@@ -85,18 +80,36 @@ class Spline2Position(Node):
 
             self.sp_position_with_ff_publisher.publish(self.pos_sp)
         else:
+            print('Trajectory Finished.')
+            print('=========================================')
             exit()
 
-def main(args=None) -> None:
+def main(args) -> None:
     print('Starting spline2position node...')
-    rclpy.init(args=args)
-    controller = Spline2Position()
+    if len(args) == 0:
+        print('No arguments provided.')
+        print('Using default trajectory (line) and control frequency (200hz).')
+        trajectory_name = 'line'
+        control_frequency = 200
+    elif len(args) == 1:
+        print('No frequency provided.')
+        print('Using default control frequency (200hz).')
+        trajectory_name = args[0]
+        control_frequency = 200
+    elif len(args) == 2:
+        trajectory_name = args[0]
+        control_frequency = int(args[1])
+    else:
+        raise ValueError('Invalid number of arguments.')
+    
+    rclpy.init()
+    controller = Spline2Position(trajectory_name,control_frequency)
     rclpy.spin(controller)
     controller.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
     try:
-        main()
+        main(sys.argv[1:])
     except Exception as e:
         print(e)

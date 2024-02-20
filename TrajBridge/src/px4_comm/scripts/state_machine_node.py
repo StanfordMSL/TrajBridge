@@ -103,8 +103,6 @@ class StateMachine(Node):
         # Create a timer to publish control commands
         self.cmdLoop = self.create_timer(1/hz_ctl, self.cmd_callback)
 
-
-
     def get_publisher_mode(self):
         """Get the current publisher mode."""
         # Check if time since last message received exceeds threshold
@@ -220,7 +218,7 @@ class StateMachine(Node):
             # Looping State Actions
             self.update_smp_sp()                                                    # Update waypoint command (time only)
             self.offboard_controller.set_trajectory_setpoint(self.smp_sp)           # Publish desired position  
-
+            
             if self.sm_tmr.check(t_cr,xv_cr[0:3]):
                 # State Transition Actions
 
