@@ -10,7 +10,6 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <build_depend>eigen</build_depend>
   <build_depend>ros_environment</build_depend>
@@ -27,7 +26,6 @@
   <depend>launch_testing</depend>
   <depend>launch_testing_ros</depend>
 
-  <exec_depend>rosidl_default_runtime</exec_depend>
   <exec_depend>ros2launch</exec_depend>
 
   <buildtool_export_depend>eigen3_cmake_module</buildtool_export_depend>
@@ -35,8 +33,6 @@
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-
-  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>

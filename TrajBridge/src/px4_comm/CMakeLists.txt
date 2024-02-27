@@ -26,12 +26,6 @@ find_package(Eigen3 REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-
-# Generate ROS2 messages
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/SampleMsg.msg"
-)
 
 # Include Cpp "include" directory
 include_directories(include)
