@@ -187,7 +187,6 @@ class StateMachine(Node):
             if self.vs_cr.nav_state is VehicleStatus.NAVIGATION_STATE_OFFBOARD:
                 # State Transition Actions
                 self.update_smp_sp(self.wp_rdy)                                     # Send to ready waypoint
-
                 self.sm_tmr.reset(t_cr,self.smp_sp.position)                        # Reset state machine timer for takeoff
 
                 # State Transition  
@@ -256,25 +255,9 @@ class StateMachine(Node):
                 self.offboard_controller.set_actuator_motors(self.ams_sp)
             else:
                 # State Transition Actions
-                self.update_smp_sp(np.hstack((xv_cr[0:3],self.wp_rdy[3])))          # Set waypoint to current position with the yaw from ready waypoint
-
-                self.sm_tmr.reset(t_cr,self.smp_sp.position)                        # Reset state machine timer for hover
-
-                # State Transition
-                self.drone_state = sm.StateMachine.HOVER
-
-                # Print outs
-                print("-------------------------------------------------------------------------------")
-                print("State Machine: HOVER")
-        
-        elif self.drone_state == sm.StateMachine.HOVER:
-            # Looping State Actions
-            self.update_smp_sp()                                                    # Update waypoint command (time only)
-            self.offboard_controller.set_trajectory_setpoint(self.smp_sp)           # Publish desired position  
-            
-            if self.sm_tmr.check(t_cr,xv_cr[0:3]):
-                # State Transition Actions
-
+                self.update_smp_sp(self.wp_rdy)                                     # Send to ready waypoint
+                self.sm_tmr.reset(t_cr,self.smp_sp.position)                        # Reset state machine timer for takeoff
+                
                 if self.at_ld == True:
                     # State Transition  
                     self.drone_state = sm.StateMachine.LAND                         # Transition to land
@@ -284,12 +267,12 @@ class StateMachine(Node):
                     print("State Machine: LAND")
                 else:
                     # State Transition  
-                    self.drone_state = sm.StateMachine.READY                        # Transition to ready
+                    self.drone_state = sm.StateMachine.WAYPOINT                     # Transition to waypoint
 
                     # Print outs
                     print("-------------------------------------------------------------------------------")
-                    print("State Machine: READY")
-
+                    print("State Machine: WAYPOINT")
+                
         elif self.drone_state == sm.StateMachine.LAND:
             # Terminal State Actions
             self.offboard_controller.land()
