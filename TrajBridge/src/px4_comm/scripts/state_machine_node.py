@@ -161,6 +161,13 @@ class StateMachine(Node):
         # Looping Callback Actions
         self.offboard_controller.set_offboard_control_mode(pub_mode)
 
+        # Safety Check
+        if ((self.vs_cr.nav_state is not VehicleStatus.NAVIGATION_STATE_OFFBOARD) and 
+            (self.drone_state is not sm.StateMachine.STARTUP_AUTO) and
+            (self.drone_state is not sm.StateMachine.STARTUP_USER)):
+            self.offboard_controller.land()
+            exit(0)
+
         # Drone State Machine
         if self.drone_state == sm.StateMachine.STARTUP_AUTO:
             # Looping State Actions
