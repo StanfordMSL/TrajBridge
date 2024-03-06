@@ -31,7 +31,7 @@ class StateMachine(Node):
         
         # Optional Parameters
         self.declare_parameter('control_frequency',200)
-        self.declare_parameter('hover_height',-5.0)
+        self.declare_parameter('hover_height',-1.5)
         self.declare_parameter('timer_time_tolerance', 3.0)
         self.declare_parameter('timer_distance_tolerance', 0.2)
         self.declare_parameter('gcs_time_tolerance', 0.5)
