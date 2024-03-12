@@ -163,8 +163,9 @@ class StateMachine(Node):
 
         # Safety Check
         if ((self.vs_cr.nav_state is not VehicleStatus.NAVIGATION_STATE_OFFBOARD) and 
-            (self.drone_state is not sm.StateMachine.STARTUP_AUTO) and
-            (self.drone_state is not sm.StateMachine.STARTUP_USER)):
+            ((self.drone_state is sm.StateMachine.WAYPOINT) or
+            (self.drone_state is sm.StateMachine.READY) or
+            (self.drone_state is sm.StateMachine.ACTIVE))):
             self.offboard_controller.land()
             exit(0)
 
