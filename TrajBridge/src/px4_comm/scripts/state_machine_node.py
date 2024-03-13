@@ -89,6 +89,24 @@ class StateMachine(Node):
         self.gcs_t_tol = gcs_t_tol                                      # time tolerance for gcs messages
         self.at_ld = at_ld                                              # auto land flag
         
+        # Print Outs
+        print("===============================================================================")
+        print("===============================================================================")
+        print("-------------------------------------------------------------------------------")
+        print("ROS2 TrajBridge: State Machine Node")
+        print("Control Frequency: ", hz_ctl)
+        print("Auto Start       : ", at_st)
+        print("Auto Land        : ", at_ld)
+        print("Hover Height     : ", z_hvr)
+        print("Waypoint Ready   : ", wp_rdy)
+        print("")
+        print("Timer Time Tolerance    : ", tmr_t_tol)
+        print("Timer Distance Tolerance: ", tmr_s_tol)
+        print("GCS Time Tolerance      : ", gcs_t_tol)
+        print("-------------------------------------------------------------------------------")
+        print("===============================================================================")
+        print("===============================================================================")
+
         if at_st == True:
             self.drone_state = sm.StateMachine.STARTUP_AUTO
 
