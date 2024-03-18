@@ -35,9 +35,9 @@ class StateMachine(Node):
         self.declare_parameter('timer_time_tolerance', 3.0)
         self.declare_parameter('timer_distance_tolerance', 0.2)
         self.declare_parameter('gcs_time_tolerance', 0.5)
-        self.declare_parameter('room_limits',[[-7.5, 7.5],
-                                              [-2.5, 2.5],
-                                              [-2.5, 0.5]])
+        self.declare_parameter('x_room_limits',[-7.5, 7.5])
+        self.declare_parameter('y_room_limits',[-2.5, 2.5])
+        self.declare_parameter('z_room_limits',[-2.5, 0.5])
 
         # Get Parameters
         at_st = self.get_parameter('auto_start').value
@@ -48,7 +48,9 @@ class StateMachine(Node):
         tmr_t_tol = self.get_parameter('timer_time_tolerance').value
         tmr_s_tol = self.get_parameter('timer_distance_tolerance').value
         gcs_t_tol = self.get_parameter('gcs_time_tolerance').value
-        rm_lmts = self.get_parameter('room_limits').value
+        x_r_lmts = self.get_parameter('x_room_limits').value
+        y_r_lmts = self.get_parameter('y_room_limits').value
+        z_r_lmts = self.get_parameter('z_room_limits').value
 
         # Configure QoS profile for publishing and subscribing
         qos_profile = QoSProfile(
@@ -92,12 +94,14 @@ class StateMachine(Node):
         self.sm_tmr = bt.BallTimer(0.0,0.0,tmr_t_tol,tmr_s_tol)         # timer for state machine transitions
         self.gcs_t_tol = gcs_t_tol                                      # time tolerance for gcs messages
         self.at_ld = at_ld                                              # auto land flag
-        self.rm_lmts = rm_lmts                                          # room limits
+        self.rm_lmts = np.array([[x_r_lmts[0],x_r_lmts[1]],             # room limits
+                                 [y_r_lmts[0],y_r_lmts[1]],
+                                 [z_r_lmts[0],z_r_lmts[1]]])
 
         # Print Outs
-        print("===============================================================================")
-        print("===============================================================================")
-        print("-------------------------------------------------------------------------------")
+        print("==============================================")
+        print("==============================================")
+        print("----------------------------------------------")
         print("ROS2 TrajBridge: State Machine Node")
         print("Control Frequency: ", hz_ctl)
         print("Auto Start       : ", at_st)
@@ -108,10 +112,12 @@ class StateMachine(Node):
         print("Timer Time Tolerance    : ", tmr_t_tol)
         print("Timer Distance Tolerance: ", tmr_s_tol)
         print("GCS Time Tolerance      : ", gcs_t_tol)
-        print("Room Limits [x,y,z]            : ", rm_lmts)
-        print("-------------------------------------------------------------------------------")
-        print("===============================================================================")
-        print("===============================================================================")
+        print("Room Limits (x)         : ", x_r_lmts)
+        print("Room Limits (y)         : ", y_r_lmts)
+        print("Room Limits (z)         : ", z_r_lmts)
+        print("----------------------------------------------")
+        print("==============================================")
+        print("==============================================")
 
         if at_st == True:
             self.drone_state = sm.StateMachine.STARTUP_AUTO
@@ -194,11 +200,21 @@ class StateMachine(Node):
             (self.drone_state is sm.StateMachine.ACTIVE))):
             self.drone_state = sm.StateMachine.LAND
 
+            # Print outs
+            print("----------------------------------------------")
+            print("Transmitter Fail-Safe Triggered...")
+            print("State Machine: LAND")
+
         # Room Limits Fail-Safe
         if ((xv_cr[0] < self.rm_lmts[0][0]) or (xv_cr[0] > self.rm_lmts[0][1]) or
             (xv_cr[1] < self.rm_lmts[1][0]) or (xv_cr[1] > self.rm_lmts[1][1]) or
             (xv_cr[2] < self.rm_lmts[2][0]) or (xv_cr[2] > self.rm_lmts[2][1])):
             self.drone_state = sm.StateMachine.LAND
+
+            # Print outs
+            print("----------------------------------------------")
+            print("Room Limit Fail-Safe Triggered...")
+            print("State Machine: LAND")
 
         # ==============================================================================
             
@@ -234,7 +250,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.WAYPOINT                         # Transition to takeoff
 
                 # Print outs
-                print("-------------------------------------------------------------------------------")
+                print("----------------------------------------------")
                 print("State Machine: WAYPOINT")
         elif self.drone_state == sm.StateMachine.TAKEOFF:
             # Looping State Actions
@@ -251,7 +267,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.WAYPOINT                         # Transition to waypoint
 
                 # Print outs
-                print("-------------------------------------------------------------------------------")
+                print("----------------------------------------------")
                 print("State Machine: WAYPOINT")                                  
 
         elif self.drone_state == sm.StateMachine.WAYPOINT:
@@ -266,7 +282,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.READY                            # Transition to active
 
                 # Print outs
-                print("-------------------------------------------------------------------------------")
+                print("----------------------------------------------")
                 print("State Machine: READY")
                 
         elif self.drone_state == sm.StateMachine.READY:
@@ -281,7 +297,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.ACTIVE                           # Transition to active
 
                 # Print outs
-                print("-------------------------------------------------------------------------------")
+                print("----------------------------------------------")
                 print("State Machine: ACTIVE")
                 
         elif self.drone_state == sm.StateMachine.ACTIVE:
@@ -304,19 +320,25 @@ class StateMachine(Node):
                     self.drone_state = sm.StateMachine.LAND                         # Transition to land
 
                     # Print outs
-                    print("-------------------------------------------------------------------------------")
+                    print("----------------------------------------------")
                     print("State Machine: LAND")
                 else:
                     # State Transition  
                     self.drone_state = sm.StateMachine.WAYPOINT                     # Transition to waypoint
 
                     # Print outs
-                    print("-------------------------------------------------------------------------------")
+                    print("----------------------------------------------")
                     print("State Machine: WAYPOINT")
                 
         elif self.drone_state == sm.StateMachine.LAND:
             # Terminal State Actions
             self.offboard_controller.land()
+
+            # Print outs
+            print("----------------------------------------------")
+            print("State Machine Node Closing...")
+            print("==============================================")
+            
             exit(0)
         else:
             # Terminal State Actions
