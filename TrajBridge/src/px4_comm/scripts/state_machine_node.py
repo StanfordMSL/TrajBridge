@@ -35,8 +35,8 @@ class StateMachine(Node):
         self.declare_parameter('timer_time_tolerance', 3.0)
         self.declare_parameter('timer_distance_tolerance', 0.2)
         self.declare_parameter('gcs_time_tolerance', 0.5)
-        self.declare_parameter('x_room_limits',[-7.5, 7.5])
-        self.declare_parameter('y_room_limits',[-2.5, 2.5])
+        self.declare_parameter('x_room_limits',[-8.0, 8.0])
+        self.declare_parameter('y_room_limits',[-3.0, 3.0])
         self.declare_parameter('z_room_limits',[-2.5, 0.5])
 
         # Get Parameters
@@ -210,10 +210,11 @@ class StateMachine(Node):
             (xv_cr[1] < self.rm_lmts[1][0]) or (xv_cr[1] > self.rm_lmts[1][1]) or
             (xv_cr[2] < self.rm_lmts[2][0]) or (xv_cr[2] > self.rm_lmts[2][1])):
             self.drone_state = sm.StateMachine.LAND
-
+            
             # Print outs
             print("----------------------------------------------")
-            print("Room Limit Fail-Safe Triggered...")
+            print("Room Limit Fail-Safe Triggered at:")
+            print("x: ",xv_cr[0:3])
             print("State Machine: LAND")
 
         # ==============================================================================
