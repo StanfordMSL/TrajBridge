@@ -15,6 +15,7 @@ from px4_msgs.msg import (
     VehicleStatus,
     TrajectorySetpoint,
     VehicleAttitudeSetpoint,
+    VehicleRatesSetpoint,
     ActuatorMotors
 )
 
@@ -71,6 +72,8 @@ class StateMachine(Node):
             TrajectorySetpoint, '/setpoint_control/velocity_with_ff', self.velocity_with_ff_callback, qos_profile)
         self.sp_vehicle_attitude_subscriber = self.create_subscription(
             VehicleAttitudeSetpoint, '/setpoint_control/vehicle_attitude', self.vehicle_attitude_callback, qos_profile)
+        self.sp_vehicle_attitude_subscriber = self.create_subscription(
+            VehicleRatesSetpoint, '/setpoint_control/vehicle_rates', self.vehicle_rates_callback, qos_profile)
         self.sp_actuator_motors_subscriber = self.create_subscription(
             ActuatorMotors, '/setpoint_control/actuator_motors', self.actuator_motors_callback, qos_profile)
 
@@ -84,6 +87,7 @@ class StateMachine(Node):
         self.pos_sp = TrajectorySetpoint()                              # position with ff setpoint command
         self.vel_sp = TrajectorySetpoint()                              # velocity with ff setpoint command
         self.vas_sp = VehicleAttitudeSetpoint()                         # vehicle attitude setpoint command
+        self.vrs_sp = VehicleRatesSetpoint()                            # vehicle rates setpoint command
         self.ams_sp = ActuatorMotors()                                  # actuator motors setpoint command
         
         # Initialize state machine variables        
@@ -154,6 +158,8 @@ class StateMachine(Node):
         elif idx_mode == 3:
             return sm.PublisherMode.VEHICLE_ATTITUDE
         elif idx_mode == 4:
+            return sm.PublisherMode.VEHICLE_RATES
+        elif idx_mode == 5:
             return sm.PublisherMode.ACTUATOR_MOTORS
         else:
             raise ValueError('Invalid Publisher Mode')
@@ -177,6 +183,10 @@ class StateMachine(Node):
     def vehicle_attitude_callback(self, vehicle_attitude:VehicleAttitudeSetpoint):
         """Callback function for vehicle_attitude topic subscriber."""
         self.vas_sp = vehicle_attitude
+
+    def vehicle_rates_callback(self, vehicle_rates:VehicleRatesSetpoint):
+        """Callback function for vehicle_rates topic subscriber."""
+        self.vrs_sp = vehicle_rates
 
     def actuator_motors_callback(self, actuator_motors:ActuatorMotors):
         """Callback function for actuator_motors topic subscriber."""
@@ -309,6 +319,8 @@ class StateMachine(Node):
                 self.offboard_controller.set_trajectory_setpoint(self.vel_sp)
             elif pub_mode is sm.PublisherMode.VEHICLE_ATTITUDE:
                 self.offboard_controller.set_vehicle_attitude_setpoint(self.vas_sp)
+            elif pub_mode is sm.PublisherMode.VEHICLE_RATES:
+                self.offboard_controller.set_vehicle_rates_setpoint(self.vrs_sp)
             elif pub_mode is sm.PublisherMode.ACTUATOR_MOTORS:
                 self.offboard_controller.set_actuator_motors(self.ams_sp)
             else:

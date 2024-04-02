@@ -3,6 +3,7 @@ from px4_msgs.msg import (
     OffboardControlMode,
     TrajectorySetpoint,
     VehicleAttitudeSetpoint,
+    VehicleRatesSetpoint,
     ActuatorMotors
 )
 
@@ -36,6 +37,8 @@ class OffboardController():
             TrajectorySetpoint,'/fmu/in/trajectory_setpoint', qos_profile)
         self.vehicle_attitude_setpoint_publisher = self.node.create_publisher(
             VehicleAttitudeSetpoint,'/fmu/in/vehicle_attitude_setpoint', qos_profile)
+        self.vehicle_rates_setpoint_publisher = self.node.create_publisher(
+            VehicleRatesSetpoint,'/fmu/in/vehicle_rates_setpoint', qos_profile)
         self.actuator_motors_publisher = self.node.create_publisher(
             ActuatorMotors,'/fmu/in/actuator_motors', qos_profile)
 
@@ -106,6 +109,8 @@ class OffboardController():
             self.offboard_control_mode.position = True
         elif (pub_mode is sm.PublisherMode.VEHICLE_ATTITUDE):
             self.offboard_control_mode.attitude = True
+        elif (pub_mode is sm.PublisherMode.VEHICLE_RATES):
+            self.offboard_control_mode.body_rate = True
         elif (pub_mode is sm.PublisherMode.ACTUATOR_MOTORS):
             self.offboard_control_mode.direct_actuator = True
         else:
@@ -121,6 +126,10 @@ class OffboardController():
     def set_vehicle_attitude_setpoint(self,vas:VehicleAttitudeSetpoint) -> None:
         """Publish the vehicle attitude setpoint."""
         self.vehicle_attitude_setpoint_publisher.publish(vas)
+
+    def set_vehicle_rates_setpoint(self,vrs:VehicleRatesSetpoint) -> None:
+        """Publish the vehicle rates setpoint."""
+        self.vehicle_rates_setpoint_publisher.publish(vrs)
 
     def set_actuator_motors(self,am:ActuatorMotors) -> None:
         """Publish the actuator motors."""
