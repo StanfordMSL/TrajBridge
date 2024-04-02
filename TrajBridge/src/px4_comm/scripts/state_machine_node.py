@@ -72,7 +72,7 @@ class StateMachine(Node):
             TrajectorySetpoint, '/setpoint_control/velocity_with_ff', self.velocity_with_ff_callback, qos_profile)
         self.sp_vehicle_attitude_subscriber = self.create_subscription(
             VehicleAttitudeSetpoint, '/setpoint_control/vehicle_attitude', self.vehicle_attitude_callback, qos_profile)
-        self.sp_vehicle_attitude_subscriber = self.create_subscription(
+        self.sp_vehicle_rates_subscriber = self.create_subscription(
             VehicleRatesSetpoint, '/setpoint_control/vehicle_rates', self.vehicle_rates_callback, qos_profile)
         self.sp_actuator_motors_subscriber = self.create_subscription(
             ActuatorMotors, '/setpoint_control/actuator_motors', self.actuator_motors_callback, qos_profile)
@@ -145,9 +145,16 @@ class StateMachine(Node):
         pos_elapsed = t_now - self.pos_sp.timestamp / 1e6
         vel_elapsed = t_now - self.vel_sp.timestamp / 1e6
         vas_elapsed = t_now - self.vas_sp.timestamp / 1e6
+        vrs_elapsed = t_now - self.vrs_sp.timestamp / 1e6
         ams_elapsed = t_now - self.ams_sp.timestamp / 1e6
 
-        idx_mode =  np.argmin([self.gcs_t_tol, pos_elapsed, vel_elapsed, vas_elapsed, ams_elapsed])
+        idx_mode =  np.argmin([
+            self.gcs_t_tol,
+            pos_elapsed,
+            vel_elapsed,
+            vas_elapsed,
+            vrs_elapsed,
+            ams_elapsed])
 
         if idx_mode == 0:
             return sm.PublisherMode.STATE_MACHINE_WP
