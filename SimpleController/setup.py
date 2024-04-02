@@ -1,16 +1,18 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="spline_controller",
+    name="simple_controller",
     version="0.1",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
         "numpy",
-        "scipy",
+        "scipy==1.12.0",
         "qpsolvers[osqp]",
         "ipykernel",
         "ipympl",
-        "matplotlib"
+        "matplotlib",
+        "ply",
+        "tabulate"
     ],
 )
