@@ -15,10 +15,10 @@ from px4_msgs.msg import (
 )
 
 class Mocap(Node):
-    """Node for controlling a vehicle using an SFTI pilot."""
+    """Node for sending pose data from mocap to drone."""
 
     def __init__(self) -> None:
-        super().__init__('state_machine_node')
+        super().__init__('mocap_node')
 
         # Configure QoS profile for publishing and subscribing
         qos_profile = QoSProfile(
@@ -57,7 +57,7 @@ class Mocap(Node):
         self.vision_pose_publisher.publish(vo)
 
 def main(args=None) -> None:
-    print('Starting state_machine node...')
+    print('Starting mocap node...')
     rclpy.init(args=args)
     mocap = Mocap()
     rclpy.spin(mocap)

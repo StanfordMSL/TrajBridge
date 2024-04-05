@@ -12,7 +12,7 @@ def generate_launch_description():
             parameters=[
                 {'auto_start': False},
                 {'auto_land': False},
-                {'wp_ready': [  0.0,  0.0, -1.0,  0.0]},
+                {'wp_ready': [  -2.0,  0.0, -1.0,  0.0]},
             ]
         )
     ])
