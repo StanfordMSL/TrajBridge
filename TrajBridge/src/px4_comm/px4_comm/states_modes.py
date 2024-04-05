@@ -17,4 +17,5 @@ class PublisherMode(Enum):
     POSITION_WITH_FF = 1
     VELOCITY_WITH_FF = 2
     VEHICLE_ATTITUDE = 3
-    ACTUATOR_MOTORS = 4
+    VEHICLE_RATES = 4
+    ACTUATOR_MOTORS = 5
