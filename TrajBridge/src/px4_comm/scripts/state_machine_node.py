@@ -26,6 +26,7 @@ class StateMachine(Node):
         super().__init__('state_machine_node')
 
         # Required Parameters
+        self.declare_parameter('drone_name',rclpy.Parameter.Type.STRING)
         self.declare_parameter('auto_start',rclpy.Parameter.Type.BOOL)        
         self.declare_parameter('auto_land',rclpy.Parameter.Type.BOOL)        
         self.declare_parameter('wp_ready',rclpy.Parameter.Type.DOUBLE_ARRAY)        
@@ -41,6 +42,7 @@ class StateMachine(Node):
         self.declare_parameter('z_room_limits',[-2.5, 0.5])
 
         # Get Parameters
+        dr_nm = self.get_parameter('drone_name').value
         at_st = self.get_parameter('auto_start').value
         at_ld = self.get_parameter('auto_land').value
         wp_rdy = self.get_parameter('wp_ready').value
@@ -62,20 +64,21 @@ class StateMachine(Node):
         )
 
         # Create subscribers
+        drone_prefix = '/'+dr_nm
         self.vehicle_status_subscriber = self.create_subscription(
-            VehicleStatus, '/fmu/out/vehicle_status', self.vehicle_status_callback, qos_profile)
+            VehicleStatus, drone_prefix+'/out/vehicle_status', self.vehicle_status_callback, qos_profile)
         self.vehicle_odometry_subscriber = self.create_subscription(
-            VehicleOdometry, '/fmu/out/vehicle_odometry', self.vehicle_odometry_callback, qos_profile)
+            VehicleOdometry, drone_prefix+'/out/vehicle_odometry', self.vehicle_odometry_callback, qos_profile)
         self.sp_position_with_ff_subscriber = self.create_subscription(
-            TrajectorySetpoint, '/setpoint_control/position_with_ff', self.position_with_ff_callback, qos_profile)
+            TrajectorySetpoint, drone_prefix+'/setpoint_control/position_with_ff', self.position_with_ff_callback, qos_profile)
         self.sp_velocity_with_ff_subscriber = self.create_subscription(
-            TrajectorySetpoint, '/setpoint_control/velocity_with_ff', self.velocity_with_ff_callback, qos_profile)
+            TrajectorySetpoint,  drone_prefix+'/setpoint_control/velocity_with_ff', self.velocity_with_ff_callback, qos_profile)
         self.sp_vehicle_attitude_subscriber = self.create_subscription(
-            VehicleAttitudeSetpoint, '/setpoint_control/vehicle_attitude', self.vehicle_attitude_callback, qos_profile)
+            VehicleAttitudeSetpoint, drone_prefix+'/setpoint_control/vehicle_attitude', self.vehicle_attitude_callback, qos_profile)
         self.sp_vehicle_rates_subscriber = self.create_subscription(
-            VehicleRatesSetpoint, '/setpoint_control/vehicle_rates', self.vehicle_rates_callback, qos_profile)
+            VehicleRatesSetpoint, drone_prefix+'/setpoint_control/vehicle_rates', self.vehicle_rates_callback, qos_profile)
         self.sp_actuator_motors_subscriber = self.create_subscription(
-            ActuatorMotors, '/setpoint_control/actuator_motors', self.actuator_motors_callback, qos_profile)
+            ActuatorMotors, drone_prefix+'/setpoint_control/actuator_motors', self.actuator_motors_callback, qos_profile)
 
         # Create publishers
         self.offboard_controller = oc.OffboardController(self)

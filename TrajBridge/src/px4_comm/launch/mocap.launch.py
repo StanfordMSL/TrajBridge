@@ -19,7 +19,10 @@ def generate_launch_description():
             executable='mocap_node.py',
             name='mocap_0',
             output='screen',
-            emulate_tty=True
+            emulate_tty=True,
+            parameters=[
+                {'asset_limit': 7}
+            ]
             )
         ]
         )
