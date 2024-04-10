@@ -21,7 +21,8 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             parameters=[
-                {'asset_limit': 7}
+                {'asset_limit': 7},
+                {'hz_topic_search': 0.5}
             ]
             )
         ]
