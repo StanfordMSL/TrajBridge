@@ -7,7 +7,7 @@ setup(
     package_dir={"": "src"},
     install_requires=[
         "numpy",
-        "scipy==1.12.0",
+        "scipy",
         "qpsolvers[osqp]",
         "ipykernel",
         "ipympl",

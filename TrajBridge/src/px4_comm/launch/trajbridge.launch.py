@@ -10,10 +10,10 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             parameters=[
-                {'drone_name':"drone5"},
+                {'drone_name':"fmu"},
                 {'auto_start': False},
                 {'auto_land': False},
-                {'wp_ready': [ -2.00,  0.00, -1.00,  0.00]},
+                {'wp_ready': [ 0.00,  0.00, -1.00,  0.00]},
             ]
         )
     ])

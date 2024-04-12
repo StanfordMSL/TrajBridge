@@ -63,25 +63,27 @@ class StateMachine(Node):
             depth=1
         )
 
+        # Some useful intermediate variables
+        dr_pf = '/'+dr_nm if dr_nm != 'fmu' else ''             # drone prefix (fmu has no prefix)
+
         # Create subscribers
-        drone_prefix = '/'+dr_nm
         self.vehicle_status_subscriber = self.create_subscription(
-            VehicleStatus, drone_prefix+'/out/vehicle_status', self.vehicle_status_callback, qos_profile)
+            VehicleStatus,dr_pf+'/fmu/out/vehicle_status', self.vehicle_status_callback, qos_profile)
         self.vehicle_odometry_subscriber = self.create_subscription(
-            VehicleOdometry, drone_prefix+'/out/vehicle_odometry', self.vehicle_odometry_callback, qos_profile)
+            VehicleOdometry, dr_pf+'/fmu/out/vehicle_odometry', self.vehicle_odometry_callback, qos_profile)
         self.sp_position_with_ff_subscriber = self.create_subscription(
-            TrajectorySetpoint, drone_prefix+'/setpoint_control/position_with_ff', self.position_with_ff_callback, qos_profile)
+            TrajectorySetpoint, dr_pf+'/fmu/setpoint_control/position_with_ff', self.position_with_ff_callback, qos_profile)
         self.sp_velocity_with_ff_subscriber = self.create_subscription(
-            TrajectorySetpoint,  drone_prefix+'/setpoint_control/velocity_with_ff', self.velocity_with_ff_callback, qos_profile)
+            TrajectorySetpoint, dr_pf+'/fmu/setpoint_control/velocity_with_ff', self.velocity_with_ff_callback, qos_profile)
         self.sp_vehicle_attitude_subscriber = self.create_subscription(
-            VehicleAttitudeSetpoint, drone_prefix+'/setpoint_control/vehicle_attitude', self.vehicle_attitude_callback, qos_profile)
+            VehicleAttitudeSetpoint, dr_pf+'/fmu/setpoint_control/vehicle_attitude', self.vehicle_attitude_callback, qos_profile)
         self.sp_vehicle_rates_subscriber = self.create_subscription(
-            VehicleRatesSetpoint, drone_prefix+'/setpoint_control/vehicle_rates', self.vehicle_rates_callback, qos_profile)
+            VehicleRatesSetpoint, dr_pf+'/fmu/setpoint_control/vehicle_rates', self.vehicle_rates_callback, qos_profile)
         self.sp_actuator_motors_subscriber = self.create_subscription(
-            ActuatorMotors, drone_prefix+'/setpoint_control/actuator_motors', self.actuator_motors_callback, qos_profile)
+            ActuatorMotors, dr_pf+'/fmu/setpoint_control/actuator_motors', self.actuator_motors_callback, qos_profile)
 
         # Create publishers
-        self.offboard_controller = oc.OffboardController(self,dr_nm)
+        self.offboard_controller = oc.OffboardController(self,dr_pf)
         
         # Subscriber variables
         self.vs_cr = VehicleStatus()                                    # current vehicle status
@@ -106,10 +108,11 @@ class StateMachine(Node):
                                  [z_r_lmts[0],z_r_lmts[1]]])
 
         # Print Outs
-        print("==============================================")
-        print("==============================================")
-        print("----------------------------------------------")
+        print("===========================================")
+        print("===========================================")
+        print("-------------------------------------------")
         print("ROS2 TrajBridge: State Machine Node")
+        print("Drone Name       : ", dr_nm)
         print("Control Frequency: ", hz_ctl)
         print("Auto Start       : ", at_st)
         print("Auto Land        : ", at_ld)
@@ -122,9 +125,9 @@ class StateMachine(Node):
         print("Room Limits (x)         : ", x_r_lmts)
         print("Room Limits (y)         : ", y_r_lmts)
         print("Room Limits (z)         : ", z_r_lmts)
-        print("----------------------------------------------")
-        print("==============================================")
-        print("==============================================")
+        print("-------------------------------------------")
+        print("===========================================")
+        print("===========================================")
 
         if at_st == True:
             self.drone_state = sm.StateMachine.STARTUP_AUTO
@@ -221,7 +224,7 @@ class StateMachine(Node):
             self.drone_state = sm.StateMachine.LAND
 
             # Print outs
-            print("----------------------------------------------")
+            print("-------------------------------------------")
             print("Transmitter Fail-Safe Triggered...")
             print("State Machine: LAND")
 
@@ -232,7 +235,7 @@ class StateMachine(Node):
             self.drone_state = sm.StateMachine.LAND
             
             # Print outs
-            print("----------------------------------------------")
+            print("-------------------------------------------")
             print("Room Limit Fail-Safe Triggered at:")
             print("x: ",xv_cr[0:3])
             print("State Machine: LAND")
@@ -258,7 +261,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.TAKEOFF                          # Transition to takeoff
                 
                 # Print outs
-                print("-------------------------------------------------------------------------------")
+                print("-------------------------------------------")
                 print("State Machine: TAKEOFF")
 
         elif self.drone_state == sm.StateMachine.STARTUP_USER:
@@ -271,7 +274,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.WAYPOINT                         # Transition to takeoff
 
                 # Print outs
-                print("----------------------------------------------")
+                print("-------------------------------------------")
                 print("State Machine: WAYPOINT")
         elif self.drone_state == sm.StateMachine.TAKEOFF:
             # Looping State Actions
@@ -288,7 +291,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.WAYPOINT                         # Transition to waypoint
 
                 # Print outs
-                print("----------------------------------------------")
+                print("-------------------------------------------")
                 print("State Machine: WAYPOINT")                                  
 
         elif self.drone_state == sm.StateMachine.WAYPOINT:
@@ -303,7 +306,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.READY                            # Transition to active
 
                 # Print outs
-                print("----------------------------------------------")
+                print("-------------------------------------------")
                 print("State Machine: READY")
                 
         elif self.drone_state == sm.StateMachine.READY:
@@ -318,7 +321,7 @@ class StateMachine(Node):
                 self.drone_state = sm.StateMachine.ACTIVE                           # Transition to active
 
                 # Print outs
-                print("----------------------------------------------")
+                print("-------------------------------------------")
                 print("State Machine: ACTIVE")
                 
         elif self.drone_state == sm.StateMachine.ACTIVE:
@@ -343,14 +346,14 @@ class StateMachine(Node):
                     self.drone_state = sm.StateMachine.LAND                         # Transition to land
 
                     # Print outs
-                    print("----------------------------------------------")
+                    print("-------------------------------------------")
                     print("State Machine: LAND")
                 else:
                     # State Transition  
                     self.drone_state = sm.StateMachine.WAYPOINT                     # Transition to waypoint
 
                     # Print outs
-                    print("----------------------------------------------")
+                    print("-------------------------------------------")
                     print("State Machine: WAYPOINT")
                 
         elif self.drone_state == sm.StateMachine.LAND:
@@ -358,9 +361,9 @@ class StateMachine(Node):
             self.offboard_controller.land()
 
             # Print outs
-            print("----------------------------------------------")
+            print("-------------------------------------------")
             print("State Machine Node Closing...")
-            print("==============================================")
+            print("===========================================")
             
             exit(0)
         else:
