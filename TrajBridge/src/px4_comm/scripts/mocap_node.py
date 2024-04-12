@@ -47,11 +47,12 @@ class Mocap(Node):
         self.searchLoop = self.create_timer(hz_ts, self.topic_search_callback)
 
         # Print outs
-        print("--------------------------------------------------------------------------")
+        print("--------------------------------------------------------------------------------")
         print("Mocap Node Parameters:")
         print("Asset Limit:", self.N_as)
         print("Topic Search Rate:", hz_ts)
-        print("--------------------------------------------------------------------------")
+        print("Note: This node forwards the singular 'fmu' and/or any 'drone<#>' mocap topic.")
+        print("--------------------------------------------------------------------------------")
         
     def topic_search_callback(self) -> None:
         """Search for mocap topics and if a new one is found, create a subscriber and publisher for it."""
@@ -65,32 +66,37 @@ class Mocap(Node):
 
             # Check if topic is from mocap
             if text[1] == 'vrpn_mocap':
-                # Check if mocap topic is already being used
-                if text[2] not in self.assets:
-                    # Limit to N_as mocap topics
-                    if len(self.assets) > self.N_as:
-                        print("Warning: More than ", self.N_as, " mocap topics found. Ignoring additional topics.")
-                        print("--------------------------------------------------------------------------")
-                    else:
+                # Check if mocap topic is already being used and there are less than N_as mocap topics
+                if text[2] not in self.assets and len(self.assets) < self.N_as:
+                    # Check if mocap topic is a drone or fmu
+                    if text[2] == "fmu" or (text[2].startswith("drone") and text[2][-1].isdigit()):
                         # Add new mocap topic
                         self.assets.append(text[2])
-                        print("Found Mocap Topic:", text[2])
-                        print("Current MoCap Topics:", self.assets)
-                        print("--------------------------------------------------------------------------")
-                        
+
                         # Create subscriber for new mocap topic
+                        sub_topic_name = topic[0]
                         self.subs.append(
                             self.create_subscription(
-                                PoseStamped,topic[0],
+                                PoseStamped,sub_topic_name,
                                 self.make_callback(len(self.assets)-1), 
                                 self.qos_profile))
                         
-                        # Create publisher for new mocap topic
+                        # Create publisher for new mocap topic with special "fmu" case
+                        base_name = "fmu/in/vehicle_visual_odometry"
+                        pub_topic_name = text[2]+"/"+base_name if text[2] != "fmu" else base_name
                         self.pubs.append(
                             self.create_publisher(
-                                VehicleOdometry,text[2]+"/in/vehicle_visual_odometry", 
+                                VehicleOdometry,pub_topic_name, 
                                 self.qos_profile)
                         )
+
+                        # Print out some details
+                        if len(self.assets) == 1:
+                            print("--------------------------------------------------------------------------------")
+                        
+                        print("Found Mocap Topic:", text[2])
+                        print("Current MoCap Topics:", self.assets)
+                        print("--------------------------------------------------------------------------------")
 
     def make_callback(self, idx:int):
         """Create a callback function for a specific mocap topic."""
