@@ -81,7 +81,7 @@ class StateMachine(Node):
             ActuatorMotors, drone_prefix+'/setpoint_control/actuator_motors', self.actuator_motors_callback, qos_profile)
 
         # Create publishers
-        self.offboard_controller = oc.OffboardController(self)
+        self.offboard_controller = oc.OffboardController(self,dr_nm)
         
         # Subscriber variables
         self.vs_cr = VehicleStatus()                                    # current vehicle status

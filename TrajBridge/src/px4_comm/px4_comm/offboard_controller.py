@@ -16,7 +16,7 @@ class OffboardController():
     '''
     Common vehicle commands
     '''
-    def __init__(self,node:Node):
+    def __init__(self,node:Node,drone_name:str):
         # Configure QoS profile for publishing and subscribing
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -29,18 +29,19 @@ class OffboardController():
         self.node = node
         
         # Create Publishers
+        drone_prefix = '/'+drone_name
         self.vehicle_command_publisher = self.node.create_publisher(
-            VehicleCommand,'/fmu/in/vehicle_command', qos_profile)
+            VehicleCommand,drone_prefix+'/in/vehicle_command', qos_profile)
         self.offboard_control_mode_publisher = self.node.create_publisher(
-            OffboardControlMode,'/fmu/in/offboard_control_mode', qos_profile)
+            OffboardControlMode,drone_prefix+'/in/offboard_control_mode', qos_profile)
         self.trajectory_setpoint_publisher = self.node.create_publisher(
-            TrajectorySetpoint,'/fmu/in/trajectory_setpoint', qos_profile)
+            TrajectorySetpoint,drone_prefix+'/in/trajectory_setpoint', qos_profile)
         self.vehicle_attitude_setpoint_publisher = self.node.create_publisher(
-            VehicleAttitudeSetpoint,'/fmu/in/vehicle_attitude_setpoint', qos_profile)
+            VehicleAttitudeSetpoint,drone_prefix+'/in/vehicle_attitude_setpoint', qos_profile)
         self.vehicle_rates_setpoint_publisher = self.node.create_publisher(
-            VehicleRatesSetpoint,'/fmu/in/vehicle_rates_setpoint', qos_profile)
+            VehicleRatesSetpoint,drone_prefix+'/in/vehicle_rates_setpoint', qos_profile)
         self.actuator_motors_publisher = self.node.create_publisher(
-            ActuatorMotors,'/fmu/in/actuator_motors', qos_profile)
+            ActuatorMotors,drone_prefix+'/in/actuator_motors', qos_profile)
 
         # Create Controller Variables
         self.vehicle_command = VehicleCommand(
