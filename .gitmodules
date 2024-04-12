@@ -1,0 +1,3 @@
+[submodule "TrajBridge/src/px4_msgs"]
+	path = TrajBridge/src/px4_msgs
+	url = https://github.com/PX4/px4_msgs.git
