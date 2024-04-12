@@ -59,7 +59,7 @@ class Spline2Position(Node):
 
         # Create publishers
         self.sp_position_with_ff_publisher = self.create_publisher(
-            TrajectorySetpoint,'/setpoint_control/position_with_ff', qos_profile)
+            TrajectorySetpoint,'/fmu/setpoint_control/position_with_ff', qos_profile)
 
         # Create subscribers
         self.vehicle_odometry_subscriber = self.create_subscription(
