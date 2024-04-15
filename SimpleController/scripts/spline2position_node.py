@@ -23,7 +23,7 @@ import plot_trajectory as pt
 class Spline2Position(Node):
     """Node for generating position (with feed-forward) commands from spline."""
 
-    def __init__(self,trajectory_name:str,control_frequency:int=200) -> None:
+    def __init__(self,trajectory_name:str,drone_name:str,control_frequency:int) -> None:
         super().__init__('spline2position_node')
 
         # Configure QoS profile for publishing and subscribing
@@ -45,9 +45,13 @@ class Spline2Position(Node):
         # Unpack trajectories
         Tpi,CPi = ms.solve(course_config)
         
-        # Initialize class variables
+        # Some useful intermediate variables
+        dr_pf = '/'+drone_name if drone_name != 'fmu' else ''
         N = int(Tpi[-1]*control_frequency) + 100
 
+        # Initialize class variables
+        self.node_start = False                                 # Node start flag
+        self.node_status_informed = False                       # Node status informed flag
         self.Tp,self.CP = Tpi,CPi
         self.ksm,self.Nsm = 0, len(Tpi)-1
         self.pos_sp = TrajectorySetpoint()                              # position with ff setpoint command
@@ -59,11 +63,11 @@ class Spline2Position(Node):
 
         # Create publishers
         self.sp_position_with_ff_publisher = self.create_publisher(
-            TrajectorySetpoint,'/setpoint_control/position_with_ff', qos_profile)
+            TrajectorySetpoint,dr_pf+'/fmu/setpoint_control/position_with_ff', qos_profile)
 
         # Create subscribers
         self.vehicle_odometry_subscriber = self.create_subscription(
-            VehicleOdometry, '/fmu/out/vehicle_odometry', self.vehicle_odometry_callback, qos_profile)
+            VehicleOdometry, dr_pf+'/fmu/out/vehicle_odometry', self.vehicle_odometry_callback, qos_profile)
         
         # Create a timer to publish control commands
         self.cmdLoop = self.create_timer(1/control_frequency, self.controller)
@@ -77,6 +81,7 @@ class Spline2Position(Node):
 
         print('================================================')
         print('Trajectory Name:',trajectory_name)
+        print("Drone Name:",drone_name)
         print('Control Frequency:',control_frequency)
         print('================================================')
 
@@ -97,67 +102,102 @@ class Spline2Position(Node):
         print('Trajectory Started.')
         print('In Segment:',self.ksm+1,'/',self.Nsm)
 
-        # Current Time
-        self.t0 = self.get_clock().now().nanoseconds / 1e9
-
     def vehicle_odometry_callback(self, vehicle_odometry:VehicleOdometry):
         """Callback function for vehicle_odometry topic subscriber."""
         self.vo_cr = vehicle_odometry
 
-    def controller(self) -> None:
-        tk = self.get_clock().now().nanoseconds / 1e9 - self.t0
+    def node_check(self) -> bool:
+        """Check if node is ready to start. We are waiting for state and control input messages."""
 
-        if tk <= self.Tp[-1]:
-            # Check if we are in a new segment
-            if tk > self.Tp[self.ksm+1]:
-                self.ksm += 1
+        if self.node_start == False:
+            if self.node_status_informed == False:
+                print('---------------------------------------------------------------------')
+                print('Node is not ready. Waiting for state and control input messages.')
+
+                self.node_status_informed = True 
+            
+            if self.vo_cr.timestamp <= 0:
+                return False
+            else:
+                self.node_start = True
+                self.t0 = self.get_clock().now().nanoseconds / 1e9
+                self.node_status_informed = False
+                return False
+            
+        else:
+            if self.node_status_informed == False:
+                print('---------------------------------------------------------------------')
+                print('Node is ready. Starting trajectory.')
+                print('---------------------------------------------------------------------')
+                print('=====================================================================')
+                print('Trajectory Started.')
                 print('In Segment:',self.ksm+1,'/',self.Nsm)
 
-            # Compute the feed-forward trajectory
-            tf_sm = self.Tp[self.ksm+1]-self.Tp[self.ksm]
-            tk_sm = tk-self.Tp[self.ksm]
-            CP_sm = self.CP[self.ksm,:,:]
-            fo = th.ts_to_fo(tk_sm,tf_sm,CP_sm)
-            
-            # Publish the feed-forward trajectory
-            self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+                self.node_status_informed = True 
 
-            self.pos_sp.position = fo[0:3,0].astype(np.float32)
-            self.pos_sp.velocity = fo[0:3,1].astype(np.float32)
-            self.pos_sp.acceleration = fo[0:3,2].astype(np.float32)
-            self.pos_sp.jerk = fo[0:3,3].astype(np.float32)
+            return True
+        
+    def controller(self) -> None:
+        if self.node_check():
+            tk = self.get_clock().now().nanoseconds / 1e9 - self.t0
 
-            self.pos_sp.yaw = float(fo[3,0])
-            self.pos_sp.yawspeed = float(fo[3,1])
+            if tk <= self.Tp[-1]:
+                # Check if we are in a new segment
+                if tk > self.Tp[self.ksm+1]:
+                    self.ksm += 1
+                    print('In Segment:',self.ksm+1,'/',self.Nsm)
 
-            self.sp_position_with_ff_publisher.publish(self.pos_sp)
+                # Compute the feed-forward trajectory
+                tf_sm = self.Tp[self.ksm+1]-self.Tp[self.ksm]
+                tk_sm = tk-self.Tp[self.ksm]
+                CP_sm = self.CP[self.ksm,:,:]
+                fo = th.ts_to_fo(tk_sm,tf_sm,CP_sm)
+                
+                # Publish the feed-forward trajectory
+                self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
-            # Logging
-            xi_cr = th.fo_to_xu(fo)[0:13]
-            xa_cr = np.hstack((self.vo_cr.position,self.vo_cr.velocity,self.vo_cr.q,self.vo_cr.angular_velocity))
+                self.pos_sp.position = fo[0:3,0].astype(np.float32)
+                self.pos_sp.velocity = fo[0:3,1].astype(np.float32)
+                self.pos_sp.acceleration = fo[0:3,2].astype(np.float32)
+                self.pos_sp.jerk = fo[0:3,3].astype(np.float32)
 
-            xi_cr[6:10] += np.array([1e-6,0,0,0])
-            xa_cr[6:10] += np.array([1e-6,0,0,0])
-            xi_cr[6:10] = xi_cr[6:10] / np.linalg.norm(xi_cr[6:10])
-            xa_cr[6:10] = xa_cr[6:10] / np.linalg.norm(xa_cr[6:10])
+                self.pos_sp.yaw = float(fo[3,0])
+                self.pos_sp.yawspeed = float(fo[3,1])
 
-            self.tXi[0,self.k] = self.tXa[0,self.k] = tk
-            self.tXi[1:,self.k] = xi_cr
-            self.tXa[1:,self.k] = xa_cr
-            self.k += 1
+                self.sp_position_with_ff_publisher.publish(self.pos_sp)
 
+                # Logging
+                xi_cr = th.fo_to_xu(fo)[0:13]
+                xa_cr = np.hstack((self.vo_cr.position,
+                                   self.vo_cr.velocity,
+                                   self.vo_cr.q[1:4],
+                                   self.vo_cr.q[0],
+                                   self.vo_cr.angular_velocity))
+
+                xi_cr[6:10] += np.array([1e-6,0,0,0])
+                xa_cr[6:10] += np.array([1e-6,0,0,0])
+                xi_cr[6:10] = xi_cr[6:10] / np.linalg.norm(xi_cr[6:10])
+                xa_cr[6:10] = xa_cr[6:10] / np.linalg.norm(xa_cr[6:10])
+
+                self.tXi[0,self.k] = self.tXa[0,self.k] = tk
+                self.tXi[1:,self.k] = xi_cr
+                self.tXa[1:,self.k] = xa_cr
+                self.k += 1
+
+            else:
+                print('Trajectory Finished.')
+                print('=========================================')
+                
+                # Trim the trajectories
+                self.tXa = self.tXa[:,10:self.k]
+                self.tXi = self.tXi[:,10:self.k]
+
+                # Plot the trajectories
+                pt.tXU_to_3D([self.tXi,self.tXa])
+
+                exit()
         else:
-            print('Trajectory Finished.')
-            print('=========================================')
-            
-            # Trim the trajectories
-            self.tXa = self.tXa[:,0:self.k]
-            self.tXi = self.tXi[:,0:self.k]
-
-            # Plot the trajectories
-            pt.tXU_to_3D([self.tXi,self.tXa])
-
-            exit()
+            pass
 
 def main() -> None:
     print('Starting spline2position node...')
@@ -167,13 +207,14 @@ def main() -> None:
 
     # Add arguments
     parser.add_argument('--traj', type=str, help='Trajectory Name')
+    parser.add_argument('--drone', type=str, help='Drone Name')
     parser.add_argument('--freq', type=int, help='Control Frequency', default=200)
 
     # Parse the command line arguments
     args = parser.parse_args()
     
     rclpy.init()
-    controller = Spline2Position(args.traj,args.freq)
+    controller = Spline2Position(args.traj,args.drone,args.freq)
     rclpy.spin(controller)
     controller.destroy_node()
     rclpy.shutdown()

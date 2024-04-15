@@ -8,8 +8,7 @@ class StateMachine(Enum):
     WAYPOINT = 3
     READY = 4
     ACTIVE = 5
-    HOVER = 6
-    LAND = 7
+    LAND = 6
 
 class PublisherMode(Enum):
     """Enum class for publisher mode."""

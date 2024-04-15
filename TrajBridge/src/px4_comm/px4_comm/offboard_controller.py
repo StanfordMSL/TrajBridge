@@ -16,7 +16,7 @@ class OffboardController():
     '''
     Common vehicle commands
     '''
-    def __init__(self,node:Node):
+    def __init__(self,node:Node,dr_pf:str):
         # Configure QoS profile for publishing and subscribing
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -30,17 +30,17 @@ class OffboardController():
         
         # Create Publishers
         self.vehicle_command_publisher = self.node.create_publisher(
-            VehicleCommand,'/fmu/in/vehicle_command', qos_profile)
+            VehicleCommand,dr_pf+'/fmu/in/vehicle_command', qos_profile)
         self.offboard_control_mode_publisher = self.node.create_publisher(
-            OffboardControlMode,'/fmu/in/offboard_control_mode', qos_profile)
+            OffboardControlMode,dr_pf+'/fmu/in/offboard_control_mode', qos_profile)
         self.trajectory_setpoint_publisher = self.node.create_publisher(
-            TrajectorySetpoint,'/fmu/in/trajectory_setpoint', qos_profile)
+            TrajectorySetpoint,dr_pf+'/fmu/in/trajectory_setpoint', qos_profile)
         self.vehicle_attitude_setpoint_publisher = self.node.create_publisher(
-            VehicleAttitudeSetpoint,'/fmu/in/vehicle_attitude_setpoint', qos_profile)
+            VehicleAttitudeSetpoint,dr_pf+'/fmu/in/vehicle_attitude_setpoint', qos_profile)
         self.vehicle_rates_setpoint_publisher = self.node.create_publisher(
-            VehicleRatesSetpoint,'/fmu/in/vehicle_rates_setpoint', qos_profile)
+            VehicleRatesSetpoint,dr_pf+'/fmu/in/vehicle_rates_setpoint', qos_profile)
         self.actuator_motors_publisher = self.node.create_publisher(
-            ActuatorMotors,'/fmu/in/actuator_motors', qos_profile)
+            ActuatorMotors,dr_pf+'/fmu/in/actuator_motors', qos_profile)
 
         # Create Controller Variables
         self.vehicle_command = VehicleCommand(
@@ -51,8 +51,7 @@ class OffboardController():
         )
         self.offboard_control_mode = OffboardControlMode(
             position=True,velocity=False,acceleration=False,
-            attitude=False,body_rate=False,thrust_and_torque=False,
-            direct_actuator=False,
+            attitude=False,body_rate=False,actuator=False,
             timestamp=0
         )
 
@@ -97,9 +96,9 @@ class OffboardController():
         self.offboard_control_mode.position = False
         self.offboard_control_mode.velocity = False
         self.offboard_control_mode.acceleration = False
+        self.offboard_control_mode.attitude = False
         self.offboard_control_mode.body_rate = False
-        self.offboard_control_mode.thrust_and_torque = False
-        self.offboard_control_mode.direct_actuator = False
+        self.offboard_control_mode.actuator = False
 
         if (pub_mode is sm.PublisherMode.STATE_MACHINE_WP):
             self.offboard_control_mode.position = True
@@ -112,7 +111,7 @@ class OffboardController():
         elif (pub_mode is sm.PublisherMode.VEHICLE_RATES):
             self.offboard_control_mode.body_rate = True
         elif (pub_mode is sm.PublisherMode.ACTUATOR_MOTORS):
-            self.offboard_control_mode.direct_actuator = True
+            self.offboard_control_mode.actuator = True
         else:
             raise ValueError('Invalid Publisher Mode')
         
