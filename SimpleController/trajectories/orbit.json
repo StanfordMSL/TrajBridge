@@ -3,45 +3,45 @@
         "t": 0.0,
         "fo":   [
             [-2.00,  0.00,  0.00,  0.00],
-            [-2.00,  0.00,  0.00,  0.00],
+            [ 0.00,  0.00,  0.00,  0.00],
             [-1.00,  0.00,  0.00,  0.00],
-            [ 0.78,  0.00,  0.00,  0.00]
+            [ 0.00,  0.00,  0.00,  0.00]
         ]
     },
     "fo1": {
         "t": 4.0,
         "fo":   [
-            [ 2.00,  null,  null,  null, null],
-            [-2.00,  null,  null,  null, null],
+            [-3.50,  null,  null,  null, null],
+            [ 1.50,  null,  null,  null, null],
             [-1.00,  null,  null,  null, null],
-            [ 2.35,  null,  null,  null, null]
+            [ 1.57,  null,  null,  null, null]
         ]
     },
     "fo2": {
         "t": 6.0,
         "fo":   [
-            [ 2.00,  null,  null,  null, null],
-            [ 2.00,  null,  null,  null, null],
+            [-5.00,  null,  null,  null, null],
+            [ 0.00,  null,  null,  null, null],
             [-1.00,  null,  null,  null, null],
-            [ 3.93,  null,  null,  null, null]
+            [ 3.14,  null,  null,  null, null]
         ]
     },
     "fo3": {
         "t": 8.0,
         "fo":   [
-            [-2.00,  null,  null,  null, null],
-            [ 2.00,  null,  null,  null, null],
+            [-3.50,  null,  null,  null, null],
+            [-1.50,  null,  null,  null, null],
             [-1.00,  null,  null,  null, null],
-            [ 5.50,  null,  null,  null, null]
+            [ 4.71,  null,  null,  null, null]
         ]
     },
     "fo4": {
         "t": 12.0,
         "fo":   [
             [-2.00,  0.00,  0.00,  0.00],
-            [-2.00,  0.00,  0.00,  0.00],
+            [ 0.00,  0.00,  0.00,  0.00],
             [-1.00,  0.00,  0.00,  0.00],
-            [ 7.07,  0.00,  0.00,  0.00]
+            [ 6.28,  0.00,  0.00,  0.00]
         ]
     }
 }
