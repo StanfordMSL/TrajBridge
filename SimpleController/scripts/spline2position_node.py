@@ -78,7 +78,7 @@ class Spline2Position(Node):
             Wrench, '/FTReading', self.ft_reading_callback, 10)
 
         # Create a timer to publish control commands
-        self.cmdLoop = self.create_timer(1/1, self.controller)
+        self.cmdLoop = self.create_timer(1/control_frequency, self.controller)
 
         # Diagnostics
         table = []
