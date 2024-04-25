@@ -176,7 +176,7 @@ class Spline2Position(Node):
                 # Simple PID FT Feedback ======================================
                 
                 # Controller Gains
-                Kp = 0.3
+                Kp = 0.1
 
                 # Unchanging setpoints
                 self.pos_sp.position[0:2]= fo[0:2,0].astype(np.float32)
