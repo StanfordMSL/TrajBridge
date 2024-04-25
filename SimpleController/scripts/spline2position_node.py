@@ -179,7 +179,7 @@ class Spline2Position(Node):
                 # Simple PID FT Feedback ============================
                 Fdes = 1.0
                 Fact = self.ft_reading.force.z
-                Kp = 0.1
+                Kp = 0.2
                 err_p = -Kp*(Fdes-Fact)
                 self.pos_sp.position[2] += err_p
                 # ===================================================
