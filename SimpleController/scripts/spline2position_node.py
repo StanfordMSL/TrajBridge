@@ -26,7 +26,7 @@ import plot_trajectory as pt
 class Spline2Position(Node):
     """Node for generating position (with feed-forward) commands from spline."""
 
-    def __init__(self,trajectory_name:str,drone_name:str,control_frequency:int) -> None:
+    def __init__(self,trajectory_name:str,drone_name:str,Fdes:float,control_frequency:int) -> None:
         super().__init__('spline2position_node')
 
         # Configure QoS profile for publishing and subscribing
@@ -65,6 +65,9 @@ class Spline2Position(Node):
         self.k = 0                                                       # trajectory index
 
         # FT Reading Stuff
+        self.Fdes = Fdes
+        self.zdes = 0.0
+        self.ft_state = False
         self.ft_reading = Wrench()
 
         # Create publishers
@@ -94,7 +97,8 @@ class Spline2Position(Node):
         print('================================================')
 
         print('Trajectory Information:')
-        print('Number of Segments:',self.Nsm)
+        print('Desired Force in Z :',self.Fdes)
+        print('Number of Segments :',self.Nsm)
         print('Trajectory Duration:',self.Tp[-1],'s')
         print('------------------------------------------------')
         print('Keyframes:')
@@ -168,22 +172,34 @@ class Spline2Position(Node):
                 # Publish the feed-forward trajectory
                 self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
-                self.pos_sp.position = fo[0:3,0].astype(np.float32)
-                self.pos_sp.velocity = fo[0:3,1].astype(np.float32)
-                self.pos_sp.acceleration = fo[0:3,2].astype(np.float32)
-                self.pos_sp.jerk = fo[0:3,3].astype(np.float32)
+                # =============================================================
+                # Simple PID FT Feedback ======================================
+                
+                # Controller Gains
+                Kp = 0.3
 
+                # Unchanging setpoints
+                self.pos_sp.position[0:2]= fo[0:2,0].astype(np.float32)
+                self.pos_sp.velocity = np.array([0.0,0.0,0.0],dtype=np.float32)
+                self.pos_sp.acceleration = np.array([0.0,0.0,0.0],dtype=np.float32)
+                self.pos_sp.jerk = np.array([0.0,0.0,0.0],dtype=np.float32)
                 self.pos_sp.yaw = float(fo[3,0])
                 self.pos_sp.yawspeed = float(fo[3,1])
 
-                # Simple PID FT Feedback ============================
-                Fdes = 1.0
-                Fact = self.ft_reading.force.z
-                Kp = 0.2
-                err_p = -Kp*(Fdes-Fact)
-                self.pos_sp.position[2] += err_p
-                # ===================================================
-                
+                # Simple State Machine
+                if self.ft_reading.force.z < self.Fdes and self.ft_state == False:
+                    self.pos_sp.position[2] = float(fo[2,0])
+                elif self.ft_reading.force.z > self.Fdes and self.ft_state == False:
+                    self.zdes = self.vo_cr.position[2]
+                    self.ft_state = True
+
+                    self.pos_sp.position[2] = float(fo[2,0])
+                elif self.ft_state == True:                    
+                    err_p = -Kp*(self.Fdes-self.ft_reading.force.z)
+                    self.pos_sp.position[2] = self.zdes + err_p
+                # =============================================================
+                # =============================================================
+
                 self.sp_position_with_ff_publisher.publish(self.pos_sp)
 
                 # Logging
@@ -228,13 +244,14 @@ def main() -> None:
     # Add arguments
     parser.add_argument('--traj', type=str, help='Trajectory Name')
     parser.add_argument('--drone', type=str, help='Drone Name')
+    parser.add_argument('--Fdes', type=float, help='Desired Force', default=1.0)
     parser.add_argument('--freq', type=int, help='Control Frequency', default=200)
 
     # Parse the command line arguments
     args = parser.parse_args()
     
     rclpy.init()
-    controller = Spline2Position(args.traj,args.drone,args.freq)
+    controller = Spline2Position(args.traj,args.drone,args.Fdes,args.freq)
     rclpy.spin(controller)
     controller.destroy_node()
     rclpy.shutdown()
