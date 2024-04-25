@@ -187,9 +187,10 @@ class Spline2Position(Node):
                 self.pos_sp.yawspeed = float(fo[3,1])
 
                 # Simple State Machine
-                if self.ft_reading.force.z < self.Fdes and self.ft_state == False:
+                Ftrg = self.Fdes + 0.3
+                if self.ft_reading.force.z < Ftrg and self.ft_state == False:
                     self.pos_sp.position[2] = float(fo[2,0])
-                elif self.ft_reading.force.z > self.Fdes and self.ft_state == False:
+                elif self.ft_reading.force.z > Ftrg and self.ft_state == False:
                     self.zdes = self.vo_cr.position[2]
                     self.ft_state = True
 
