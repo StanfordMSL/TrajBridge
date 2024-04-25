@@ -169,12 +169,12 @@ class Spline2Position(Node):
                 self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
                 self.pos_sp.position = fo[0:3,0].astype(np.float32)
-                self.pos_sp.velocity = np.array([None,None,None]).astype(np.float32)
-                self.pos_sp.acceleration = np.array([None,None,None]).astype(np.float32)
-                self.pos_sp.jerk = np.array([None,None,None]).astype(np.float32)
+                self.pos_sp.velocity = fo[0:3,1].astype(np.float32)
+                self.pos_sp.acceleration = fo[0:3,2].astype(np.float32)
+                self.pos_sp.jerk = fo[0:3,3].astype(np.float32)
 
                 self.pos_sp.yaw = float(fo[3,0])
-                self.pos_sp.yawspeed = None
+                self.pos_sp.yawspeed = float(fo[3,1])
 
                 # Simple PID FT Feedback ============================
                 Fdes = 1.0
