@@ -15,6 +15,9 @@ from px4_msgs.msg import (
     VehicleOdometry,
     TrajectorySetpoint
 )
+from geometry_msgs.msg import (
+    Wrench
+)
 
 import min_snap as ms
 import trajectory_helper as th
@@ -61,6 +64,9 @@ class Spline2Position(Node):
         self.tXa = np.zeros((14,N))                                    # actual trajectory
         self.k = 0                                                       # trajectory index
 
+        # FT Reading Stuff
+        self.ft_reading = Wrench()
+
         # Create publishers
         self.sp_position_with_ff_publisher = self.create_publisher(
             TrajectorySetpoint,dr_pf+'/fmu/setpoint_control/position_with_ff', qos_profile)
@@ -68,9 +74,11 @@ class Spline2Position(Node):
         # Create subscribers
         self.vehicle_odometry_subscriber = self.create_subscription(
             VehicleOdometry, dr_pf+'/fmu/out/vehicle_odometry', self.vehicle_odometry_callback, qos_profile)
-        
+        self.ft_reading_subscriber = self.create_subscription(
+            Wrench, '/FTReading', self.ft_reading_callback, 10)
+
         # Create a timer to publish control commands
-        self.cmdLoop = self.create_timer(1/control_frequency, self.controller)
+        self.cmdLoop = self.create_timer(1/1, self.controller)
 
         # Diagnostics
         table = []
@@ -106,9 +114,13 @@ class Spline2Position(Node):
         """Callback function for vehicle_odometry topic subscriber."""
         self.vo_cr = vehicle_odometry
 
+    def ft_reading_callback(self, ft_reading:Wrench):
+        """Callback function for ft_reading topic subscriber."""
+
+        self.ft_reading = ft_reading
+
     def node_check(self) -> bool:
         """Check if node is ready to start. We are waiting for state and control input messages."""
-
         if self.node_start == False:
             if self.node_status_informed == False:
                 print('---------------------------------------------------------------------')
@@ -157,13 +169,21 @@ class Spline2Position(Node):
                 self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
                 self.pos_sp.position = fo[0:3,0].astype(np.float32)
-                self.pos_sp.velocity = fo[0:3,1].astype(np.float32)
-                self.pos_sp.acceleration = fo[0:3,2].astype(np.float32)
-                self.pos_sp.jerk = fo[0:3,3].astype(np.float32)
+                self.pos_sp.velocity = np.array([None,None,None]).astype(np.float32)
+                self.pos_sp.acceleration = np.array([None,None,None]).astype(np.float32)
+                self.pos_sp.jerk = np.array([None,None,None]).astype(np.float32)
 
                 self.pos_sp.yaw = float(fo[3,0])
-                self.pos_sp.yawspeed = float(fo[3,1])
+                self.pos_sp.yawspeed = None
 
+                # Simple PID FT Feedback ============================
+                Fdes = 1.0
+                Fact = self.ft_reading.force.z
+                Kp = 0.1
+                err_p = -Kp*(Fdes-Fact)
+                self.pos_sp.position[2] += err_p
+                # ===================================================
+                
                 self.sp_position_with_ff_publisher.publish(self.pos_sp)
 
                 # Logging
