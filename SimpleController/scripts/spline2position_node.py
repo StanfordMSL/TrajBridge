@@ -178,9 +178,9 @@ class Spline2Position(Node):
                 # Simple PID FT Feedback ======================================
                 
                 # Controller Gains
-                Kp = 0.15
-                Ki = 0.0
-                Kd = 0.08
+                Kp = 0.05
+                Ki = 0.00
+                Kd = 0.00
                 df = 0.1
 
                 # Unchanging setpoints
