@@ -178,10 +178,10 @@ class Spline2Position(Node):
                 # Simple PID FT Feedback ======================================
                 
                 # Controller Gains
-                Kp = 0.05
+                Kp = 0.30
                 Ki = 0.00
-                Kd = 0.00
-                df = 0.1
+                Kd = 0.05
+                df = 0.0
 
                 # Unchanging setpoints
                 self.pos_sp.position[0:2]= fo[0:2,0].astype(np.float32)
@@ -198,7 +198,7 @@ class Spline2Position(Node):
                     self.pos_sp.position[2] = float(fo[2,0])
                 elif self.ft_reading.force.z > Ftrg and self.ft_state == False:
                     # Save the desired height and proceed to PID controller in subsequent iterations
-                    self.zdes = float(fo[2,0])
+                    self.zdes = float((fo[2,0]+self.vo_cr.position[2])/2)
                     self.ft_state = True
 
                     self.pos_sp.position[2] = float(fo[2,0])
