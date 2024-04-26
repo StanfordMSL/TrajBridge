@@ -66,7 +66,10 @@ class Spline2Position(Node):
 
         # FT Reading Stuff
         self.Fdes = Fdes
-        self.zdes = 0.0
+        self.pdes = np.array([0.0,0.0,0.0],dtype=np.float32)
+        self.Kp = 0.30
+        self.Ki = 0.00
+        self.Kd = 0.05
         self.prev_error = 0.0
         self.integral = 0.0
         self.ft_state = False
@@ -100,6 +103,7 @@ class Spline2Position(Node):
 
         print('Trajectory Information:')
         print('Desired Force in Z :',self.Fdes)
+        print('PID Gains:',self.Kp,self.Ki,self.Kd)
         print('Number of Segments :',self.Nsm)
         print('Trajectory Duration:',self.Tp[-1],'s')
         print('------------------------------------------------')
@@ -127,6 +131,7 @@ class Spline2Position(Node):
 
     def node_check(self) -> bool:
         """Check if node is ready to start. We are waiting for state and control input messages."""
+
         if self.node_start == False:
             if self.node_status_informed == False:
                 print('---------------------------------------------------------------------')
@@ -169,49 +174,46 @@ class Spline2Position(Node):
                 tf_sm = self.Tp[self.ksm+1]-self.Tp[self.ksm]
                 tk_sm = tk-self.Tp[self.ksm]
                 CP_sm = self.CP[self.ksm,:,:]
-                fo = th.ts_to_fo(tk_sm,tf_sm,CP_sm)
+                fo = th.ts_to_fo(tk_sm,tf_sm,CP_sm).astype(np.float32)
                 
                 # Publish the feed-forward trajectory
                 self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
                 # =============================================================
-                # Simple PID FT Feedback ======================================
-                
-                # Controller Gains
-                Kp = 0.30
-                Ki = 0.00
-                Kd = 0.05
-                df = 0.0
-
-                # Unchanging setpoints
-                self.pos_sp.position[0:2]= fo[0:2,0].astype(np.float32)
-                self.pos_sp.velocity = np.array([0.0,0.0,0.0],dtype=np.float32)
-                self.pos_sp.acceleration = np.array([0.0,0.0,0.0],dtype=np.float32)
-                self.pos_sp.jerk = np.array([0.0,0.0,0.0],dtype=np.float32)
-                self.pos_sp.yaw = float(fo[3,0])
-                self.pos_sp.yawspeed = float(fo[3,1])
+                # Simple FT Feedback ==========================================
 
                 # Simple State Machine
-                Ftrg = self.Fdes + df
-                if self.ft_reading.force.z < Ftrg and self.ft_state == False:
+                if self.ft_state == False:
                     # Carry on with the trajectory
-                    self.pos_sp.position[2] = float(fo[2,0])
-                elif self.ft_reading.force.z > Ftrg and self.ft_state == False:
-                    # Save the desired height and proceed to PID controller in subsequent iterations
-                    self.zdes = float((fo[2,0]+self.vo_cr.position[2])/2)
-                    self.ft_state = True
+                    self.pos_sp.position = fo[0:3,0]
+                    self.pos_sp.velocity = fo[0:3,1]
+                    self.pos_sp.acceleration = fo[0:3,2]
+                    self.pos_sp.jerk = fo[0:3,3]
+                    self.pos_sp.yaw = float(fo[3,0])
+                    self.pos_sp.yawspeed = float(fo[3,1])
 
-                    self.pos_sp.position[2] = float(fo[2,0])
+                    # Check if the force is greater than the threshold
+                    if self.ft_reading.force.z > self.Fdes:
+                        self.ft_state = True
+                        self.pdes = np.mean([fo[0:3,0],self.vo_cr.position],axis=0)
+                        print("Locking Position at:",self.pdes)
+                    else:
+                        pass
                 elif self.ft_state == True:
-                    # PID controller         
+                    # Lock the setpoint
+                    v0,s0 = np.array([0.0,0.0,0.0],dtype=np.float32),float(0.0)
+
+                    self.pos_sp.position[0:2]= self.pdes[0:2]
+                    self.pos_sp.velocity = self.pos_sp.acceleration = self.pos_sp.jerk = v0
+                    self.pos_sp.yaw = self.pos_sp.yawspeed = s0
+
+                    # PID controller on z     
                     error = (self.Fdes-self.ft_reading.force.z)
                     self.integral += error
-                    output = -Kp*error - Ki*self.integral - Kd*(error-self.prev_error)
-                    
-                    self.pos_sp.position[2] = self.zdes + output
-
-                    # Update the previous error term
+                    output = -self.Kp*error - self.Ki*self.integral - self.Kd*(error-self.prev_error)
                     self.prev_error = error
+                    
+                    self.pos_sp.position[2] = self.pdes[2] + output
 
                 # =============================================================
                 # =============================================================
@@ -243,7 +245,6 @@ class Spline2Position(Node):
                 # Trim the trajectories
                 self.tXa = self.tXa[:,10:self.k]
                 self.tXi = self.tXi[:,10:self.k]
-
                 # Plot the trajectories
                 pt.tXU_to_3D([self.tXi,self.tXa])
 
