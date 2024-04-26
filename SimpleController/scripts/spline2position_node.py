@@ -69,7 +69,7 @@ class Spline2Position(Node):
         self.pdes = np.array([0.0,0.0,0.0],dtype=np.float32)
         self.Kp = 0.30
         self.Ki = 0.00
-        self.Kd = 0.05
+        self.Kd = 0.10
         self.prev_error = 0.0
         self.integral = 0.0
         self.ft_state = False
