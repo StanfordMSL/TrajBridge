@@ -67,6 +67,8 @@ class Spline2Position(Node):
         # FT Reading Stuff
         self.Fdes = Fdes
         self.zdes = 0.0
+        self.prev_error = 0.0
+        self.integral = 0.0
         self.ft_state = False
         self.ft_reading = Wrench()
 
@@ -177,6 +179,8 @@ class Spline2Position(Node):
                 
                 # Controller Gains
                 Kp = 0.1
+                Ki = 0.0
+                Kd = 0.05
 
                 # Unchanging setpoints
                 self.pos_sp.position[0:2]= fo[0:2,0].astype(np.float32)
@@ -189,15 +193,25 @@ class Spline2Position(Node):
                 # Simple State Machine
                 Ftrg = self.Fdes + 0.3
                 if self.ft_reading.force.z < Ftrg and self.ft_state == False:
+                    # Carry on with the trajectory
                     self.pos_sp.position[2] = float(fo[2,0])
                 elif self.ft_reading.force.z > Ftrg and self.ft_state == False:
+                    # Save the desired height and proceed to PID controller in subsequent iterations
                     self.zdes = self.vo_cr.position[2]
                     self.ft_state = True
 
                     self.pos_sp.position[2] = float(fo[2,0])
-                elif self.ft_state == True:                    
-                    err_p = -Kp*(self.Fdes-self.ft_reading.force.z)
-                    self.pos_sp.position[2] = self.zdes + err_p
+                elif self.ft_state == True:
+                    # PID controller         
+                    error = (self.Fdes-self.ft_reading.force.z)
+                    self.integral += error
+                    output = -Kp*error - Ki*self.integral - Kd*(error-self.prev_error)
+                    
+                    self.pos_sp.position[2] = self.zdes + output
+
+                    # Update the previous error term
+                    self.prev_error = error
+
                 # =============================================================
                 # =============================================================
 
