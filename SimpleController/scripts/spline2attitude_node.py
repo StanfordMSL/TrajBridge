@@ -6,6 +6,7 @@ import json
 import os
 import argparse
 from tabulate import tabulate
+from scipy.spatial.transform import Rotation as R
 
 import rclpy
 from rclpy.node import Node
@@ -13,7 +14,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPo
 
 from px4_msgs.msg import (
     VehicleOdometry,
-    TrajectorySetpoint
+    VehicleAttitudeSetpoint
 )
 from geometry_msgs.msg import (
     Wrench
@@ -23,11 +24,11 @@ import min_snap as ms
 import trajectory_helper as th
 import plot_trajectory as pt
 
-class Spline2Position(Node):
-    """Node for generating position (with feed-forward) commands from spline."""
+class Spline2Attitude(Node):
+    """Node for generating attitude commands from spline."""
 
     def __init__(self,trajectory_name:str,drone_name:str,Fdes:float,control_frequency:int) -> None:
-        super().__init__('spline2position_node')
+        super().__init__('spline2attitude_node')
 
         # Configure QoS profile for publishing and subscribing
         qos_profile = QoSProfile(
@@ -57,32 +58,25 @@ class Spline2Position(Node):
         self.node_status_informed = False                       # Node status informed flag
         self.Tp,self.CP = Tpi,CPi
         self.ksm,self.Nsm = 0, len(Tpi)-1
-        self.pos_sp = TrajectorySetpoint()                              # position with ff setpoint command
+        self.att_sp = VehicleAttitudeSetpoint()                 # attitude setpoint command
         
-        self.vo_cr = VehicleOdometry()                                  # current vehicle odometry
-        self.tXi = np.zeros((14,N))                                     # ideal trajectory
-        self.tXa = np.zeros((14,N))                                    # actual trajectory
-        self.k = 0                                                       # trajectory index
+        self.vo_cr = VehicleOdometry()                          # current vehicle odometry
+        self.tXi = np.zeros((14,N))                             # ideal trajectory
+        self.tXa = np.zeros((14,N))                             # actual trajectory
+        self.k = 0                                              # trajectory index
         self.t0 = None
         self.tf = Tpi[-1]
 
         # FT Reading Stuff
-        self.Fdes = Fdes
-        self.pdes = np.array([0.0,0.0,0.0],dtype=np.float32)
-        self.Kp = 0.350
-        self.Ki = 0.000
-        self.Kd = 0.100
-        self.Tst = 5.0
-        self.alpha = 0.0
-        self.prev_error = 0.0
-        self.integral = 0.0
-        self.lim_int = 0.1
-        self.ft_state = False
+        self.Kp = np.diag([3.0,3.0,5.0])
+        self.Kv = np.diag([3.0,3.0,3.0])
+        self.tn = 4.0*6.90
+        self.m  = 1.0
         self.ft_reading = Wrench()
 
         # Create publishers
-        self.sp_position_with_ff_publisher = self.create_publisher(
-            TrajectorySetpoint,dr_pf+'/fmu/setpoint_control/position_with_ff', qos_profile)
+        self.sp_attitude_publisher = self.create_publisher(
+            VehicleAttitudeSetpoint,dr_pf+'/fmu/setpoint_control/vehicle_attitude', qos_profile)
 
         # Create subscribers
         self.vehicle_odometry_subscriber = self.create_subscription(
@@ -107,10 +101,7 @@ class Spline2Position(Node):
         print('================================================')
 
         print('Trajectory Information:')
-        print('Desired Force in Z :',self.Fdes)
-        print('PID Gains:',self.Kp,self.Ki,self.Kd)
-        print('alpha val:',self.alpha)
-        print('Step Time:',self.Tst)
+        print('PID Gains:',self.Kp,self.Kv)
         print('Number of Segments :',self.Nsm)
         print('Trajectory Duration:',self.Tp[-1],'s')
         print('------------------------------------------------')
@@ -166,10 +157,24 @@ class Spline2Position(Node):
                 self.node_status_informed = True 
 
             return True
+
+    def vo2xv(self,vo:VehicleOdometry) -> np.ndarray:
+        """Convert VehicleOdometry to state vector."""
+
+        xv = np.array([vo.position[0],vo.position[1],vo.position[2],
+                       vo.velocity[0],vo.velocity[1],vo.velocity[2],
+                       vo.q[1],vo.q[2],vo.q[3],vo.q[0],
+                       vo.angular_velocity[0],vo.angular_velocity[1],vo.angular_velocity[2]])
         
+        xv[6:10] += np.array([0.0,0.0,0.0,1e-9])
+        xv[6:10] = xv[6:10]/np.linalg.norm(xv[6:10])
+
+        return xv
+            
     def controller(self) -> None:
         if self.node_check():
             tk = self.get_clock().now().nanoseconds / 1e9 - self.t0
+            xv_cr = self.vo2xv(self.vo_cr)
 
             if tk <= self.tf:
                 # Check if we are in a new segment
@@ -181,95 +186,64 @@ class Spline2Position(Node):
                 tf_sm = self.Tp[self.ksm+1]-self.Tp[self.ksm]
                 tk_sm = tk-self.Tp[self.ksm]
                 CP_sm = self.CP[self.ksm,:,:]
-                fo = th.ts_to_fo(tk_sm,tf_sm,CP_sm).astype(np.float32)
-                
+                xv_ds = th.ts_to_xu(tk_sm,tf_sm,CP_sm,None,None,None)[0:10]
+
                 # Publish the feed-forward trajectory
-                self.pos_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+                self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
 
                 # =============================================================
                 # Simple FT Feedback ==========================================
 
-                # Simple State Machine
-                if self.ft_state == False:
-                    # Carry on with the trajectory
-                    self.pos_sp.position = fo[0:3,0]
-                    self.pos_sp.velocity = fo[0:3,1]
-                    self.pos_sp.acceleration = fo[0:3,2]
-                    self.pos_sp.jerk = fo[0:3,3]
-                    self.pos_sp.yaw = float(fo[3,0])
-                    self.pos_sp.yawspeed = float(fo[3,1])
+                # Some useful intermediate variables
+                del_p = xv_ds[0:3]-xv_cr[0:3]
+                del_v = xv_ds[3:6]-xv_cr[3:6]
+ 
+                R_ds = R.from_quat(xv_ds[6:10]).as_matrix()
+                R_cr = R.from_quat(xv_cr[6:10]).as_matrix()
+                z_cr = R_cr[:,2]
 
-                    # Check if the force is greater than the threshold
-                    if self.ft_reading.force.z > self.Fdes:
-                        self.ft_state = True
-                        self.pdes = self.alpha*self.vo_cr.position + (1.0-self.alpha)*fo[0:3,0]
-                        self.tf = tk + self.Tst
-                        print("Locking Position at:",self.pdes)
-                    else:
-                        pass
-                elif self.ft_state == True:
-                    # Lock the setpoint
-                    v0,s0 = np.array([0.0,0.0,0.0],dtype=np.float32),float(0.0)
+                Fdes = -self.Kp@del_p - self.Kv@del_v + self.m*np.array([0,0,9.81])
 
-                    self.pos_sp.position[0:2]= self.pdes[0:2]
-                    self.pos_sp.velocity = self.pos_sp.acceleration = self.pos_sp.jerk = v0
-                    self.pos_sp.yaw = self.pos_sp.yawspeed = s0
+                # Generate z_cmd vector
+                z_cmd = Fdes/np.linalg.norm(Fdes)
+                y_cmd = np.cross(z_cmd,R_ds[:,0])/np.linalg.norm(np.cross(z_cmd,R_ds[:,0]))
+                x_cmd = np.cross(y_cmd,z_cmd)
 
-                    # PID controller on z     
-                    error = (self.Fdes-self.ft_reading.force.z)
-                    self.integral += error
-                    output = -self.Kp*error - self.Ki*self.integral - self.Kd*(error-self.prev_error)
-                    
-                    output = np.clip(output,-0.3, 0.3)
+                R_cmd = np.hstack((x_cmd.reshape(-1,1),y_cmd.reshape(-1,1),z_cmd.reshape(-1,1)))
 
-                    self.prev_error = error
-                    self.integral = np.clip(self.integral,-self.lim_int,self.lim_int)
+                # Generate Thrust Command
+                thrust = -np.dot(Fdes,z_cr)
+                n_thrust = float(thrust/self.tn)
 
-                    self.pos_sp.position[2] = self.pdes[2] + output
+                # Generate Quaternion Command
+                q_cmd = R.from_matrix(R_cmd).as_quat().astype(np.float32)
 
-
+                self.att_sp.q_d = np.array([q_cmd[3],q_cmd[0],q_cmd[1],q_cmd[2]]).astype(np.float32)
+                self.att_sp.thrust_body = np.array([0.0, 0.0, n_thrust]).astype(np.float32)
                 # =============================================================
                 # =============================================================
 
-                self.sp_position_with_ff_publisher.publish(self.pos_sp)
-
-                # Logging
-                xi_cr = th.fo_to_xu(fo)[0:13]
-                xa_cr = np.hstack((self.vo_cr.position,
-                                   self.vo_cr.velocity,
-                                   self.vo_cr.q[1:4],
-                                   self.vo_cr.q[0],
-                                   self.vo_cr.angular_velocity))
-
-                xi_cr[6:10] += np.array([1e-6,0,0,0])
-                xa_cr[6:10] += np.array([1e-6,0,0,0])
-                xi_cr[6:10] = xi_cr[6:10] / np.linalg.norm(xi_cr[6:10])
-                xa_cr[6:10] = xa_cr[6:10] / np.linalg.norm(xa_cr[6:10])
-
-                self.tXi[0,self.k] = self.tXa[0,self.k] = tk
-                self.tXi[1:,self.k] = xi_cr
-                self.tXa[1:,self.k] = xa_cr
-                self.k += 1
+                self.sp_attitude_publisher.publish(self.att_sp)
 
             else:
                 print('Trajectory Finished.')
                 print('=========================================')
                 
-                # Trim the trajectories
-                self.tXa = self.tXa[:,10:self.k]
-                self.tXi = self.tXi[:,10:self.k]
-                # Plot the trajectories
-                pt.tXU_to_3D([self.tXi,self.tXa])
+                # # Trim the trajectories
+                # self.tXa = self.tXa[:,10:self.k]
+                # self.tXi = self.tXi[:,10:self.k]
+                # # Plot the trajectories
+                # pt.tXU_to_3D([self.tXi,self.tXa])
 
                 exit()
         else:
             pass
 
 def main() -> None:
-    print('Starting spline2position node...')
+    print('Starting spline2attitude node...')
 
     # Create ArgumentParser object
-    parser = argparse.ArgumentParser(description="Spline2Position Node.")
+    parser = argparse.ArgumentParser(description="Spline2Attitude Node.")
 
     # Add arguments
     parser.add_argument('--traj', type=str, help='Trajectory Name')
@@ -281,7 +255,7 @@ def main() -> None:
     args = parser.parse_args()
     
     rclpy.init()
-    controller = Spline2Position(args.traj,args.drone,args.Fdes,args.freq)
+    controller = Spline2Attitude(args.traj,args.drone,args.Fdes,args.freq)
     rclpy.spin(controller)
     controller.destroy_node()
     rclpy.shutdown()

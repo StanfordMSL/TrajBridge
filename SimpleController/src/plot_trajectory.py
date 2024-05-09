@@ -83,8 +83,8 @@ def tXU_to_3D(tXU_list:List[np.ndarray],
         ax.plot(tXU[1,:], tXU[2,:], tXU[3,:],color=traj_colors[idx%len(traj_colors)],alpha=0.5)             # spline
 
         # Plot Initial and Final
-        quad_frame(tXU[1:14,0],ax)
-        quad_frame(tXU[1:14,-1],ax)
+        quad_frame(tXU[1:11,0],ax)
+        quad_frame(tXU[1:11,-1],ax)
             
         if n is not None:
             for i in range(n,tXU.shape[1],n):
