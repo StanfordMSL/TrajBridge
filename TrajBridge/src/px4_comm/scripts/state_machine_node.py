@@ -336,13 +336,9 @@ class StateMachine(Node):
                 self.offboard_controller.set_vehicle_rates_setpoint(self.vrs_sp)
             elif pub_mode is sm.PublisherMode.ACTUATOR_MOTORS:
                 self.offboard_controller.set_actuator_motors(self.ams_sp)
-            else:
-                # State Transition Actions
-                self.update_smp_sp(self.wp_rdy)                                     # Send to ready waypoint
-                self.sm_tmr.reset(t_cr,self.smp_sp.position)                        # Reset state machine timer for takeoff
-                
+            else:                
                 if self.at_ld == True:
-                    # State Transition  
+                    # State Transition
                     self.drone_state = sm.StateMachine.LAND                         # Transition to land
 
                     # Print outs
@@ -350,6 +346,8 @@ class StateMachine(Node):
                     print("State Machine: LAND")
                 else:
                     # State Transition  
+                    self.update_smp_sp(self.wp_rdy)                                 # Send to ready waypoint
+                    self.sm_tmr.reset(t_cr,self.smp_sp.position)                    # Reset state machine timer for takeoff
                     self.drone_state = sm.StateMachine.WAYPOINT                     # Transition to waypoint
 
                     # Print outs
