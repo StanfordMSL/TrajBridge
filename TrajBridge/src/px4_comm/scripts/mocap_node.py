@@ -51,7 +51,10 @@ class Mocap(Node):
         print("Mocap Node Parameters:")
         print("Asset Limit:", self.N_as)
         print("Topic Search Rate:", hz_ts)
-        print("Note: This node forwards the singular 'fmu' and/or any 'drone<#>' mocap topic.")
+        print("Note: This node forwards the following mocap topic(s):")
+        print("- 'fmu' (special case)")
+        print("- 'droneX' where X is a digit")
+        print("- 'cameraX' where X is a digit")
         print("--------------------------------------------------------------------------------")
         
     def topic_search_callback(self) -> None:
@@ -69,7 +72,7 @@ class Mocap(Node):
                 # Check if mocap topic is already being used and there are less than N_as mocap topics
                 if text[2] not in self.assets and len(self.assets) < self.N_as:
                     # Check if mocap topic is a drone or fmu
-                    if text[2] == "fmu" or (text[2].startswith("drone") and text[2][-1].isdigit()):
+                    if text[2] == "fmu" or (text[2].startswith("drone") and text[2][-1].isdigit()) or (text[2].startswith("camera") and text[2][-1].isdigit()):
                         # Add new mocap topic
                         self.assets.append(text[2])
 
@@ -82,8 +85,15 @@ class Mocap(Node):
                                 self.qos_profile))
                         
                         # Create publisher for new mocap topic with special "fmu" case
-                        base_name = "fmu/in/vehicle_visual_odometry"
-                        pub_topic_name = text[2]+"/"+base_name if text[2] != "fmu" else base_name
+                        if text[2] == "fmu":
+                            pub_topic_name = "fmu/in/vehicle_visual_odometry"
+                        elif text[2].startswith("drone"):
+                            pub_topic_name = text[2]+"/fmu/in/vehicle_visual_odometry"
+                        elif text[2].startswith("camera"):
+                            pub_topic_name = text[2]+"/odometry"
+                        else:
+                            raise ValueError("Unknown mocap topic name")
+
                         self.pubs.append(
                             self.create_publisher(
                                 VehicleOdometry,pub_topic_name, 
