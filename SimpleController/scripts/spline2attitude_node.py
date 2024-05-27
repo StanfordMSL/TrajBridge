@@ -24,10 +24,19 @@ import min_snap as ms
 import trajectory_helper as th
 import plot_trajectory as pt
 
+from enum import Enum
+
+class StateMachine(Enum):
+    """Enum class for pilot state."""
+    IDLE = 0
+    ASCEND = 1
+    STAIRCASE = 2
+    DESCEND = 3
+    
 class Spline2Attitude(Node):
     """Node for generating attitude commands from spline."""
 
-    def __init__(self,trajectory_name:str,drone_name:str,Fdes:float,control_frequency:int) -> None:
+    def __init__(self,trajectory_name:str,drone_name:str,Fdp:float,control_frequency:int) -> None:
         super().__init__('spline2attitude_node')
 
         # Configure QoS profile for publishing and subscribing
@@ -70,8 +79,13 @@ class Spline2Attitude(Node):
         # FT Reading Stuff
         self.Kp = np.diag([3.0,3.0,5.0])
         self.Kv = np.diag([3.0,3.0,3.0])
+        self.Tst = 5.0
         self.tn = 4.0*6.90
         self.m  = 1.0
+        self.Fdp = Fdp
+        self.Kfz = 0.2
+        self.fz_sv = None
+        self.ft_state = False
         self.ft_reading = Wrench()
 
         # Create publishers
@@ -101,7 +115,7 @@ class Spline2Attitude(Node):
         print('================================================')
 
         print('Trajectory Information:')
-        print('PID Gains:',self.Kp,self.Kv)
+        print('PD Gains:',np.diag(self.Kp),np.diag(self.Kv))
         print('Number of Segments :',self.Nsm)
         print('Trajectory Duration:',self.Tp[-1],'s')
         print('------------------------------------------------')
@@ -176,7 +190,7 @@ class Spline2Attitude(Node):
             tk = self.get_clock().now().nanoseconds / 1e9 - self.t0
             xv_cr = self.vo2xv(self.vo_cr)
 
-            if tk <= self.tf:
+            if (tk <= self.tf) and (xv_cr[2] > -1.5):
                 # Check if we are in a new segment
                 if tk > self.Tp[self.ksm+1]:
                     self.ksm += 1
@@ -203,6 +217,16 @@ class Spline2Attitude(Node):
                 z_cr = R_cr[:,2]
 
                 Fdes = -self.Kp@del_p - self.Kv@del_v + self.m*np.array([0,0,9.81])
+                if self.ft_state == False:
+                    # Do Nothing
+                    if self.ft_reading.force.z > self.Fdp:
+                        self.ft_state = True
+                        self.fz_sv = Fdes[2]
+                        self.tf = tk + self.Tst
+                        print("Triggered at:",self.fz_sv)
+                elif self.ft_state == True:
+                    Fdes[2] = self.fz_sv + self.Kfz*(self.Fdp-self.ft_reading.force.z)
+                # print("Ref:",self.fz_sv,"Cmd:",Fdes[2])
 
                 # Generate z_cmd vector
                 z_cmd = Fdes/np.linalg.norm(Fdes)
@@ -220,11 +244,11 @@ class Spline2Attitude(Node):
 
                 self.att_sp.q_d = np.array([q_cmd[3],q_cmd[0],q_cmd[1],q_cmd[2]]).astype(np.float32)
                 self.att_sp.thrust_body = np.array([0.0, 0.0, n_thrust]).astype(np.float32)
+
                 # =============================================================
                 # =============================================================
 
                 self.sp_attitude_publisher.publish(self.att_sp)
-
             else:
                 print('Trajectory Finished.')
                 print('=========================================')
