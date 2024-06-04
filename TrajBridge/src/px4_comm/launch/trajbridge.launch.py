@@ -11,9 +11,9 @@ def generate_launch_description():
             emulate_tty=True,
             parameters=[
                 {'drone_name':"drone5"},
-                {'auto_start': False},
-                {'auto_land': True},
-                {'wp_ready': [ -2.00,  0.00, -1.20,  0.00]},
+                {'auto_start': True},
+                {'auto_land': False},
+                {'wp_ready': [ -1.00, -2.00, -1.00,  1.57]},
             ]
         )
     ])
