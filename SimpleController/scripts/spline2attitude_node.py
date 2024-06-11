@@ -165,7 +165,7 @@ class Spline2Attitude(Node):
         # Drone State Machine
         if self.drone_state == StateMachine.FREE_STARTUP:
             # Looping State Actions
-            
+
             # State Transition Actions
             if self.vo_cr.timestamp > 0:
                 self.t0,self.x0 = tk,xv_cr
@@ -187,7 +187,7 @@ class Spline2Attitude(Node):
                 print("Failsafe Triggered at:",xv_ds[2])
                 print("State Machine: FREE_DISENGAGE")
             elif self.wr_sn.force.z > self.Fthh:
-                self.t0,self.xd,self.fd = tk,xv_ds,self.att_sp.thrust_body
+                self.t0,self.xd,self.fv_ds = tk,xv_ds,self.att_sp.thrust_body
                 self.drone_state = StateMachine.CONTACT_SEARCH
                 print("State Machine: CONTACT_SEARCH")
 
@@ -210,7 +210,7 @@ class Spline2Attitude(Node):
                 print("Z Force:",self.wr_sn.force.z)
                 print("State Machine: FREE_DISENGAGE")
             elif abs(self.Ftgt[self.idx_st] - self.wr_sn.force.z) <= 0.1:
-                self.t0,self.fd = tk,self.att_sp.thrust_body
+                self.t0,self.fv_ds = tk,self.att_sp.thrust_body
 
                 self.drone_state = StateMachine.CONTACT_HOLD
                 print("State Machine: CONTACT_HOLD")
