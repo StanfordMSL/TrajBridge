@@ -30,7 +30,7 @@ class StateMachine(Enum):
 class Spline2Attitude(Node):
     """Node for generating attitude commands from spline."""
 
-    def __init__(self,trajectory_name:str,drone_name:str,control_frequency:int=50) -> None:
+    def __init__(self,trajectory_name:str,drone_name:str,control_frequency:int) -> None:
         super().__init__('spline2attitude_node')
 
         # Configure QoS profile for publishing and subscribing
@@ -56,8 +56,8 @@ class Spline2Attitude(Node):
         
         # Initialize state machine constants
         self.idx_st = 0                                         # State machine stair index
-        self.dt_st = 3.0                                        # State machine stair time  
-        self.Ftgt = np.array([1.0,3.0,1.0])                     # State machine stair forces
+        self.dt_st = 5.0                                        # State machine stair time  
+        self.Ftgt = np.array([1.0,2.0,3.0])                     # State machine stair forces
         self.Fthh = 0.5                                         # State machine search threshold
         self.dp_z = 0.1                                         # z-position search rate
         self.df_z = 0.01                                        # z-force search rate
@@ -69,7 +69,7 @@ class Spline2Attitude(Node):
         self.Kv = np.diag([3.0,3.0,3.0])                        # VAS Vel Gain
         self.tn = 4.0*6.90                                      # Thurt Gain
         self.m  = 1.0                                           # Mass
-        self.Kfp = 0.1                                          # Force Feedback P-Gain
+        self.Kfp = 0.005                                          # Force Feedback P-Gain
 
         # Create publishers
         self.sp_attitude_publisher = self.create_publisher(
@@ -128,29 +128,45 @@ class Spline2Attitude(Node):
         R_cr = R.from_quat(xv_cr[6:10]).as_matrix()
         z_cr = R_cr[:,2]
 
-        Fdes = -self.Kp@del_p - self.Kv@del_v + self.m*np.array([0,0,9.81])
-
-        z_cmd = Fdes/np.linalg.norm(Fdes)
-        y_cmd = np.cross(z_cmd,R_ds[:,0])/np.linalg.norm(np.cross(z_cmd,R_ds[:,0]))
-        x_cmd = np.cross(y_cmd,z_cmd)
-
-        R_cmd = np.hstack((x_cmd.reshape(-1,1),y_cmd.reshape(-1,1),z_cmd.reshape(-1,1)))
-
-        # Generate Thrust Command
-        thrust = -np.dot(Fdes,z_cr)
-
-        # Generate Quaternion Command
-        q_cmd = R.from_matrix(R_cmd).as_quat().astype(np.float32)
-
         if fv_ds is False:
+            Fdes = -self.Kp@del_p - self.Kv@del_v + self.m*np.array([0,0,9.81])
+
+            z_cmd = Fdes/np.linalg.norm(Fdes)
+            y_cmd = np.cross(z_cmd,R_ds[:,0])/np.linalg.norm(np.cross(z_cmd,R_ds[:,0]))
+            x_cmd = np.cross(y_cmd,z_cmd)
+
+            R_cmd = np.hstack((x_cmd.reshape(-1,1),y_cmd.reshape(-1,1),z_cmd.reshape(-1,1)))
+
+            # Generate Thrust Command
+            thrust = -np.dot(Fdes,z_cr)
+
+            # Generate Quaternion Command
+            q_cmd = R.from_matrix(R_cmd).as_quat().astype(np.float32)
+
             nt_cmd = float(thrust/self.tn)
         else:
+            Fdes = -(0.3*(self.Kp@del_p)) - (0.3*(self.Kv@del_v)) + self.m*np.array([0,0,9.81])
+
+            z_cmd = Fdes/np.linalg.norm(Fdes)
+            y_cmd = np.cross(z_cmd,R_ds[:,0])/np.linalg.norm(np.cross(z_cmd,R_ds[:,0]))
+            x_cmd = np.cross(y_cmd,z_cmd)
+
+            R_cmd = np.hstack((x_cmd.reshape(-1,1),y_cmd.reshape(-1,1),z_cmd.reshape(-1,1)))
+
+            # Generate Thrust Command
+            thrust = -np.dot(Fdes,z_cr)
+
+            # Generate Quaternion Command
+            q_cmd = R.from_matrix(R_cmd).as_quat().astype(np.float32)
+
             if self.drone_state == StateMachine.CONTACT_SEARCH:
                 nt_cmd = fv_ds[2]
             elif self.drone_state == StateMachine.CONTACT_HOLD:
                 fz_tgt = self.Ftgt[self.idx_st]
                 fz_act = self.wr_sn.force.z
-                nt_cmd = fv_ds[2] + self.Kfp*(fz_tgt-fz_act)
+                nt_cmd = fv_ds[2] - self.Kfp*(fz_tgt-fz_act)
+                
+        # print(self.drone_state,nt_cmd)
 
         thrust_body = np.array([0.0, 0.0, nt_cmd]).astype(np.float32)
         q_d = np.array([q_cmd[3],q_cmd[0],q_cmd[1],q_cmd[2]]).astype(np.float32)
@@ -167,7 +183,7 @@ class Spline2Attitude(Node):
             # Looping State Actions
 
             # State Transition Actions
-            if self.vo_cr.timestamp > 0:
+            if self.vo_cr.timestamp >    0:
                 self.t0,self.x0 = tk,xv_cr
                 self.drone_state = StateMachine.FREE_SEARCH
                 print("State Machine: FREE_SEARCH")
@@ -176,10 +192,6 @@ class Spline2Attitude(Node):
             # Looping State Actions
             xv_ds = self.xv_0.copy()
             xv_ds[2] -= self.dp_z*(tk-self.t0)
-
-            self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr)
-            self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
-            self.sp_attitude_publisher.publish(self.att_sp)
 
             # State Transition Actions
             if xv_cr[2] < self.pz_max:
@@ -190,17 +202,19 @@ class Spline2Attitude(Node):
                 self.t0,self.xd,self.fv_ds = tk,xv_ds,self.att_sp.thrust_body
                 self.drone_state = StateMachine.CONTACT_SEARCH
                 print("State Machine: CONTACT_SEARCH")
+            # Looping State Actions
+            else:
+                self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr)
+                self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+                self.sp_attitude_publisher.publish(self.att_sp)
 
         elif self.drone_state == StateMachine.CONTACT_SEARCH:
             # Looping State Actions
             xv_ds = self.xv_ds
             fv_ds = self.fv_ds.copy()
             sgn_ds = np.sign(self.Ftgt[self.idx_st]-self.wr_sn.force.z)
-            fv_ds[2] += sgn_ds*self.df_z*(tk-self.t0)
 
-            self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr,fv_ds)
-            self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
-            self.sp_attitude_publisher.publish(self.att_sp)
+            fv_ds[2] -= sgn_ds*self.df_z*(tk-self.t0)
 
             # State Transition Actions
             if (xv_cr[2] < self.pz_max) or (self.wr_sn.force.z > self.fz_max):
@@ -209,20 +223,21 @@ class Spline2Attitude(Node):
                 print("Z Height:",xv_cr[2])
                 print("Z Force:",self.wr_sn.force.z)
                 print("State Machine: FREE_DISENGAGE")
-            elif abs(self.Ftgt[self.idx_st] - self.wr_sn.force.z) <= 0.1:
+            elif self.wr_sn.force.z > self.Ftgt[self.idx_st]:
                 self.t0,self.fv_ds = tk,self.att_sp.thrust_body
 
                 self.drone_state = StateMachine.CONTACT_HOLD
                 print("State Machine: CONTACT_HOLD")
+            # Looping State Actions
+            else:
+                self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr,fv_ds)
+                self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+                self.sp_attitude_publisher.publish(self.att_sp)
 
         elif self.drone_state == StateMachine.CONTACT_HOLD:
             # Looping State Actions
             xv_ds = self.xv_ds
             fv_ds = self.fv_ds
-
-            self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr,fv_ds)
-            self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
-            self.sp_attitude_publisher.publish(self.att_sp)
 
             # State Transition Actions
             if (xv_cr[2] < self.pz_max) or (self.wr_sn.force.z > self.fz_max):
@@ -232,12 +247,19 @@ class Spline2Attitude(Node):
             elif tk > self.t0 + self.dt_st:
                 self.idx_st += 1
                 if self.idx_st < len(self.Ftgt):
+                    self.t0,self.fv_ds = tk,self.att_sp.thrust_body
+
                     self.drone_state = StateMachine.CONTACT_SEARCH
                     print("State Machine: CONTACT_SEARCH")
                 else:
                     self.drone_state = StateMachine.FREE_DISENGAGE
                     self.t0 = tk
                     print("State Machine: FREE_DISENGAGE")
+            # Looping State Actions
+            else:
+                self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr,fv_ds)
+                self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+                self.sp_attitude_publisher.publish(self.att_sp)
 
         elif self.drone_state == StateMachine.FREE_DISENGAGE:
             xv_ds = self.xv_0.copy()
