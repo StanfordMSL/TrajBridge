@@ -356,7 +356,9 @@ class StateMachine(Node):
                 
         elif self.drone_state == sm.StateMachine.LAND:
             # Terminal State Actions
-            self.offboard_controller.land()
+            # self.update_smp_sp(np.array([xv_cr[0],xv_cr[1],0.0,0.0]))               # Set waypoint to current xy-position (hover altitude)
+            # self.offboard_controller.set_trajectory_setpoint(self.smp_sp)           # Publish desired position  
+            self.offboard_controller.land(xv_cr[0],xv_cr[1])
 
             # Print outs
             print("-------------------------------------------")
@@ -365,8 +367,16 @@ class StateMachine(Node):
             
             exit(0)
         else:
-            # Terminal State Actions
-            self.offboard_controller.land()
+            # Unrecognized State Actions
+            # self.update_smp_sp(np.array([xv_cr[0],xv_cr[1],0.0,0.0]))               # Set waypoint to current xy-position (hover altitude)
+            # self.offboard_controller.set_trajectory_setpoint(self.smp_sp)           # Publish desired position  
+            self.offboard_controller.land(xv_cr[0],xv_cr[1])
+
+            # Print outs
+            print("-------------------------------------------")
+            print("State Machine mode unrecognized. Node Closing...")
+            print("===========================================")
+
             exit(0)
 
     def update_smp_sp(self,wp:np.ndarray=None):

@@ -82,11 +82,11 @@ class OffboardController():
         self.vehicle_command.timestamp = int(self.node.get_clock().now().nanoseconds / 1000)
         self.vehicle_command_publisher.publish(self.vehicle_command)
 
-    def land(self) -> None:
+    def land(self,x,y) -> None:
         """Switch to land mode."""
         self.vehicle_command.command = VehicleCommand.VEHICLE_CMD_NAV_LAND
-        self.vehicle_command.param1 = 0.0
-        self.vehicle_command.param2 = 0.0
+        self.vehicle_command.param5 = x
+        self.vehicle_command.param6 = y
 
         self.vehicle_command.timestamp = int(self.node.get_clock().now().nanoseconds / 1000)
         self.vehicle_command_publisher.publish(self.vehicle_command)
