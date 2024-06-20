@@ -13,7 +13,7 @@ def generate_launch_description():
                 {'drone_name':"drone5"},
                 {'auto_start': True},
                 {'auto_land': False},
-                {'wp_ready': [ -1.00, -2.00, -1.00,  1.57]},
+                {'wp_ready': [ -5.00, -1.00, -1.00,  0.00]},
             ]
         )
     ])
