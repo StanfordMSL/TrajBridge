@@ -16,9 +16,6 @@ from px4_msgs.msg import (
 from geometry_msgs.msg import (
     Wrench
 )
-from std_msgs.msg import (
-    String
-)
 
 from enum import Enum
 
@@ -26,23 +23,15 @@ class StateMachine(Enum):
     """Enum class for pilot state."""
     FREE_STARTUP = 0
     FREE_SEARCH = 1
-    FREE_CHECK = 2
-    FREE_DISENGAGE = 3
-    CONTACT_SEARCH = 4
-    CONTACT_HOLD = 5
+    FREE_DISENGAGE = 2
+    CONTACT_SEARCH = 3
+    CONTACT_HOLD = 4
     
 class Spline2Attitude(Node):
     """Node for generating attitude commands from spline."""
 
-    def __init__(self,drone_name:str,control_frequency:int) -> None:
+    def __init__(self,drone_name:str,trajectory_name:str,control_frequency:int) -> None:
         super().__init__('spline2attitude_node')
-
-        # Hardcoded Variables
-        self.xv_0 = np.array([
-            -2.80, 0.00,-0.50,
-             0.00, 0.00, 0.00,
-             0.00, 0.00, 0.00, 1.00
-        ])
 
         # Configure QoS profile for publishing and subscribing
         qos_profile = QoSProfile(
@@ -62,18 +51,18 @@ class Spline2Attitude(Node):
         self.wr_sn = Wrench()                                   # wrench sensor reading
         self.t0 = 0.0                                           # State machine start time variable
         self.fv_ds:np.ndarray = np.zeros(3)                     # State machine desired force vector
+        self.xv_0:np.ndarray  = np.eye(10)[9]                   # State machine starting full state variable
         self.xv_ds:np.ndarray = np.eye(10)[9]                   # State machine desired full state variable
         
         # Initialize state machine constants
-        self.dt_hd = 5.0                                        # State machine hold time  
-        self.Ftgt = 1.5                                         # State machine target force
-        self.dFtgt = 1.0                                        # State machine target force step size
-        self.Fchk = 0.6                                         # State machine check force
-        self.Fthh = 1.0                                         # State machine search threshold
+        self.idx_st = 0                                         # State machine stair index
+        self.dt_st = 5.0                                        # State machine stair time  
+        self.Ftgt = np.array([1.0,2.0,3.0])                     # State machine stair forces
+        self.Fthh = 0.5                                         # State machine search threshold
         self.dp_z = 0.1                                         # z-position search rate
         self.df_z = 0.01                                        # z-force search rate
         self.pz_max = -1.5                                      # State machine stair max height
-        self.fz_max = 5.0                                       # State machine stair max force
+        self.fz_max = np.max(self.Ftgt)+1.0                     # State machine stair max force
 
         # Controller
         self.Kp = np.diag([3.0,3.0,5.0])                        # VAS Pos Gain
@@ -85,8 +74,6 @@ class Spline2Attitude(Node):
         # Create publishers
         self.sp_attitude_publisher = self.create_publisher(
             VehicleAttitudeSetpoint,dr_pf+'/fmu/setpoint_control/vehicle_attitude', qos_profile)
-        self.light_publisher = self.create_publisher(
-            String,'/cmdToESP', 1)
 
         # Create subscribers
         self.vehicle_odometry_subscriber = self.create_subscription(
@@ -98,13 +85,15 @@ class Spline2Attitude(Node):
         self.cmdLoop = self.create_timer(1/control_frequency, self.controller)
 
         print('================================================')
+        print('Trajectory Name:',trajectory_name)
         print("Drone Name:",drone_name)
         print('Control Frequency:',control_frequency)
         print('================================================')
+
         print('Trajectory Information:')
         print('PD Gains:',np.diag(self.Kp),np.diag(self.Kv))
         input("Press Enter to start trajectory...")
-
+    
         print('================================================')
 
         print('Trajectory Started.')
@@ -173,7 +162,7 @@ class Spline2Attitude(Node):
             if self.drone_state == StateMachine.CONTACT_SEARCH:
                 nt_cmd = fv_ds[2]
             elif self.drone_state == StateMachine.CONTACT_HOLD:
-                fz_tgt = self.Ftgt
+                fz_tgt = self.Ftgt[self.idx_st]
                 fz_act = self.wr_sn.force.z
                 nt_cmd = fv_ds[2] - self.Kfp*(fz_tgt-fz_act)
                 
@@ -207,14 +196,12 @@ class Spline2Attitude(Node):
             # State Transition Actions
             if xv_cr[2] < self.pz_max:
                 self.drone_state = StateMachine.FREE_DISENGAGE
-                print("Height Failsafe Triggered at:",xv_cr[2])
+                print("Failsafe Triggered at:",xv_ds[2])
                 print("State Machine: FREE_DISENGAGE")
             elif self.wr_sn.force.z > self.Fthh:
                 self.t0,self.xd,self.fv_ds = tk,xv_ds,self.att_sp.thrust_body
                 self.drone_state = StateMachine.CONTACT_SEARCH
                 print("State Machine: CONTACT_SEARCH")
-                print("Target Force :",self.Ftgt)
-
             # Looping State Actions
             else:
                 self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr)
@@ -225,18 +212,18 @@ class Spline2Attitude(Node):
             # Looping State Actions
             xv_ds = self.xv_ds
             fv_ds = self.fv_ds.copy()
-            sgn_ds = np.sign(self.Ftgt-self.wr_sn.force.z)
+            sgn_ds = np.sign(self.Ftgt[self.idx_st]-self.wr_sn.force.z)
 
             fv_ds[2] -= sgn_ds*self.df_z*(tk-self.t0)
 
             # State Transition Actions
             if (xv_cr[2] < self.pz_max) or (self.wr_sn.force.z > self.fz_max):
                 self.drone_state = StateMachine.FREE_DISENGAGE
-                print("Failsafe Triggered")
+                print("Failsafe Triggered.")
                 print("Z Height:",xv_cr[2])
                 print("Z Force:",self.wr_sn.force.z)
                 print("State Machine: FREE_DISENGAGE")
-            elif self.wr_sn.force.z > self.Ftgt:
+            elif self.wr_sn.force.z > self.Ftgt[self.idx_st]:
                 self.t0,self.fv_ds = tk,self.att_sp.thrust_body
 
                 self.drone_state = StateMachine.CONTACT_HOLD
@@ -256,52 +243,27 @@ class Spline2Attitude(Node):
             if (xv_cr[2] < self.pz_max) or (self.wr_sn.force.z > self.fz_max):
                 self.drone_state = StateMachine.FREE_DISENGAGE
                 print("Failsafe Triggered.")
-                print("Z Height:",xv_cr[2])
-                print("Z Force:",self.wr_sn.force.z)
                 print("State Machine: FREE_DISENGAGE")
-            elif tk > self.t0 + self.dt_hd:
-                self.t0 = tk
+            elif tk > self.t0 + self.dt_st:
+                self.idx_st += 1
+                if self.idx_st < len(self.Ftgt):
+                    self.t0,self.fv_ds = tk,self.att_sp.thrust_body
 
-                self.drone_state = StateMachine.FREE_CHECK
-                print("State Machine: FREE_CHECK")
+                    self.drone_state = StateMachine.CONTACT_SEARCH
+                    print("State Machine: CONTACT_SEARCH")
+                else:
+                    self.drone_state = StateMachine.FREE_DISENGAGE
+                    self.t0 = tk
+                    print("State Machine: FREE_DISENGAGE")
             # Looping State Actions
             else:
                 self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr,fv_ds)
                 self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
                 self.sp_attitude_publisher.publish(self.att_sp)
 
-        elif self.drone_state == StateMachine.FREE_CHECK:
-            # Looping State Actions
-            xv_ds = self.xv_0.copy()
-
-            # State Transition Actions
-            if tk > self.t0 + self.dt_hd:
-                # Reset timer regardless of transition state (both require reset)
-                self.t0 = tk
-                print("Force Sensor Reads:",self.wr_sn.force.z)
-
-                # Check if sensor is still in contact
-                if self.wr_sn.force.z > self.Fchk:
-                    self.Ftgt += self.dFtgt
-
-                    self.drone_state = StateMachine.FREE_SEARCH
-                    print("State Machine: FREE_SEARCH")
-                else:
-                    # Payload is off
-                    light_command = String()
-                    light_command.data = 'ON'
-                    self.light_publisher.publish(light_command)
-
-                    self.drone_state = StateMachine.FREE_DISENGAGE
-                    print("State Machine: FREE_DISENGAGE")
-            else:
-                # Get to free hover
-                self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr)
-                self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
-                self.sp_attitude_publisher.publish(self.att_sp)
-
         elif self.drone_state == StateMachine.FREE_DISENGAGE:
             xv_ds = self.xv_0.copy()
+            xv_ds[2] = -0.8
 
             self.att_sp.thrust_body,self.att_sp.q_d = self.vas_controller(xv_ds,xv_cr)
             self.att_sp.timestamp = int(self.get_clock().now().nanoseconds / 1000)
@@ -318,13 +280,14 @@ def main() -> None:
 
     # Add arguments
     parser.add_argument('--drone', type=str, help='Drone Name')
+    parser.add_argument('--traj',  type=str, help='Trajectory Name', default='climb')
     parser.add_argument('--freq',  type=int, help='Control Frequency', default=200)
 
     # Parse the command line arguments
     args = parser.parse_args()
     
     rclpy.init()
-    controller = Spline2Attitude(args.drone,args.freq)
+    controller = Spline2Attitude(args.drone,args.traj,args.freq)
     rclpy.spin(controller)
     controller.destroy_node()
     rclpy.shutdown()
