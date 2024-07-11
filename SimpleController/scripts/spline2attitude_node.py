@@ -43,7 +43,12 @@ class Spline2Attitude(Node):
              0.00, 0.00, 0.00,
              0.00, 0.00, 0.00, 1.00
         ])
-
+        self.xv_ds:np.ndarray = np.array([
+            -2.80, 0.00,-0.50,
+             0.00, 0.00, 0.00,
+             0.00, 0.00, 0.00, 1.00
+        ])
+        
         # Configure QoS profile for publishing and subscribing
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -62,25 +67,39 @@ class Spline2Attitude(Node):
         self.wr_sn = Wrench()                                   # wrench sensor reading
         self.t0 = 0.0                                           # State machine start time variable
         self.fv_ds:np.ndarray = np.zeros(3)                     # State machine desired force vector
-        self.xv_ds:np.ndarray = np.eye(10)[9]                   # State machine desired full state variable
         
         # Initialize state machine constants
         self.dt_hd = 5.0                                        # State machine hold time  
-        self.Ftgt = 1.5                                         # State machine target force
+
+        # USE ME FOR STAIRCASE ======================================================================
+        self.Ftgt = 1.0                                         # State machine target force
         self.dFtgt = 1.0                                        # State machine target force step size
-        self.Fchk = 0.6                                         # State machine check force
+        self.fz_max = 4.0                                       # State machine stair max force
+        self.Fchk = -1.0                                         # State machine check force
+
+        # # USE ME FOR LIGHTBULB ======================================================================
+        # self.Ftgt = 1.5                                         # State machine target force
+        # self.dFtgt = 3.0                                        # State machine target force step size
+        # self.fz_max = 7.0                                       # State machine stair max force
+        # self.Fchk = 0.6                                         # State machine check force
+
+        # =============================================================================================
+
         self.Fthh = 1.0                                         # State machine search threshold
         self.dp_z = 0.1                                         # z-position search rate
         self.df_z = 0.01                                        # z-force search rate
         self.pz_max = -1.5                                      # State machine stair max height
-        self.fz_max = 5.0                                       # State machine stair max force
 
         # Controller
         self.Kp = np.diag([3.0,3.0,5.0])                        # VAS Pos Gain
         self.Kv = np.diag([3.0,3.0,3.0])                        # VAS Vel Gain
         self.tn = 4.0*6.90                                      # Thurt Gain
         self.m  = 1.0                                           # Mass
-        self.Kfp = 0.005                                          # Force Feedback P-Gain
+        self.Kfp = 0.005                                        # Force Feedback P-Gain
+        self.Kfi = 0.001                                        # Force Feedback I-Gain
+        self.e_i = 0                                            # Force error integral term   
+        self.e_ith_up = 0.04                                     # error windup upper bound
+        self.e_ith_low = -0.04                                   # error windup lower bound
 
         # Create publishers
         self.sp_attitude_publisher = self.create_publisher(
@@ -126,7 +145,7 @@ class Spline2Attitude(Node):
                        vo.q[1],vo.q[2],vo.q[3],vo.q[0],
                        vo.angular_velocity[0],vo.angular_velocity[1],vo.angular_velocity[2]])
         
-        xv[6:10] += np.array([0.0,0.0,0.0,1e-9])
+        xv[6:10] += np.array([0.0,0.0,0.0,1e-9])        
         xv[6:10] = xv[6:10]/np.linalg.norm(xv[6:10])
 
         return xv
@@ -135,9 +154,10 @@ class Spline2Attitude(Node):
         del_p = xv_ds[0:3]-xv_cr[0:3]
         del_v = xv_ds[3:6]-xv_cr[3:6]
 
+        # R is from body to world
         R_ds = R.from_quat(xv_ds[6:10]).as_matrix()
         R_cr = R.from_quat(xv_cr[6:10]).as_matrix()
-        z_cr = R_cr[:,2]
+        z_cr = R_cr[:,2] 
 
         if fv_ds is False:
             Fdes = -self.Kp@del_p - self.Kv@del_v + self.m*np.array([0,0,9.81])
@@ -171,11 +191,16 @@ class Spline2Attitude(Node):
             q_cmd = R.from_matrix(R_cmd).as_quat().astype(np.float32)
 
             if self.drone_state == StateMachine.CONTACT_SEARCH:
-                nt_cmd = fv_ds[2]
+                nt_cmd = fv_ds[2]   
             elif self.drone_state == StateMachine.CONTACT_HOLD:
                 fz_tgt = self.Ftgt
                 fz_act = self.wr_sn.force.z
-                nt_cmd = fv_ds[2] - self.Kfp*(fz_tgt-fz_act)
+                self.e_i += (fz_tgt-fz_act)
+                if self.Kfi*(self.e_i) > self.e_ith_up:
+                    self.e_i = self.e_ith_up / self.Kfi
+                elif self.Kfi*(self.e_i) < self.e_ith_low:
+                    self.e_i = self.e_ith_low / self.Kfi
+                nt_cmd = fv_ds[2] - self.Kfp*(fz_tgt-fz_act) - self.Kfi*(self.e_i)    # TODO: add an integral term here.
                 
         # print(self.drone_state,nt_cmd)
 
@@ -198,10 +223,10 @@ class Spline2Attitude(Node):
                 self.t0,self.x0 = tk,xv_cr
                 self.drone_state = StateMachine.FREE_SEARCH
                 print("State Machine: FREE_SEARCH")
-
+                                                                
         elif self.drone_state == StateMachine.FREE_SEARCH:
             # Looping State Actions
-            xv_ds = self.xv_0.copy()
+            xv_ds = self.xv_0.copy()                # QQQ: what exactly is xv_0? just a hardcoded goal? why a separate xv_ds declaration then?
             xv_ds[2] -= self.dp_z*(tk-self.t0)
 
             # State Transition Actions
