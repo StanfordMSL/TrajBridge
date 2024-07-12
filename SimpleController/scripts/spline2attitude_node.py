@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 from tabulate import tabulate
 from scipy.spatial.transform import Rotation as R
+from typing import Union
 
 import rclpy
 from rclpy.node import Node
@@ -69,23 +70,39 @@ class Spline2Attitude(Node):
         self.fv_ds:np.ndarray = np.zeros(3)                     # State machine desired force vector
         
         # Initialize state machine constants
-        self.dt_hd = 5.0                                        # State machine hold time  
 
         # USE ME FOR STAIRCASE ======================================================================
-        self.Ftgt = 1.0                                         # State machine target force
-        self.dFtgt = 1.0                                        # State machine target force step size
-        self.fz_max = 4.0                                       # State machine stair max force
-        self.Fchk = -1.0                                         # State machine check force
+        self.Fthh = 1.0                                         # State machine search threshold
+        self.Ftgt   = 1.0                                       # State machine target force
+        self.dFtgt  = 1.0                                       # State machine target force step size
+        self.fz_max = 5.0                                       # State machine stair max force
+        self.Fchk   = -1.0                                      # State machine check force
+        self.dt_hd_hold = 5.0                                        # State machine hold time  
+        self.dt_hd_free = 2.0
 
+        # USE ME FOR sinusoidal ======================================================================
+        self.Fthh = 1.0                                         # State machine search threshold
+        self.Ftgt   = 2.0                                       # State machine target force
+        self.dFtgt  = 1.0                                       # State machine target force step size
+        self.fz_max = 5.0                                       # State machine stair max force
+        self.Fchk   = -1.0                                      # State machine check force
+        self.alpha = 2*np.pi/4.0                                # period gain
+        self.dt_hd_hold = 12.0                                        # State machine hold time  
+        self.dt_hd_free = 2.0
+        
         # # USE ME FOR LIGHTBULB ======================================================================
-        # self.Ftgt = 1.5                                         # State machine target force
-        # self.dFtgt = 3.0                                        # State machine target force step size
-        # self.fz_max = 7.0                                       # State machine stair max force
-        # self.Fchk = 0.6                                         # State machine check force
+        # self.Fthh   = 1.5                                         # State machine search threshold
+        # self.Ftgt   = 1.7                                         # State machine target force
+        # self.dFtgt  = 4.3                                        # State machine target force step size
+        # self.fz_max = 10.0                                      # State machine stair max force
+        # self.Fchk   = 0.6                                         # State machine check force
+        # self.dt_hd_hold = 5.0                                        # State machine hold time  
+        # self.dt_hd_free = 2.0
+        
+        # some usefull stuff ==========================================================================
+
 
         # =============================================================================================
-
-        self.Fthh = 1.0                                         # State machine search threshold
         self.dp_z = 0.1                                         # z-position search rate
         self.df_z = 0.01                                        # z-force search rate
         self.pz_max = -1.5                                      # State machine stair max height
@@ -97,9 +114,15 @@ class Spline2Attitude(Node):
         self.m  = 1.0                                           # Mass
         self.Kfp = 0.005                                        # Force Feedback P-Gain
         self.Kfi = 0.001                                        # Force Feedback I-Gain
+        self.Kfd = 0.040                                        # Forfe Feedback D-Gain
         self.e_i = 0                                            # Force error integral term   
-        self.e_ith_up = 0.04                                     # error windup upper bound
-        self.e_ith_low = -0.04                                   # error windup lower bound
+        self.e_ith_up = 0.04                                    # error windup upper bound
+        self.e_ith_low = -0.04                                  # error windup lower bound
+        self.e_d = 0                                            # Force error derivative term
+        self.e_prev = 0                                         # Force error previous
+        self.e_cr = 0                                           # Force error current
+        self.e_dth_up = 0.04                                    # error derivative windup upper bound
+        self.e_dth_low = -0.04                                  # error derivative windup lower bound
 
         # Create publishers
         self.sp_attitude_publisher = self.create_publisher(
@@ -150,7 +173,7 @@ class Spline2Attitude(Node):
 
         return xv
     
-    def vas_controller(self,xv_ds:np.ndarray,xv_cr:np.ndarray,fv_ds:np.ndarray=False) -> tuple:
+    def vas_controller(self,xv_ds:np.ndarray,xv_cr:np.ndarray,fv_ds:Union[bool,np.ndarray]=False) -> tuple:
         del_p = xv_ds[0:3]-xv_cr[0:3]
         del_v = xv_ds[3:6]-xv_cr[3:6]
 
@@ -193,14 +216,33 @@ class Spline2Attitude(Node):
             if self.drone_state == StateMachine.CONTACT_SEARCH:
                 nt_cmd = fv_ds[2]   
             elif self.drone_state == StateMachine.CONTACT_HOLD:
-                fz_tgt = self.Ftgt
                 fz_act = self.wr_sn.force.z
-                self.e_i += (fz_tgt-fz_act)
+
+                # # standard ==============================
+                # fz_tgt = self.Ftgt
+
+                # sinusoidal  ===========================
+                fz_tgt = self.Ftgt + np.sin(self.alpha*(self.tk-self.t0))
+
+                # =======================================
+                self.e_cr = (fz_tgt-fz_act)
+                self.e_i += self.e_cr
+                self.e_d = self.e_cr - self.e_prev
+                self.e_prev = self.e_cr
+                # bound the e_i term
                 if self.Kfi*(self.e_i) > self.e_ith_up:
                     self.e_i = self.e_ith_up / self.Kfi
                 elif self.Kfi*(self.e_i) < self.e_ith_low:
                     self.e_i = self.e_ith_low / self.Kfi
-                nt_cmd = fv_ds[2] - self.Kfp*(fz_tgt-fz_act) - self.Kfi*(self.e_i)    # TODO: add an integral term here.
+                # bound the e_d term
+                if self.Kfd*(self.e_d) > self.e_dth_up:
+                    # print("e_d bound upper reached")
+                    self.e_d = self.e_dth_up / self.Kfd
+                elif self.Kfd*(self.e_d) < self.e_dth_low:
+                    # print("e_d bound lower reached")
+                    self.e_d = self.e_dth_low / self.Kfd
+                
+                nt_cmd = fv_ds[2] - self.Kfp*(fz_tgt-fz_act) - self.Kfi*(self.e_i) - self.Kfd*(self.e_d)
                 
         # print(self.drone_state,nt_cmd)
 
@@ -212,6 +254,7 @@ class Spline2Attitude(Node):
     def controller(self) -> None:
         # Looping Controlle Actions
         tk = self.get_clock().now().nanoseconds / 1e9
+        self.tk = tk
         xv_cr = self.vo2xv(self.vo_cr)
 
         # Drone State Machine
@@ -284,7 +327,7 @@ class Spline2Attitude(Node):
                 print("Z Height:",xv_cr[2])
                 print("Z Force:",self.wr_sn.force.z)
                 print("State Machine: FREE_DISENGAGE")
-            elif tk > self.t0 + self.dt_hd:
+            elif tk > self.t0 + self.dt_hd_hold:
                 self.t0 = tk
 
                 self.drone_state = StateMachine.FREE_CHECK
@@ -300,7 +343,7 @@ class Spline2Attitude(Node):
             xv_ds = self.xv_0.copy()
 
             # State Transition Actions
-            if tk > self.t0 + self.dt_hd:
+            if tk > self.t0 + self.dt_hd_free:
                 # Reset timer regardless of transition state (both require reset)
                 self.t0 = tk
                 print("Force Sensor Reads:",self.wr_sn.force.z)
