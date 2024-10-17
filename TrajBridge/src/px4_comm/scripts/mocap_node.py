@@ -55,6 +55,7 @@ class Mocap(Node):
         print("- 'fmu' (special case)")
         print("- 'droneX' where X is a digit")
         print("- 'cameraX' where X is a digit")
+        print("Using Motive Y-Up")
         print("--------------------------------------------------------------------------------")
         
     def topic_search_callback(self) -> None:
@@ -123,15 +124,15 @@ class Mocap(Node):
             vo.pose_frame = VehicleOdometry.POSE_FRAME_FRD
             vo.position = [ 
                  msg.pose.position.x,
-                -msg.pose.position.y,
-                -msg.pose.position.z
+                -msg.pose.position.z,
+                 msg.pose.position.y
                 ]
             
             vo.q = [
                  msg.pose.orientation.w,
                  msg.pose.orientation.x,
-                -msg.pose.orientation.y,
-                -msg.pose.orientation.z
+                -msg.pose.orientation.z,
+                 msg.pose.orientation.y
                 ]
 
             # Blank out velocity data

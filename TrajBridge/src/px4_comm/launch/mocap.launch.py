@@ -11,7 +11,7 @@ def generate_launch_description():
             namespace='vrpn_mocap',
             output='screen',
             emulate_tty=True,
-            parameters=[{'server': 'mocap.local',
+            parameters=[{'server': '192.168.0.224',
                          'port': 3883}]
             ),
         Node(
