@@ -124,15 +124,15 @@ class Mocap(Node):
             vo.pose_frame = VehicleOdometry.POSE_FRAME_FRD
             vo.position = [ 
                  msg.pose.position.x,
-                -msg.pose.position.z,
-                 msg.pose.position.y
+                 msg.pose.position.z,
+                -msg.pose.position.y
                 ]
             
             vo.q = [
                  msg.pose.orientation.w,
                  msg.pose.orientation.x,
-                -msg.pose.orientation.z,
-                 msg.pose.orientation.y
+                 msg.pose.orientation.z,
+                -msg.pose.orientation.y
                 ]
 
             # Blank out velocity data
